@@ -43,8 +43,9 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 **Admitted forms as data.** The three forms of the [admitted relations with an authored idea](provenance-of-ideas.md#^authored-relations) are read from the registries:
 
-- the first form holds for every presentational relation that requires no class;
-- the second and the third forms hold when the source is an authored idea of a kind listed by the relation under `admitted-authored-sources`, and the target is referenced. The elaboration admits an illustration. The restatement and the summary admit each of the four kinds. ^admitted-forms
+- the first form holds for every presentational relation that requires no class, whichever of its two ideas is authored;
+- the second form holds when the source is an authored idea of a kind listed by the relation under `admitted-authored-sources`, and the target is referenced. The elaboration admits an illustration;
+- the third form admits no authored idea yet, so the restatement and the summary list no kind. ^admitted-forms
 
 **Severities and order.** The check applies the rules on the provenance of ideas only to a record that conforms to its schema. These rules read the fields of the record through the annotations of the schema. Until a source publishes its relations, the check reports each relation that requires a class between two referenced ideas as unverified, at the severity of a warning. Every other finding is an error. ^severities
 
@@ -68,7 +69,7 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 - **Exports.** A source that publishes an export replaces the relative links of its units by logical identifiers. Then, a new rule reads the recorded relations, and resolves each warning on a required class against the export.
 - **Classes.** The classes required by subject-matter relations are renamed after the classes that the contract of an export declares.
-- **Syntheses.** A synthesis restates referenced units, as the third form requires, but none of the four authored kinds describes it. Until the decision on the provenance of ideas settles this gap, the restatement and the summary admit each of the four kinds. A fifth kind, `synthesis`, would close the gap, and requires a revision of that decision.
+- **Syntheses.** The decision on the provenance of ideas admits a restatement or a summary realized by a synthesis. A synthesis restates referenced units, so it carries content about the objects of the inquiry. Two rules of the same decision exclude such an authored idea: in an exposition that presents research, [an authored idea carries content about other objects only](provenance-of-ideas.md#^research-artifacts), and a premise about those objects must first be recorded as a research unit. None of the four authored kinds describes a synthesis either. Therefore, the check admits no authored source for a restatement or a summary, and reports such a relation as an error. A fifth kind, `synthesis`, exempted from the rule on content, would resolve the conflict, and requires a revision of the decision on the provenance of ideas.
 - **Judgment.** No rule judges whether an authored idea carries content about the objects of the inquiry. The author and the reviewer judge it, as the decision on the provenance of ideas states.
 
 ---

@@ -72,3 +72,13 @@ def test_every_example_of_the_schema_validates_against_its_field() -> None:
         validator = Draft202012Validator({"$defs": schema["$defs"], **node})
         for example in node["examples"]:
             assert not list(validator.iter_errors(example)), (node.get("title"), example)
+
+
+def test_only_the_elaboration_admits_an_authored_source() -> None:
+    """The second form admits an illustration; the third form admits no kind until a synthesis kind exists."""
+    admitting = {
+        entry.id: entry.admitted_authored_sources
+        for entry in RESOURCES.registries.relations.values()
+        if entry.admitted_authored_sources
+    }
+    assert admitting == {"elaboration": frozenset({"illustration"})}

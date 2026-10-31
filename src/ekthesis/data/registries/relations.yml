@@ -101,14 +101,14 @@ entries:
     kind: subject-matter
     nuclearity: mononuclear
     requires: restatement
-    admitted-authored-sources: [illustration, analogy, motivation, premise]
+    admitted-authored-sources: []
     description: the source restates the target, in a form of comparable size
   - id: summary
     title: Summary
     kind: subject-matter
     nuclearity: mononuclear
     requires: summary
-    admitted-authored-sources: [illustration, analogy, motivation, premise]
+    admitted-authored-sources: []
     description: the source restates the target, in a shorter form
   - id: sequence
     title: Sequence
