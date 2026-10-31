@@ -1,7 +1,8 @@
 ---
 tags:
   - theory
-index: "[Expression](docs/epistemology/expression/_index.md)"
+  - revision
+index: "[Theory](docs/theory/_index.md)"
 aliases:
   - Exposition
   - Exposition as a projection
@@ -29,7 +30,7 @@ The connectors of an exposition fall under the same rule. Rhetorical Structure T
 
 ## The audience
 
-The **audience** of an exposition is a readership described by its knowledge, its skills and its register, as an audience specification records them under the decision on [terminology, audience and project specifications](../../adr/terminology-audience-project-specifications.md). The design brief of an exposition cites its audiences. ^audience
+The **audience** of an exposition is a readership described by its knowledge, its skills and its register, as an audience specification records them under the decision on [terminology, audience and project specifications](../adr/terminology-audience-project-specifications.md). The design brief of an exposition cites its audiences. ^audience
 
 Argumentation is relative to the audience that it addresses: it seeks the adherence of that audience, and starts from premises that the audience grants [perelman1958]. The audience therefore changes four properties of an exposition:
 
@@ -59,7 +60,7 @@ The audience changes neither the content nor the warrant of a unit. The warrant 
 > 	- the restatement of a recorded relation by each connector that states a subject-matter relation;
 > 	- the four properties of an exposition that its audience changes, and the departure from the new rhetoric.
 
-Marks follow the [legend of reading marks](../../../CONTRIBUTING.md#^reading-marks).
+Marks follow the [legend of reading marks](../../CONTRIBUTING.md#^reading-marks).
 
 - [knuth1984] ◐ [Knuth, "Literate programming", *The Computer Journal* 27(2), 97–111, 1984](https://doi.org/10.1093/comjnl/27.2.97)
 - [mann1988] ◐ [Mann & Thompson, "Rhetorical Structure Theory: toward a functional theory of text organization", *Text* 8(3), 243–281, 1988](https://doi.org/10.1515/text.1.1988.8.3.243); subject-matter and presentational relations

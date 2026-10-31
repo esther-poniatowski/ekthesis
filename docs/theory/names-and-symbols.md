@@ -1,7 +1,8 @@
 ---
 tags:
   - theory
-index: "[Expression](docs/epistemology/expression/_index.md)"
+  - revision
+index: "[Theory](docs/theory/_index.md)"
 aliases:
   - Glossary and notation
   - Names and symbols
@@ -27,7 +28,7 @@ The Simple Knowledge Organization System separates a concept from its lexical la
 A **notation** composes the symbols of a project from declared parts: bases, each with its meaning; modifiers, such as a label, a superscript or an accent, each with its meaning and its admitted positions; index sets, which bind the letters that range over them; and conventions of typography. The meaning of a compound symbol is composed from the meanings of its parts. A compound whose meaning does not follow from its parts is declared explicitly. ^notation
 
 - **Composition follows the principle of compositionality.** The meaning of a complex expression is determined by the meanings of its parts and by the way in which they are combined [szabo2020]. A compound declared explicitly is the counterpart of an idiom, whose meaning the rule of composition does not yield.
-- **A symbol of a declared quantity has one declaration.** Once a record of the inquiry declares a quantity, the notation refers to that record for its symbol and does not restate it, as the decision on [terminology, audience and project specifications](../../adr/terminology-audience-project-specifications.md) states.
+- **A symbol of a declared quantity has one declaration.** Once a record of the inquiry declares a quantity, the notation refers to that record for its symbol and does not restate it, as the decision on [terminology, audience and project specifications](../adr/terminology-audience-project-specifications.md) states.
 
 ## Distinctions
 
@@ -43,7 +44,7 @@ A **notation** composes the symbols of a project from declared parts: bases, eac
 > 	- the glossary and the notation as records of one project, apart from the concept;
 > 	- the rule that two forms designate one concept only when they carry the same meaning in the contexts listed.
 
-Marks follow the [legend of reading marks](../../../CONTRIBUTING.md#^reading-marks).
+Marks follow the [legend of reading marks](../../CONTRIBUTING.md#^reading-marks).
 
 - [frege1892a] ◐ Frege, "Über Sinn und Bedeutung", *Zeitschrift für Philosophie und philosophische Kritik* (N.F.) 100(1), 25–50, 1892; sense and reference
 - [skos2009] ◐ [Miles & Bechhofer (eds.), *SKOS Simple Knowledge Organization System Reference*, W3C Recommendation, 18 August 2009](https://www.w3.org/TR/skos-reference/); preferred and alternative labels, and the relation `broader`, checked through the namespace document

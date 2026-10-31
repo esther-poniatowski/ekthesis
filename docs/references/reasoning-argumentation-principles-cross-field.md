@@ -1,6 +1,7 @@
 ---
 tags:
   - reference
+  - revision
 index: "[References](docs/references/_index.md)"
 aliases:
   - Reasoning principles across fields
