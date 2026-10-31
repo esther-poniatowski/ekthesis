@@ -12,7 +12,7 @@ aliases:
 
 > [!QUESTION] Goal: which form do the record of an exposition, its registries and its check take, where the [decision on the provenance of ideas](provenance-of-ideas.md) leaves the form open?
 
-The decision on the provenance of ideas fixes three contents that an exposition must express: the provenance of each idea, whether the exposition presents research, and the requirements on each relation. The first version of `ekthesis` implements these rules in the contract `ekthesis:exposition@1`, two closed registries and the command `ekthesis check`. The first consumer is a poster of a research project, and the sources of that project publish no export yet.
+The decision on the provenance of ideas fixes three contents that an exposition must express: the provenance of each idea, whether the exposition is bound to its sources, and the requirements on each relation. The first version of `ekthesis` implements these rules in the contract `ekthesis:exposition@1`, two closed registries and the command `ekthesis check`. The first consumer is a poster of a research project, and the sources of that project publish no export yet.
 
 ## Decision
 
@@ -27,13 +27,13 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 **Referenced idea.** A referenced idea names its unit by a relative Markdown link to the file that states it, with an optional anchor of a block (`#^id`) or of a heading. The check resolves the link from the directory of the record. A link to a remote address is rejected, since no remote file can be checked for its anchor. The logical identifier of a unit in an export replaces the link once a source publishes an export. ^referenced-idea
 
-**Roles of the fields.** Annotations of the schema state which field holds each identifier, reference, registry value, source link and research flag. Therefore, the check names no field of a record:
+**Roles of the fields.** Annotations of the schema state which field holds each identifier, reference, registry value, source link and binding to the sources. Therefore, the check names no field of a record:
 
 - `x-identifier` at the root names the identifier of the record, as Ekphrasis reads it; on a definition reached as the items of a sequence, it names the identifier of each item;
 - `x-refers` names the definition whose items a field identifies;
 - `x-registry` names the registry that holds the values of a field;
 - `x-resolves: file` marks a link to the source of an idea;
-- `x-role` marks the field stating whether the exposition presents research, and the source and the target of a relation. ^field-roles
+- `x-role` marks the field stating whether the exposition is bound to its sources, and the source and the target of a relation. ^field-roles
 
 **Registries.** Each registry is a data file of the package, and the schema leaves its values unenumerated. Therefore, each registry is the single source of its values, and its membership is checked by a rule of its own. The registry of relations holds the 23 relations of Rhetorical Structure Theory, divided into 16 subject-matter relations and 7 presentational relations [mann1988]. ^registries
 
@@ -41,11 +41,12 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 **Direction.** In a mononuclear relation, the source is the satellite and the target is the nucleus. In a multinuclear relation, the source and the target are two nuclei, in reading order. ^direction
 
-**Admitted forms as data.** The three forms of the [admitted relations with an authored idea](provenance-of-ideas.md#^authored-relations) are read from the registries:
+**Admitted forms as data.** The two forms of the [admitted relations with an authored idea](provenance-of-ideas.md#^authored-relations) are read from the registries:
 
 - the first form holds for every presentational relation that requires no class, whichever of its two ideas is authored;
-- the second form holds when the source is an authored idea of a kind listed by the relation under `admitted-authored-sources`, and the target is referenced. The elaboration admits an illustration;
-- the third form admits no authored idea yet, so the restatement and the summary list no kind. ^admitted-forms
+- the second form holds when the source is an authored idea of a kind listed by the relation under `admitted-authored-sources`, and the target is referenced. The elaboration admits an illustration. ^admitted-forms
+
+A [synthesis](provenance-of-ideas.md#^syntheses) adds no idea. Its part lists again the referenced ideas reformulated by the synthesis. Therefore, the restatement and the summary list no authored kind.
 
 **Severities and order.** The check applies the rules on the provenance of ideas only to a record that conforms to its schema. These rules read the fields of the record through the annotations of the schema. Until a source publishes its relations, the check reports each relation that requires a class between two referenced ideas as unverified, at the severity of a warning. Every other finding is an error. ^severities
 
@@ -62,15 +63,16 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 | ------ | ------- | ---------------------- |
 | Field names written in the code of the check | Shorter code | A renamed field breaks the check silently, and the schema is no longer the single source of the form of a record |
 | Registries enumerated in the schema | A dropdown in the form of Ekphrasis | Two sources of each value; the schema rule and the registry rule fail together |
-| The three admitted forms written as conditions in the code | No field `admitted-authored-sources` | The forms change with the registry, and a condition naming a relation duplicates its entry |
+| The two admitted forms written as conditions in the code | No field `admitted-authored-sources` | The forms change with the registry, and a condition naming a relation duplicates its entry |
 | A remote link admitted as a source | A unit of another repository can be cited | No anchor can be checked; the logical identifier of an export serves that case later |
 
 ## Consequences
 
 - **Exports.** A source that publishes an export replaces the relative links of its units by logical identifiers. Then, a new rule reads the recorded relations, and resolves each warning on a required class against the export.
 - **Classes.** The classes required by subject-matter relations are renamed after the classes that the contract of an export declares.
-- **Syntheses.** The decision on the provenance of ideas admits a restatement or a summary realized by a synthesis. A synthesis restates referenced units, so it carries content about the objects of the inquiry. Two rules of the same decision exclude such an authored idea: in an exposition that presents research, [an authored idea carries content about other objects only](provenance-of-ideas.md#^research-artifacts), and a premise about those objects must first be recorded as a research unit. None of the four authored kinds describes a synthesis either. Therefore, the check admits no authored source for a restatement or a summary, and reports such a relation as an error. A fifth kind, `synthesis`, exempted from the rule on content, would resolve the conflict, and requires a revision of the decision on the provenance of ideas.
-- **Judgment.** No rule judges whether an authored idea carries content about the objects of the inquiry. The author and the reviewer judge it, as the decision on the provenance of ideas states.
+- **Syntheses.** The decision on the provenance of ideas treats a synthesis as a device that adds no idea, rather than as an authored idea. Therefore, the check reports an authored source of a restatement or a summary as an error, and the registry of authored kinds keeps its four kinds.
+- **Judgment.** No rule judges whether an authored idea carries content about the subject of the exposition. The author and the reviewer judge it, as the decision on the provenance of ideas states.
+- **Modularity.** The parts of a record are generic: they name no feature of one kind of artifact. A field specific to one kind, such as the panels of a poster or the frames of a slide deck, enters a contract of its own, which extends a common core holding the identity, the ideas, the relations and the parts. That split requires the layout of the check to follow a `$ref` into another schema file of the package.
 
 ---
 ## Sources
