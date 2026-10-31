@@ -12,6 +12,7 @@ See Also
 --------
 ekthesis.cli: Module implementing the application's command-line interface.
 """
+
 from .cli import app
 
 app()
