@@ -23,7 +23,13 @@ Research records, such as those of [`gnomon`](https://github.com/esther-poniatow
 
 ### Status
 
-Pre-alpha. The repository holds the decisions, theory notes and proposals carried from `gnomon` with their history, and no code yet. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/main/docs/adr/research-scope.md) states the boundary between the two tools.
+Pre-alpha. The package provides the contract `ekthesis:exposition@1` of an argument record, the closed registries of authored kinds and of rhetorical relations, and a command that checks records against them:
+
+```sh
+ekthesis check path/to/argument.yml
+```
+
+The command reports each finding with its rule, its field and its severity, and exits with a nonzero code on an error. The repository also holds the decisions, theory notes and proposals carried from `gnomon` with their history. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/main/docs/adr/research-scope.md) states the boundary between the two tools.
 
 ---
 

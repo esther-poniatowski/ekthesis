@@ -28,18 +28,18 @@ steps to set up a development environment:
 2. Create a virtual environment containing the development dependencies:
 
    ```sh
-   cd  ekthesis
+   cd ekthesis
    conda env create -f environment.yml
    ```
 
    By default, the environment will be named `ekthesis`, as specified in the `environment.yml`
    file. This name can be modified by passing the `-n` option.
 
-3. Register the packages in "editable mode":
+3. Register the package in "editable mode", from the root of the repository:
 
    ```sh
    conda activate ekthesis
-   pip install -e /src/ekthesis
+   pip install -e .
    ```
 
 ### Using the Commit Message Template
