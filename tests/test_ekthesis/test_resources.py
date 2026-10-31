@@ -86,7 +86,7 @@ def test_every_example_of_the_schema_validates_against_its_field() -> None:
 
 
 def test_only_the_elaboration_admits_an_authored_source() -> None:
-    """The second form admits an illustration; the third form admits no kind until a synthesis kind exists."""
+    """The second form admits an illustration; a synthesis is no authored idea, so no other relation admits one."""
     admitting = {
         entry.identifier: entry.admitted_authored_sources
         for entry in RESOURCES.registries.relations.values()

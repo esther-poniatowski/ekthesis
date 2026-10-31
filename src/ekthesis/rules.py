@@ -187,7 +187,7 @@ def source_links(record: BoundRecord) -> Iterator[Finding]:
 
 def authored_relations(record: BoundRecord) -> Iterator[Finding]:
     """
-    Yield a finding for each relation with an authored idea outside the three admitted forms.
+    Yield a finding for each relation with an authored idea outside the two admitted forms.
 
     The rule applies to an exposition bound to its sources. A relation with an authored idea is
     admitted when it is a presentational relation that requires no recorded relation, or when its
