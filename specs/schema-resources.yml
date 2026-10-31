@@ -1,0 +1,8 @@
+# Inputs of the schema closure of ekthesis; generated files remain outside this record.
+format_version: 1
+
+paths:
+  owned_schemas: src/ekthesis/data/schemas
+
+exports:
+  - ekthesis:exposition@1
