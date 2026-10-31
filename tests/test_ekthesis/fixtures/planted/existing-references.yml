@@ -1,0 +1,31 @@
+# Planted record: fails the rule existing-references alone.
+_schema: 'ekthesis:exposition@1'
+exposition:
+  id: valid-poster
+  title: A valid poster
+  presents-research: true
+  audience: '[Readers](https://example.org/audience.yml)'
+ideas:
+  - id: mixture-input
+    statement: A mixture input is a weighted sum of two component inputs.
+    source: '[Mixture input](../sources/note.md#^mixture-input)'
+  - id: operations
+    statement: The map of the network factorizes into two operations.
+    source: '[Two network operations](../sources/note.md#Two%20network%20operations)'
+  - id: plaid
+    statement: Two superimposed gratings form a plaid.
+    kind: illustration
+  - id: scenes
+    statement: Natural scenes often combine several sources.
+    kind: motivation
+relations:
+  - {source: plaid, relation: elaboration, target: mixture-input}
+  - {source: scenes, relation: motivation, target: mixture-input}
+  - {source: mixture-input, relation: background, target: operations}
+parts:
+  - id: problem
+    title: Problem
+    ideas: [scenes, mixture-input, plaid]
+  - id: mechanism
+    title: Mechanism
+    ideas: [operations, readouts]
