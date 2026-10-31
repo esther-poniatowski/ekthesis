@@ -22,7 +22,7 @@ registry_membership(record)
 source_links(record)
     Every link to a source resolves to a file, and its anchor exists in that file.
 authored_relations(record)
-    In an exposition that presents research, every relation with an authored idea is admitted.
+    In an exposition bound to its sources, every relation with an authored idea is admitted.
 relation_requirements(record)
     A relation between two referenced ideas that requires a recorded relation is unverified.
 
@@ -189,12 +189,12 @@ def authored_relations(record: BoundRecord) -> Iterator[Finding]:
     """
     Yield a finding for each relation with an authored idea outside the three admitted forms.
 
-    The rule applies to an exposition that presents research. A relation with an authored idea is
+    The rule applies to an exposition bound to its sources. A relation with an authored idea is
     admitted when it is a presentational relation that requires no recorded relation, or when its
     source is an authored idea of a kind that the relation admits and its target is referenced.
     """
     exposition = record.exposition()
-    if not exposition.presents_research:
+    if not exposition.source_bound:
         return
     for relation in exposition.relations:
         source, target = exposition.ideas.get(relation.source), exposition.ideas.get(

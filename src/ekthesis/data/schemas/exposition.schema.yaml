@@ -40,7 +40,7 @@ properties:
     minItems: 1
     items: {$ref: '#/$defs/part'}
     title: Parts
-    description: the parts of the exposition in reading order, such as the cards of a poster
+    description: the parts of the exposition, in reading order
 
 $defs:
   identifier:
@@ -64,7 +64,7 @@ $defs:
   exposition:
     type: object
     additionalProperties: false
-    required: [id, title, presents-research]
+    required: [id, title, source-bound]
     properties:
       id:
         $ref: '#/$defs/record-identifier'
@@ -78,13 +78,14 @@ $defs:
         title: Title
         description: title of the exposition, as its reader meets it
         examples: ['How do recurrent networks encode mixtures?']
-      presents-research:
+      source-bound:
         type: boolean
-        x-role: presents-research
-        title: Presents research
+        x-role: source-bound
+        title: Bound to its sources
         description: >-
-          whether the exposition presents research, so that each idea about the objects of the
-          inquiry must reference a research unit
+          whether the exposition presents the content of its sources, so that each idea about its
+          subject, such as the objects of an inquiry or the behaviour of a program, must reference a
+          unit of a source
         examples: [true]
       audience:
         $ref: '#/$defs/link'

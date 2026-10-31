@@ -10,7 +10,7 @@ declares the roles by six keywords:
 - `x-refers` on a field names the definition whose items the field identifies;
 - `x-registry` on a field names the registry to which its value belongs;
 - `x-resolves: file` on a field marks a Markdown link to the source of an idea;
-- `x-role` on a field names its role in the rules on research: `presents-research`,
+- `x-role` on a field names its role in the rules on sources: `source-bound`,
   `relation-source` or `relation-target`.
 
 Classes
@@ -146,7 +146,7 @@ class SchemaLayout:
     source_links : tuple of Pattern
         Each field holding a link to the source of an idea.
     roles : Mapping[str, Pattern]
-        Field of each role in the rules on research.
+        Field of each role in the rules on sources.
     """
 
     record_identifier: Pattern | None

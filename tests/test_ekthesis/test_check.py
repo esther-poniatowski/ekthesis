@@ -60,12 +60,12 @@ def test_finding_locates_the_planted_field(checker: Checker, rule: str, field: s
     assert [finding.field for finding in findings] == [field]
 
 
-def test_record_without_research_admits_any_relation_with_an_authored_idea(
+def test_record_not_bound_to_sources_admits_any_relation_with_an_authored_idea(
     checker: Checker, tmp_path: Path
 ) -> None:
-    """The admitted forms bind only an exposition that presents research."""
+    """The admitted forms bind only an exposition bound to its sources."""
     record = yaml.safe_load((FIXTURES / "planted" / "authored-relations.yml").read_text())
-    record["exposition"]["presents-research"] = False
+    record["exposition"]["source-bound"] = False
     path = tmp_path / "record.yml"
     path.write_text(yaml.safe_dump(record))
     findings = checker.check_record(path)

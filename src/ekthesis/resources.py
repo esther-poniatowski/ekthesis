@@ -121,8 +121,8 @@ class RhetoricalRelation:
     requires : str or None
         Class of the recorded relation required when both ideas are referenced, or `None`.
     admitted_authored_sources : frozenset of str
-        Authored kinds admitted as source when the target is referenced, in an exposition that
-        presents research.
+        Authored kinds admitted as source when the target is referenced, in an exposition bound
+        to its sources.
     description : str
         Definition of the relation.
     """

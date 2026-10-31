@@ -8,7 +8,7 @@ Idea
 Relation
     Rhetorical relation asserted between two ideas.
 Exposition
-    The ideas and relations of one record, with whether it presents research.
+    The ideas and relations of one record, with whether it is bound to its sources.
 """
 
 from collections.abc import Mapping
@@ -18,7 +18,7 @@ from .errors import ResourceError
 from .layout import FieldPath, Pattern, SchemaLayout
 from .resources import AUTHORED_KINDS, RELATIONS
 
-PRESENTS_RESEARCH = "presents-research"
+SOURCE_BOUND = "source-bound"
 RELATION_SOURCE = "relation-source"
 RELATION_TARGET = "relation-target"
 
@@ -65,15 +65,15 @@ class Exposition:
 
     Attributes
     ----------
-    presents_research : bool
-        Whether the exposition presents research.
+    source_bound : bool
+        Whether the exposition is bound to its sources.
     ideas : Mapping[str, Idea]
         Ideas by identifier; the first of two ideas sharing an identifier is kept.
     relations : tuple of Relation
         Relations in the order of the record.
     """
 
-    presents_research: bool
+    source_bound: bool
     ideas: Mapping[str, Idea]
     relations: tuple[Relation, ...]
 
@@ -91,7 +91,7 @@ class Exposition:
         idea_definition : str
             Name of the definition of the ideas, among the collections of the layout.
         """
-        flags = [value for _, value in layout.role(PRESENTS_RESEARCH).select(record)]
+        flags = [value for _, value in layout.role(SOURCE_BOUND).select(record)]
         ideas_collection = layout.collections[idea_definition]
         kind_field = _field_in(layout.registries, AUTHORED_KINDS, ideas_collection.items)
         ideas: dict[str, Idea] = {}
@@ -101,7 +101,7 @@ class Exposition:
             if isinstance(identifier, str) and identifier not in ideas:
                 ideas[identifier] = Idea(identifier, path, kind if isinstance(kind, str) else None)
         return cls(
-            presents_research=bool(flags and flags[0] is True),
+            source_bound=bool(flags and flags[0] is True),
             ideas=ideas,
             relations=tuple(_relations(record, layout)),
         )

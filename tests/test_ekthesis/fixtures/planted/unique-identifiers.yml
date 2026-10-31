@@ -3,7 +3,7 @@ _schema: 'ekthesis:exposition@1'
 exposition:
   id: valid-poster
   title: A valid poster
-  presents-research: true
+  source-bound: true
   audience: '[Readers](https://example.org/audience.yml)'
 ideas:
   - id: mixture-input

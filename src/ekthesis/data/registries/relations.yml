@@ -6,7 +6,7 @@
 #     target are two nuclei, in reading order);
 #   requires: the class of a recorded relation that the export must hold when both ideas are
 #     referenced, or null when the relation requires none;
-#   admitted-authored-sources: in an exposition that presents research, the authored kinds
+#   admitted-authored-sources: in an exposition bound to its sources, the authored kinds
 #     admitted as source when the target is referenced, for a relation that requires a class.
 registry: relations
 description: the rhetorical relations that an exposition may assert between two ideas
