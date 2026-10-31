@@ -49,6 +49,12 @@ $defs:
     x-kind: label
     description: an identifier in lower kebab-case
 
+  record-identifier:
+    type: string
+    pattern: '^[a-z0-9]+([-_][a-z0-9]+)*$'
+    x-kind: label
+    description: an identifier in lower case, whose segments are joined by hyphens or underscores
+
   link:
     type: string
     pattern: '^\[[^\]]+\]\([^()\s]+\)$'
@@ -61,7 +67,7 @@ $defs:
     required: [id, title, presents-research]
     properties:
       id:
-        $ref: '#/$defs/identifier'
+        $ref: '#/$defs/record-identifier'
         title: Identifier
         description: identifier of the exposition, unique among the records of a project
         examples: [mixture-input-encoding_poster_2026-11_pints]

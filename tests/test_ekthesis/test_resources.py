@@ -1,4 +1,6 @@
 """Tests of the packaged schemas and registries, and of the layout read from the schema."""
+from jsonschema import Draft202012Validator
+
 from ekthesis.layout import ITEM, Pattern, SchemaLayout
 from ekthesis.resources import RelationKind, packaged_resources
 
@@ -47,3 +49,26 @@ def test_registries_state_the_requirements_of_the_decision() -> None:
 def test_registry_of_authored_kinds_is_closed_at_four() -> None:
     """The authored kinds are the four of the decision."""
     assert set(RESOURCES.registries.authored_kinds) == {"illustration", "analogy", "motivation", "premise"}
+
+
+def _annotated_nodes(node: object):
+    """Yield every subschema of `node` that carries the keyword `examples`."""
+    if isinstance(node, dict):
+        if "examples" in node:
+            yield node
+        for value in node.values():
+            yield from _annotated_nodes(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _annotated_nodes(value)
+
+
+def test_every_example_of_the_schema_validates_against_its_field() -> None:
+    """An example that its own field rejects would mislead the author of a record."""
+    schema = RESOURCES.schemas.schemas[CONTRACT]
+    nodes = list(_annotated_nodes(schema))
+    assert nodes
+    for node in nodes:
+        validator = Draft202012Validator({"$defs": schema["$defs"], **node})
+        for example in node["examples"]:
+            assert not list(validator.iter_errors(example)), (node.get("title"), example)
