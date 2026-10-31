@@ -14,6 +14,7 @@ The fields of a finding map one to one onto a result of SARIF: `rule` onto `rule
 the artifact location, `field` onto the logical location, `severity` onto `level`, and `message`
 onto `message.text`. A SARIF output therefore changes only the serialization.
 """
+
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path

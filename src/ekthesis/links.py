@@ -13,6 +13,7 @@ Functions
 resolve_link(link, base) -> str or None
     Explain why a link does not resolve, or return `None` when it does.
 """
+
 import re
 from pathlib import Path
 from urllib.parse import unquote, urlsplit

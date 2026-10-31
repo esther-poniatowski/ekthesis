@@ -1,4 +1,5 @@
 """Tests of the packaged schemas and registries, and of the layout read from the schema."""
+
 from jsonschema import Draft202012Validator
 
 from ekthesis.layout import ITEM, Pattern, SchemaLayout
@@ -24,10 +25,13 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
         "part": f"parts{ITEM}",
     }
     assert {str(pattern) for pattern, _ in layout.references} == {
-        f"relations{ITEM}.source", f"relations{ITEM}.target", f"parts{ITEM}.ideas{ITEM}",
+        f"relations{ITEM}.source",
+        f"relations{ITEM}.target",
+        f"parts{ITEM}.ideas{ITEM}",
     }
     assert {(str(pattern), name) for pattern, name in layout.registries} == {
-        (f"ideas{ITEM}.kind", "authored-kinds"), (f"relations{ITEM}.relation", "relations"),
+        (f"ideas{ITEM}.kind", "authored-kinds"),
+        (f"relations{ITEM}.relation", "relations"),
     }
     assert [str(pattern) for pattern in layout.source_links] == [f"ideas{ITEM}.source"]
 
@@ -36,19 +40,26 @@ def test_registries_state_the_requirements_of_the_decision() -> None:
     """Among presentational relations, only an evidence and an antithesis require a class."""
     relations = RESOURCES.registries.relations
     requiring = {
-        entry.id: entry.requires
+        entry.identifier: entry.requires
         for entry in relations.values()
         if entry.kind is RelationKind.PRESENTATIONAL and entry.requires is not None
     }
     assert requiring == {"evidence": "support", "antithesis": "incompatibility"}
     assert all(
-        entry.requires is not None for entry in relations.values() if entry.kind is RelationKind.SUBJECT_MATTER
+        entry.requires is not None
+        for entry in relations.values()
+        if entry.kind is RelationKind.SUBJECT_MATTER
     )
 
 
 def test_registry_of_authored_kinds_is_closed_at_four() -> None:
     """The authored kinds are the four of the decision."""
-    assert set(RESOURCES.registries.authored_kinds) == {"illustration", "analogy", "motivation", "premise"}
+    assert set(RESOURCES.registries.authored_kinds) == {
+        "illustration",
+        "analogy",
+        "motivation",
+        "premise",
+    }
 
 
 def _annotated_nodes(node: object):
@@ -77,7 +88,7 @@ def test_every_example_of_the_schema_validates_against_its_field() -> None:
 def test_only_the_elaboration_admits_an_authored_source() -> None:
     """The second form admits an illustration; the third form admits no kind until a synthesis kind exists."""
     admitting = {
-        entry.id: entry.admitted_authored_sources
+        entry.identifier: entry.admitted_authored_sources
         for entry in RESOURCES.registries.relations.values()
         if entry.admitted_authored_sources
     }

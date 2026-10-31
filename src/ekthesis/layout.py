@@ -24,6 +24,7 @@ Collection
 SchemaLayout
     Roles of the fields of a schema.
 """
+
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 
@@ -68,13 +69,15 @@ class Pattern:
         return Pattern((*self.segments, segment))
 
     def relative_to(self, prefix: "Pattern") -> "Pattern | None":
-        """Return the rest of this pattern after `prefix`, or `None` if `prefix` does not lead it."""
+        """Return the rest of this pattern after `prefix`, or `None` if it does not start so."""
         size = len(prefix.segments)
         if self.segments[:size] != prefix.segments:
             return None
         return Pattern(self.segments[size:])
 
-    def select(self, value: object, at: FieldPath = FieldPath()) -> Iterator[tuple[FieldPath, object]]:
+    def select(
+        self, value: object, at: FieldPath = FieldPath()
+    ) -> Iterator[tuple[FieldPath, object]]:
         """
         Yield each node of `value` that this pattern designates, with its field path.
 
@@ -164,7 +167,9 @@ class SchemaLayout:
             raise ResourceError(f"x-refers names no collection: {sorted(unknown)}")
         return cls(
             record_identifier=(
-                Pattern(tuple(root_identifier.split("."))) if isinstance(root_identifier, str) else None
+                Pattern(tuple(root_identifier.split(".")))
+                if isinstance(root_identifier, str)
+                else None
             ),
             collections=walker.collections,
             references=tuple(walker.references),
@@ -215,6 +220,7 @@ class _Walker:
             self.walk(items, at.child(ITEM), expanding)
 
     def _annotate(self, node: Mapping[str, object], at: Pattern) -> None:
+        """Record the annotations that `node` carries at `at`."""
         refers = node.get("x-refers")
         if isinstance(refers, str):
             self.references.append((at, refers))
@@ -230,6 +236,7 @@ class _Walker:
             self.roles[role] = at
 
     def _register_collection(self, items: Mapping[str, object], at: Pattern) -> None:
+        """Register `at` as a collection when its items refer to an identified definition."""
         reference = items.get("$ref")
         if not isinstance(reference, str):
             return
@@ -242,12 +249,14 @@ class _Walker:
 
     @staticmethod
     def _definition_name(reference: str) -> str:
+        """Name of the definition that a local `$ref` designates."""
         prefix = "#/$defs/"
         if not reference.startswith(prefix):
             raise ResourceError(f"the reference {reference} leaves the schema")
-        return reference[len(prefix):]
+        return reference[len(prefix) :]
 
     def _definition(self, name: str) -> Mapping[str, object]:
+        """Return the definition `name` of the schema."""
         definitions = self.schema.get("$defs", {})
         definition = definitions.get(name) if isinstance(definitions, Mapping) else None
         if not isinstance(definition, Mapping):

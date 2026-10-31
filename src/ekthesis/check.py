@@ -6,6 +6,7 @@ Classes
 Checker
     Applies the rules to records, with given schemas and registries.
 """
+
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,16 +45,27 @@ class Checker:
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, yaml.YAMLError) as error:
-            return [Finding("schema-conformance", path, "", Severity.ERROR, f"cannot read the record: {error}")]
+            return [
+                Finding(
+                    "schema-conformance",
+                    path,
+                    "",
+                    Severity.ERROR,
+                    f"cannot read the record: {error}",
+                )
+            ]
         findings = list(schema_conformance(path, data, self.resources.schemas))
         if findings:
             return findings
-        record = BoundRecord(path, data, self._layout(data[BINDING_FIELD]), self.resources.registries)
+        record = BoundRecord(
+            path, data, self._layout(data[BINDING_FIELD]), self.resources.registries
+        )
         for rule in RECORD_RULES:
             findings.extend(rule(record))
         return findings
 
     def _layout(self, contract: str) -> SchemaLayout:
+        """Return the layout of the schema of `contract`, read once."""
         if contract not in self._layouts:
             schema = self.resources.schemas.get(contract)
             assert schema is not None, "a conforming record names a known contract"

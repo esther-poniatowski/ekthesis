@@ -1,4 +1,5 @@
 """Tests of the check of argument records, on one valid record and one planted record per rule."""
+
 from pathlib import Path
 
 import pytest

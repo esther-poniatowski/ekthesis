@@ -10,6 +10,7 @@ Relation
 Exposition
     The ideas and relations of one record, with whether it presents research.
 """
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -107,6 +108,7 @@ class Exposition:
 
 
 def _relations(record: object, layout: SchemaLayout) -> list[Relation]:
+    """Read the relations of `record`, located by the roles of the source and the target."""
     source_role, target_role = layout.role(RELATION_SOURCE), layout.role(RELATION_TARGET)
     items = Pattern(source_role.segments[:-1])
     if Pattern(target_role.segments[:-1]) != items:
@@ -139,5 +141,6 @@ def _field_in(
 
 
 def _single(pattern: Pattern, item: object) -> object:
+    """Return the first value that `pattern` selects in `item`, or `None`."""
     values = [value for _, value in pattern.select(item)]
     return values[0] if values else None

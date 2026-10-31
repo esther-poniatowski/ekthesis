@@ -40,7 +40,9 @@ def cli_check(
     for finding in findings:
         typer.echo(finding.format())
     blocking = sum(finding.severity.blocking for finding in findings)
-    typer.echo(f"{len(paths)} records checked: {blocking} errors, {len(findings) - blocking} warnings")
+    typer.echo(
+        f"{len(paths)} records checked: {blocking} errors, {len(findings) - blocking} warnings"
+    )
     if blocking:
         raise typer.Exit(code=1)
 

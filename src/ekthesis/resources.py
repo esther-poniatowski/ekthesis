@@ -21,6 +21,7 @@ Functions
 packaged_resources() -> Resources
     Load the schemas and registries shipped with the package.
 """
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -32,7 +33,7 @@ import yaml
 from .errors import ResourceError
 
 BINDING_FIELD = "_schema"
-"""Root field by which a record names its contract, after the convention of Kleisis and Ekphrasis."""
+"""Root field by which a record names its contract, by the convention of Kleisis and Ekphrasis."""
 
 AUTHORED_KINDS = "authored-kinds"
 """Name of the registry of authored kinds."""
@@ -44,6 +45,7 @@ JsonObject = Mapping[str, object]
 
 
 def _read_yaml(path: Path) -> object:
+    """Parse the YAML file at `path`, raising a `ResourceError` when it cannot be read."""
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as error:
@@ -89,7 +91,7 @@ class SchemaCatalog:
 class AuthoredKind:
     """Kind that an authored idea may declare."""
 
-    id: str
+    identifier: str
     title: str
     description: str
 
@@ -108,7 +110,7 @@ class RhetoricalRelation:
 
     Attributes
     ----------
-    id : str
+    identifier : str
         Identifier of the relation.
     title : str
         Name of the relation.
@@ -125,7 +127,7 @@ class RhetoricalRelation:
         Definition of the relation.
     """
 
-    id: str
+    identifier: str
     title: str
     kind: RelationKind
     nuclearity: str
@@ -162,23 +164,26 @@ class Registries:
     def from_directory(cls, directory: Path) -> "Registries":
         """Load the registries `authored-kinds.yml` and `relations.yml` of `directory`."""
         kinds = {
-            entry.text("id"): AuthoredKind(entry.text("id"), entry.text("title"), entry.text("description"))
+            entry.text("id"): AuthoredKind(
+                entry.text("id"), entry.text("title"), entry.text("description")
+            )
             for entry in _entries(directory / f"{AUTHORED_KINDS}.yml", AUTHORED_KINDS)
         }
         relations: dict[str, RhetoricalRelation] = {}
         for entry in _entries(directory / f"{RELATIONS}.yml", RELATIONS):
+            identifier = entry.text("id")
             admitted = frozenset(entry.texts("admitted-authored-sources"))
             unknown = admitted - kinds.keys()
             if unknown:
                 raise ResourceError(
-                    f"relation {entry.text('id')} admits unknown authored kinds: {sorted(unknown)}"
+                    f"relation {identifier} admits unknown authored kinds: {sorted(unknown)}"
                 )
             try:
                 kind = RelationKind(entry.text("kind"))
             except ValueError as error:
-                raise ResourceError(f"relation {entry.text('id')}: {error}") from error
-            relations[entry.text("id")] = RhetoricalRelation(
-                id=entry.text("id"),
+                raise ResourceError(f"relation {identifier}: {error}") from error
+            relations[identifier] = RhetoricalRelation(
+                identifier=identifier,
                 title=entry.text("title"),
                 kind=kind,
                 nuclearity=entry.text("nuclearity"),
@@ -216,6 +221,7 @@ class _Entry:
 
 
 def _entries(path: Path, name: str) -> list[_Entry]:
+    """Read the entries of the registry `name` from `path`, with distinct identifiers."""
     document = _read_yaml(path)
     if not isinstance(document, Mapping) or document.get("registry") != name:
         raise ResourceError(f"{path} is not the registry {name}")

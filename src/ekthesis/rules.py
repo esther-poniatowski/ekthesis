@@ -31,6 +31,7 @@ Attributes
 RECORD_RULES : tuple of callables
     The rules applied to a record that conforms to its schema, in order.
 """
+
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -67,8 +68,9 @@ class BoundRecord:
     layout: SchemaLayout
     registries: Registries
 
-    def finding(self, rule: str, field: FieldPath, message: str,
-                severity: Severity = Severity.ERROR) -> Finding:
+    def finding(
+        self, rule: str, field: FieldPath, message: str, severity: Severity = Severity.ERROR
+    ) -> Finding:
         """Build a finding of `rule` located at `field` of this record."""
         return Finding(rule, self.path, str(field), severity, message)
 
@@ -101,13 +103,23 @@ def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> It
     rule = "schema-conformance"
     contract = record.get(BINDING_FIELD) if isinstance(record, Mapping) else None
     if not isinstance(contract, str):
-        yield Finding(rule, path, BINDING_FIELD, Severity.ERROR,
-                      f"the record names no contract in its field {BINDING_FIELD}")
+        yield Finding(
+            rule,
+            path,
+            BINDING_FIELD,
+            Severity.ERROR,
+            f"the record names no contract in its field {BINDING_FIELD}",
+        )
         return
     schema = catalog.get(contract)
     if schema is None:
-        yield Finding(rule, path, BINDING_FIELD, Severity.ERROR,
-                      f"no schema of ekthesis binds the contract {contract}")
+        yield Finding(
+            rule,
+            path,
+            BINDING_FIELD,
+            Severity.ERROR,
+            f"no schema of ekthesis binds the contract {contract}",
+        )
         return
     validator = Draft202012Validator(schema)
     for error in sorted(validator.iter_errors(record), key=lambda error: list(error.path)):
@@ -123,7 +135,8 @@ def unique_identifiers(record: BoundRecord) -> Iterator[Finding]:
             for _, identifier in collection.identifier.select(item):
                 if identifier in first:
                     yield record.finding(
-                        "unique-identifiers", path,
+                        "unique-identifiers",
+                        path,
                         f"the identifier {identifier} repeats that of {first[identifier]}",
                     )
                 else:
@@ -142,7 +155,9 @@ def existing_references(record: BoundRecord) -> Iterator[Finding]:
         for path, value in pattern.select(record.data):
             if value not in existing:
                 yield record.finding(
-                    "existing-references", path, f"no item of {collection.items} has the identifier {value}"
+                    "existing-references",
+                    path,
+                    f"no item of {collection.items} has the identifier {value}",
                 )
 
 
@@ -155,7 +170,9 @@ def registry_membership(record: BoundRecord) -> Iterator[Finding]:
         for path, value in pattern.select(record.data):
             if value not in admitted:
                 yield record.finding(
-                    "registry-membership", path, f"{value} belongs to no entry of the registry {registry}"
+                    "registry-membership",
+                    path,
+                    f"{value} belongs to no entry of the registry {registry}",
                 )
 
 
@@ -180,44 +197,59 @@ def authored_relations(record: BoundRecord) -> Iterator[Finding]:
     if not exposition.presents_research:
         return
     for relation in exposition.relations:
-        source, target = exposition.ideas.get(relation.source), exposition.ideas.get(relation.target)
+        source, target = exposition.ideas.get(relation.source), exposition.ideas.get(
+            relation.target
+        )
         entry = record.registries.relations.get(relation.name)
         if source is None or target is None or entry is None:
             continue
         if (source.authored or target.authored) and not _admitted(entry, source, target):
             yield record.finding(
-                "authored-relations", relation.path,
-                f"the relation {relation.name} from {_describe(source)} to {_describe(target)} takes no "
-                "admitted form: a presentational relation other than an evidence or an antithesis, "
-                "or an authored source of a kind that the relation admits, toward a referenced idea",
+                "authored-relations",
+                relation.path,
+                f"the relation {relation.name} from {_describe(source)} "
+                f"to {_describe(target)} takes no admitted form: a presentational relation "
+                "other than an evidence or an antithesis, or an authored source of a kind "
+                "that the relation admits, toward a referenced idea",
             )
 
 
 def relation_requirements(record: BoundRecord) -> Iterator[Finding]:
-    """Yield a warning for each relation between referenced ideas that requires a recorded relation."""
+    """Yield a warning for each relation between referenced ideas that requires a recorded one."""
     exposition = record.exposition()
     for relation in exposition.relations:
-        source, target = exposition.ideas.get(relation.source), exposition.ideas.get(relation.target)
+        source = exposition.ideas.get(relation.source)
+        target = exposition.ideas.get(relation.target)
         entry = record.registries.relations.get(relation.name)
         if source is None or target is None or entry is None or entry.requires is None:
             continue
         if not source.authored and not target.authored:
             yield record.finding(
-                "relation-requirements", relation.path,
+                "relation-requirements",
+                relation.path,
                 f"unverified: the relation {relation.name} requires a recorded {entry.requires} "
-                f"from {relation.source} to {relation.target}, and no source publishes its relations yet",
+                f"from {relation.source} to {relation.target}, "
+                "and no source publishes its relations yet",
                 Severity.WARNING,
             )
 
 
 def _admitted(entry: RhetoricalRelation, source: Idea, target: Idea) -> bool:
+    """Whether a relation with an authored idea takes one of the admitted forms."""
     if entry.kind is RelationKind.PRESENTATIONAL and entry.requires is None:
         return True
-    return source.authored and not target.authored and source.kind in entry.admitted_authored_sources
+    return (
+        source.authored and not target.authored and source.kind in entry.admitted_authored_sources
+    )
 
 
 def _describe(idea: Idea) -> str:
-    return f"the authored {idea.kind} {idea.identifier}" if idea.authored else f"the referenced idea {idea.identifier}"
+    """Name `idea` with its provenance, for a message."""
+    return (
+        f"the authored {idea.kind} {idea.identifier}"
+        if idea.authored
+        else f"the referenced idea {idea.identifier}"
+    )
 
 
 RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
