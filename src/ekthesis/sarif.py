@@ -9,12 +9,18 @@ holds one run, whose results map the fields of each finding as follows:
 - `rule` onto `ruleId`, and `severity` onto `level`, always written;
 - `message` onto `message.text`;
 - `record` onto the artifact location, relative to the root and based on `SRCROOT`, and `position`
-  onto its region, absent for a finding on the whole record;
-- the record and `field` onto the name of the single logical location, `<resource>#<locus>`: the
-  resource is `id:<identifier>` when the record declares an identifier, `path:<path>` otherwise,
-  and the locus is the JSON Pointer of the field, empty for the whole record;
+  onto its region: the node of the finding, or its closest existing ancestor for an absent field,
+  and no region when that node is the whole record;
+- the record and the locus of the finding onto the name of the single logical location,
+  `<resource>#<locus>`: the resource is `id:<identifier>` when the record declares an identifier,
+  `path:<path>` otherwise, and the locus is the JSON Pointer of the field, absent or not, empty
+  for the whole record;
 - `discriminator` onto `partialFingerprints["discriminator/v1"]`, when it is non-empty.
 
+A run that skips rules on a record, since the record fails `schema-conformance`, is incomplete. It
+then holds one invocation, whose `executionSuccessful` is false and which holds one notification of
+level `error` per skipped record. A complete run holds no invocation, which the profile leaves
+optional.
 The gate alone writes `fingerprints` and `suppressions`, so the log holds neither.
 
 Functions
@@ -39,7 +45,7 @@ from urllib.parse import quote
 from . import __version__
 from .check import RecordReport
 from .findings import Finding
-from .rules import RULES
+from .rules import RULES, SCHEMA_CONFORMANCE
 
 SARIF_SCHEMA = (
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
@@ -117,18 +123,19 @@ def sarif_log(reports: Iterable[RecordReport], root: Path) -> JsonObject:
     ValueError
         If a record lies outside `root`.
     """
+    reports = list(reports)
     results = [
         _result(finding, _resource(report, root), repository_path(report.path, root))
         for report in reports
         for finding in report.findings
     ]
-    return {
-        "version": "2.1.0",
-        "$schema": SARIF_SCHEMA,
-        "runs": [
-            {"tool": {"driver": _driver()}, "columnKind": "unicodeCodePoints", "results": results}
-        ],
-    }
+    run: JsonObject = {"tool": {"driver": _driver()}}
+    skipped = [report for report in reports if report.skipped]
+    if skipped:
+        run["invocations"] = [_failed_invocation(skipped, root)]
+    run["columnKind"] = "unicodeCodePoints"
+    run["results"] = results
+    return {"version": "2.1.0", "$schema": SARIF_SCHEMA, "runs": [run]}
 
 
 def _driver() -> JsonObject:
@@ -143,6 +150,26 @@ def _driver() -> JsonObject:
                 "defaultConfiguration": {"level": str(rule.severity)},
             }
             for rule in RULES
+        ],
+    }
+
+
+def _failed_invocation(skipped: list[RecordReport], root: Path) -> JsonObject:
+    """Declare a run that skipped rules on the records `skipped`, as the profile requires."""
+    return {
+        "executionSuccessful": False,
+        "toolExecutionNotifications": [
+            {
+                "level": "error",
+                "message": {
+                    "text": (
+                        f"{repository_path(report.path, root)} fails the rule "
+                        f"{SCHEMA_CONFORMANCE.identifier}, so the rules "
+                        f"{", ".join(report.skipped)} were skipped on it"
+                    )
+                },
+            }
+            for report in skipped
         ],
     }
 
@@ -171,7 +198,7 @@ def _result(finding: Finding, resource: str, path: str) -> JsonObject:
         "locations": [
             {
                 "physicalLocation": physical,
-                "logicalLocations": [{"name": logical_name(resource, finding.field.pointer())}],
+                "logicalLocations": [{"name": logical_name(resource, finding.locus().pointer())}],
             }
         ],
     }

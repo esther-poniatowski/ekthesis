@@ -4,7 +4,8 @@ Check of argument records against their schema and the rules on the provenance o
 Classes
 -------
 RecordReport
-    The findings of one record, with the identifier that the record declares.
+    The findings of one record, with the identifier that the record declares and the rules skipped
+    on it.
 Checker
     Applies the rules to records, with given schemas and registries.
 """
@@ -18,13 +19,19 @@ import yaml
 from .findings import Finding, Position
 from .layout import FieldPath, SchemaLayout
 from .resources import BINDING_FIELD, Resources
-from .rules import RECORD_RULES, SCHEMA_CONFORMANCE, BoundRecord, schema_conformance
+from .rules import RECORD_RULES, RULES, SCHEMA_CONFORMANCE, BoundRecord, schema_conformance
+
+SKIPPED_ON_NONCONFORMANCE: tuple[str, ...] = tuple(
+    rule.identifier for rule in RULES if rule is not SCHEMA_CONFORMANCE
+)
+"""Rules that a record breaking `schema-conformance` is not checked by, in the order of `RULES`."""
 
 
 @dataclass(frozen=True)
 class RecordReport:
     """
-    The findings of one record, with the identifier that the record declares.
+    The findings of one record, with the identifier that the record declares and the rules skipped
+    on it.
 
     Attributes
     ----------
@@ -35,12 +42,18 @@ class RecordReport:
         or `None` when the record names no known contract, its schema declares no identifier, or
         the record holds no non-empty text in that field.
     findings : tuple of Finding
-        Findings of the record, each with the position of its node when the node is located.
+        Findings of the record, each with the position of its node, or of the closest existing
+        ancestor of that node.
+    skipped : tuple of str
+        Identifiers of the rules that were not applied to the record, empty when every rule was
+        applied. A record that cannot be read, or that breaks `schema-conformance`, skips every
+        other rule.
     """
 
     path: Path
     identifier: str | None
     findings: tuple[Finding, ...]
+    skipped: tuple[str, ...] = ()
 
 
 @dataclass
@@ -80,12 +93,14 @@ class Checker:
                 SCHEMA_CONFORMANCE.severity,
                 f"cannot read the record: {error}",
             )
-            return RecordReport(path, None, (finding,))
+            return RecordReport(path, None, (finding,), SKIPPED_ON_NONCONFORMANCE)
         findings = tuple(
-            replace(finding, position=_position(node, finding.field))
+            replace(finding, position=_position(node, finding.locus()))
             for finding in self._findings(path, data)
         )
-        return RecordReport(path, self._identifier(data), findings)
+        conforms = all(finding.rule != SCHEMA_CONFORMANCE.identifier for finding in findings)
+        skipped = () if conforms else SKIPPED_ON_NONCONFORMANCE
+        return RecordReport(path, self._identifier(data), findings, skipped)
 
     def _findings(self, path: Path, data: object) -> list[Finding]:
         """Return the findings of the record `data` read from `path`."""
@@ -134,28 +149,34 @@ def _parse(path: Path) -> tuple[object, yaml.Node | None]:
 
 def _position(node: yaml.Node | None, at: FieldPath) -> Position | None:
     """
-    Return where the node at `at` starts in the tree `node`, or `None` for the root path.
+    Return where the node at `at` starts in the tree `node`, or else its closest existing ancestor.
 
     A key is matched by its text as written, and the last of two equal keys is kept, as the
-    loader keeps it. A path that leaves the tree yields `None`.
+    loader keeps it. When the path leaves the tree, the last node that it reaches is located, since
+    the absence of a node is detected in its parent. The root, the whole record, yields `None`.
     """
-    if node is None or not at.segments:
+    if node is None:
         return None
-    current: yaml.Node = node
+    current, depth = node, 0
     for segment in at.segments:
-        if isinstance(current, yaml.SequenceNode) and isinstance(segment, int):
-            if not 0 <= segment < len(current.value):
-                return None
-            current = current.value[segment]
-        elif isinstance(current, yaml.MappingNode):
-            values = [
-                value
-                for key, value in current.value
-                if isinstance(key, yaml.ScalarNode) and key.value == str(segment)
-            ]
-            if not values:
-                return None
-            current = values[-1]
-        else:
-            return None
+        child = _child(current, segment)
+        if child is None:
+            break
+        current, depth = child, depth + 1
+    if not depth:
+        return None
     return Position(current.start_mark.line + 1, current.start_mark.column + 1)
+
+
+def _child(node: yaml.Node, segment: str | int) -> yaml.Node | None:
+    """Return the child of `node` at `segment`, or `None` when `node` holds no such child."""
+    if isinstance(node, yaml.SequenceNode) and isinstance(segment, int):
+        return node.value[segment] if 0 <= segment < len(node.value) else None
+    if isinstance(node, yaml.MappingNode):
+        values = [
+            value
+            for key, value in node.value
+            if isinstance(key, yaml.ScalarNode) and key.value == str(segment)
+        ]
+        return values[-1] if values else None
+    return None

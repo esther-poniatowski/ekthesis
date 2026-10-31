@@ -7,7 +7,8 @@ Commands
 --------
 info : Display diagnostic information.
 check : Check argument records against their schema and the rules on the provenance of ideas, and
-    report the findings as text lines or as a SARIF log (`--format sarif`).
+    report the findings as text lines or as a SARIF log (`--format sarif`), written to the standard
+    output or to a file (`--output`).
 
 See Also
 --------
@@ -53,8 +54,19 @@ def cli_check(
             "findings profile of Elenchos, whose paths are relative to the working directory."
         ),
     ),
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        dir_okay=False,
+        help=(
+            "File to which the SARIF log is written, with its missing parent directories, in "
+            "place of the standard output; valid with --format sarif only."
+        ),
+    ),
 ) -> None:
     """Check argument records, and exit non-zero on a blocking finding."""
+    if output is not None and output_format is not OutputFormat.SARIF:
+        raise typer.BadParameter("requires --format sarif", param_hint="--output")
     checker = Checker(packaged_resources())
     if output_format is OutputFormat.SARIF:
         root = Path.cwd()
@@ -67,7 +79,11 @@ def cli_check(
                 ) from None
         reports = [checker.report(path) for path in paths]
         findings = [finding for report in reports for finding in report.findings]
-        typer.echo(json.dumps(sarif_log(reports, root), indent=2, ensure_ascii=False))
+        text = json.dumps(sarif_log(reports, root), indent=2, ensure_ascii=False)
+        if output is None:
+            typer.echo(text)
+        else:
+            _write(output, text + "\n")
     else:
         findings = checker.check(paths)
         for finding in findings:
@@ -78,6 +94,16 @@ def cli_check(
         )
     if any(finding.severity.blocking for finding in findings):
         raise typer.Exit(code=1)
+
+
+def _write(path: Path, text: str) -> None:
+    """Write `text` to `path`, creating its parent directories, or exit with the code 2."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    except OSError as error:
+        typer.echo(f"cannot write the log {path}: {error}", err=True)
+        raise typer.Exit(code=2) from None
 
 
 @app.callback()

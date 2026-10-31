@@ -1,46 +1,61 @@
 """
 Validator of a SARIF log against the findings profile of Elenchos, written from the profile text.
 
-The validator implements the requirements that the profile places on a producer: sections 3 and 4
-of `elenchos/docs/profile.md`, and the rejected input of its section 5.6. It reports every
-violation as a string naming the object at fault. It imports no package of Elenchos, as the profile
-requires of a producer.
+The profile places two sets of requirements on a log:
+
+- the rejected input of its section 5.6: the rules on which the identity or the verdict of the gate
+  depends, which the gate enforces on every log;
+- the requirements of its sections 3 and 4 on a producer, which include the rejected input and add
+  the objects that the gate does not check, such as the complete list of rules.
+
+Each function reports every violation as a string naming the object at fault. The module imports no
+package of Elenchos, as the profile requires of a producer.
 
 Functions
 ---------
-profile_violations(log, producer) -> list of str
-    Violations of the profile by a log.
+rejections(log) -> list of str
+    Violations of section 5.6, for which the gate rejects a log.
+profile_violations(log) -> list of str
+    Violations of sections 3 and 4 by the log of a producer, section 5.6 included.
 """
 
 import re
 from collections.abc import Mapping
+from urllib.parse import unquote
 
+SARIF_SCHEMA = (
+    "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
+)
+GATE_DRIVER = "elenchos"
 DRIVER_NAME = re.compile(r"[a-z][a-z0-9-]*\Z")
 RULE_ID = re.compile(r"[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)*\Z")
 VERSIONED_KEY = re.compile(r"([^/]+/)*v(0|[1-9][0-9]*)\Z")
 LEVELS = {"error", "warning", "note"}
+NOTIFICATION_LEVELS = {"none", "note", "warning", "error"}
 COLUMN_KINDS = {"unicodeCodePoints", "utf16CodeUnits"}
 LOCUS_TYPES = {"link", "task", "slot", "term", "symbol"}
-GATE_ONLY = ("fingerprints", "suppressions")
 ABSENT = ("kind", "baselineState")
 
 
-def profile_violations(log: object, producer: bool = True) -> list[str]:
-    """
-    Return the violations of the findings profile by `log`, empty when the log conforms.
+def rejections(log: object) -> list[str]:
+    """Return the violations of section 5.6 by `log`, empty when the gate accepts the log."""
+    return _log_violations(log, producer=False)
 
-    Parameters
-    ----------
-    log : object
-        SARIF log parsed from JSON.
-    producer : bool
-        Whether the log is written by a producer, which writes no object reserved to the gate.
-    """
+
+def profile_violations(log: object) -> list[str]:
+    """Return the violations of sections 3 and 4 by the log of a producer, empty if it conforms."""
+    return _log_violations(log, producer=True)
+
+
+def _log_violations(log: object, producer: bool) -> list[str]:
+    """Return the violations by a log: section 5.6, and sections 3 and 4 when `producer` is set."""
     if not isinstance(log, Mapping):
         return ["the log is no object"]
     problems = []
     if log.get("version") != "2.1.0":
         problems.append("sarifLog.version is not 2.1.0")
+    if producer and log.get("$schema", SARIF_SCHEMA) != SARIF_SCHEMA:
+        problems.append("sarifLog.$schema is not the schema URI of errata 01")
     runs = log.get("runs")
     if not isinstance(runs, list) or not runs:
         return [*problems, "sarifLog.runs holds no run"]
@@ -50,7 +65,7 @@ def profile_violations(log: object, producer: bool = True) -> list[str]:
 
 
 def _run_violations(run: object, producer: bool) -> list[str]:
-    """Return the violations of section 3 and of section 4 by one run."""
+    """Return the violations of section 3, and of section 4 by the results of one run."""
     if not isinstance(run, Mapping):
         return ["the run is no object"]
     problems = []
@@ -62,13 +77,22 @@ def _run_violations(run: object, producer: bool) -> list[str]:
     if not isinstance(name, str) or not DRIVER_NAME.match(name):
         problems.append(f"tool.driver.name {name!r} breaks [a-z][a-z0-9-]*")
         name = ""
-    if not any(isinstance(driver.get(key), str) for key in ("version", "semanticVersion")):
-        problems.append("tool.driver holds neither version nor semanticVersion")
-    described = _rule_descriptors(driver.get("rules"), problems)
-    results = run.get("results", [])
+    elif name == GATE_DRIVER:
+        problems.append(f"tool.driver.name is {GATE_DRIVER}, the driver of the gate")
+    described = None
+    if producer:
+        if not any(isinstance(driver.get(key), str) for key in ("version", "semanticVersion")):
+            problems.append("tool.driver holds neither version nor semanticVersion")
+        described = _rule_descriptors(driver.get("rules"), problems)
+        if driver.get("isComprehensive", True) is not True:
+            problems.append("tool.driver.isComprehensive is written, and is not true")
+    incomplete = _invocation_violations(run.get("invocations"), producer, problems)
+    if "results" not in run and incomplete:
+        return problems
+    results = run.get("results")
     if not isinstance(results, list):
-        return [*problems, "results is no array"]
-    if results and run.get("columnKind") not in COLUMN_KINDS:
+        return [*problems, "results is no array, and the run declares no incomplete analysis"]
+    if producer and results and run.get("columnKind") not in COLUMN_KINDS:
         problems.append(f"columnKind {run.get('columnKind')!r} is not admitted")
     for index, result in enumerate(results):
         problems.extend(
@@ -78,13 +102,11 @@ def _run_violations(run: object, producer: bool) -> list[str]:
     return problems
 
 
-def _rule_descriptors(rules: object, problems: list[str]) -> set[str] | None:
-    """Return the rule identifiers described by `rules`, or `None` when the run lists no rule."""
-    if rules is None:
-        return None
+def _rule_descriptors(rules: object, problems: list[str]) -> set[str]:
+    """Return the rule identifiers described by the required array `rules`."""
     if not isinstance(rules, list):
         problems.append("tool.driver.rules is no array")
-        return None
+        return set()
     described = set()
     for rule in rules:
         identifier = rule.get("id") if isinstance(rule, Mapping) else None
@@ -102,10 +124,60 @@ def _rule_descriptors(rules: object, problems: list[str]) -> set[str] | None:
     return described
 
 
+def _invocation_violations(invocations: object, producer: bool, problems: list[str]) -> bool:
+    """
+    Record the violations by `invocations`, and return whether they declare an incomplete run.
+
+    The gate reads a run as incomplete when one invocation holds `executionSuccessful` false or a
+    notification of level `error`. A producer writes exactly one invocation when it writes any: a
+    failed one with an error notification stating why, or a successful one without such a notice.
+    """
+    if invocations is None:
+        return False
+    if not isinstance(invocations, list) or not all(
+        isinstance(invocation, Mapping) and isinstance(invocation.get("executionSuccessful"), bool)
+        for invocation in invocations
+    ):
+        problems.append("invocations is not an array of objects holding executionSuccessful")
+        return False
+    failed, errors = False, []
+    for invocation in invocations:
+        failed |= invocation["executionSuccessful"] is False
+        errors.extend(_notification_errors(invocation, problems))
+    if producer:
+        if len(invocations) != 1:
+            problems.append("invocations does not hold exactly one invocation")
+        elif failed and not errors:
+            problems.append("a failed invocation holds no notification of level error")
+        elif errors and not failed:
+            problems.append("a successful invocation holds a notification of level error")
+        if any(not isinstance(text, str) for text in errors):
+            problems.append("a notification of level error holds no message.text")
+    return failed or bool(errors)
+
+
+def _notification_errors(invocation: Mapping[str, object], problems: list[str]) -> list[object]:
+    """Return the `message.text` of each notification of level `error` of `invocation`."""
+    notifications = invocation.get("toolExecutionNotifications", [])
+    if not isinstance(notifications, list) or not all(
+        isinstance(notification, Mapping)
+        and notification.get("level", "warning") in NOTIFICATION_LEVELS
+        for notification in notifications
+    ):
+        problems.append("toolExecutionNotifications is not an array of notifications")
+        return []
+    texts = []
+    for notification in notifications:
+        if notification.get("level", "warning") == "error":
+            message = notification.get("message")
+            texts.append(message.get("text") if isinstance(message, Mapping) else None)
+    return texts
+
+
 def _result_violations(
     result: object, driver: str, described: set[str] | None, producer: bool
 ) -> list[str]:
-    """Return the violations of section 4 by one result."""
+    """Return the violations of section 4 by one result, or of section 5.6 alone."""
     if not isinstance(result, Mapping):
         return ["the result is no object"]
     problems = []
@@ -114,19 +186,31 @@ def _result_violations(
         problems.append(f"ruleId {rule!r} breaks the form of a rule identifier")
     elif described is not None and rule not in described:
         problems.append(f"ruleId {rule} has no rule descriptor")
-    problems.extend(f"{key} is written" for key in ABSENT if key in result)
-    if producer:
-        problems.extend(f"{key} is written by a producer" for key in GATE_ONLY if key in result)
     if result.get("level") not in LEVELS:
         problems.append(f"level {result.get('level')!r} is not admitted")
     message = result.get("message")
     if not isinstance(message, Mapping) or not isinstance(message.get("text"), str):
         problems.append("message.text is absent")
-    problems.extend(_location_violations(result.get("locations")))
+    if "suppressions" in result:
+        problems.append("suppressions is written, which the gate alone writes")
+    fingerprints = result.get("fingerprints", {})
+    if isinstance(fingerprints, Mapping) and "elenchos/v1" in fingerprints:
+        problems.append("fingerprints holds elenchos/v1, which the gate alone writes")
+    problems.extend(_location_violations(result.get("locations"), producer))
     for key in ("partialFingerprints", "fingerprints"):
         problems.extend(_fingerprint_violations(key, result.get(key, {})))
+    if producer:
+        problems.extend(_producer_result_violations(result, driver))
+    return problems
+
+
+def _producer_result_violations(result: Mapping[str, object], driver: str) -> list[str]:
+    """Return the violations of section 4 that the gate does not check, by one result."""
+    problems = [f"{key} is written" for key in ABSENT if key in result]
+    if "fingerprints" in result:
+        problems.append("fingerprints is written by a producer")
     partial = result.get("partialFingerprints", {})
-    if producer and isinstance(partial, Mapping):
+    if isinstance(partial, Mapping):
         if set(partial) - {"discriminator/v1"}:
             problems.append("partialFingerprints holds a key other than discriminator/v1")
         if partial.get("discriminator/v1", None) == "":
@@ -141,36 +225,39 @@ def _result_violations(
     return problems
 
 
-def _location_violations(locations: object) -> list[str]:
+def _location_violations(locations: object, producer: bool) -> list[str]:
     """Return the violations of sections 4.4 and 4.5 by the locations of a result."""
     if not isinstance(locations, list) or len(locations) != 1:
         return ["locations does not hold exactly one location"]
     [location] = locations
     if not isinstance(location, Mapping):
         return ["the location is no object"]
-    problems = []
+    problems: list[str] = []
     logical = location.get("logicalLocations")
+    path = None
     if not isinstance(logical, list) or len(logical) != 1 or not isinstance(logical[0], Mapping):
         problems.append("logicalLocations does not hold exactly one logical location")
+    elif not isinstance(logical[0].get("name"), str):
+        problems.append("the logical location holds no name")
     else:
-        name = logical[0].get("name")
-        if not isinstance(name, str):
-            problems.append("the logical location holds no name")
-        else:
-            problems.extend(_name_violations(name))
-            qualified = logical[0].get("fullyQualifiedName", name)
-            if qualified != name:
-                problems.append("fullyQualifiedName differs from name")
-        if "parentIndex" in logical[0]:
+        name = logical[0]["name"]
+        path = _name_violations(name, problems)
+        if producer and logical[0].get("fullyQualifiedName", name) != name:
+            problems.append("fullyQualifiedName differs from name")
+        if producer and "parentIndex" in logical[0]:
             problems.append("the logical location is not top-level")
+    if not producer:
+        return problems
     physical = location.get("physicalLocation")
     if physical is not None:
-        problems.extend(_physical_violations(physical))
+        problems.extend(_physical_violations(physical, path))
+    elif path is not None:
+        problems.append("a resource path: holds no physicalLocation")
     return problems
 
 
-def _physical_violations(physical: object) -> list[str]:
-    """Return the violations of section 4.4 by a physical location."""
+def _physical_violations(physical: object, path: str | None) -> list[str]:
+    """Return the violations of section 4.4 by a physical location, given the resource path."""
     if not isinstance(physical, Mapping):
         return ["physicalLocation is no object"]
     problems = []
@@ -178,10 +265,13 @@ def _physical_violations(physical: object) -> list[str]:
     if not isinstance(artifact, Mapping) or not isinstance(artifact.get("uri"), str):
         return ["physicalLocation.artifactLocation.uri is absent"]
     uri = artifact["uri"]
-    if not re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", uri) and artifact.get("uriBaseId") != "SRCROOT":
+    relative = not re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", uri)
+    if relative and artifact.get("uriBaseId") != "SRCROOT":
         problems.append("a relative URI is not based on SRCROOT")
     if re.search(r"[^A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]|%(?![0-9A-Fa-f]{2})", uri):
         problems.append(f"the URI {uri!r} is not percent-encoded")
+    elif relative and path is not None and unquote(uri) != path:
+        problems.append(f"the URI {uri!r} does not name the resource path {path!r}")
     region = physical.get("region")
     if region is not None:
         if not isinstance(region, Mapping):
@@ -193,20 +283,21 @@ def _physical_violations(physical: object) -> list[str]:
     return problems
 
 
-def _name_violations(name: str) -> list[str]:
-    """Return the violations of section 4.5 by the name of a logical location."""
+def _name_violations(name: str, problems: list[str]) -> str | None:
+    """Record the violations of section 4.5 by a logical name, and return its path, if any."""
     resource, separator, locus = name.partition("#")
-    problems = []
     if separator and not locus:
         problems.append(f"the name {name!r} ends with #")
     if re.search(r"%(?!25|23)", resource):
         problems.append(f"the resource {resource!r} holds a % sequence other than %25 and %23")
     decoded = re.sub(r"%(25|23)", lambda match: chr(int(match[1], 16)), resource)
+    path = None
     if decoded.startswith("id:"):
         if decoded == "id:":
             problems.append("the identifier of the resource is empty")
     elif decoded.startswith("path:"):
-        problems.extend(_path_violations(decoded[len("path:") :]))
+        path = decoded[len("path:") :]
+        problems.extend(_path_violations(path))
     else:
         problems.append(f"the resource {resource!r} opens on neither id: nor path:")
     if locus.startswith("/"):
@@ -216,7 +307,7 @@ def _name_violations(name: str) -> list[str]:
         kind, colon, _ = locus.partition(":")
         if not colon or kind not in LOCUS_TYPES:
             problems.append(f"the locus {locus!r} is neither a pointer nor a typed locus")
-    return problems
+    return path
 
 
 def _path_violations(path: str) -> list[str]:

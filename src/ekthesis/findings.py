@@ -14,10 +14,11 @@ Finding
 
 Notes
 -----
-The fields of a finding map one to one onto a result of SARIF: `rule` onto `ruleId`, `record` onto
-the artifact location, `position` onto its region, `field` onto the locus of the logical location,
-`severity` onto `level`, `message` onto `message.text`, and `discriminator` onto the partial
-fingerprint `discriminator/v1`. The module `ekthesis.sarif` writes that serialization.
+The fields of a finding map onto a result of SARIF: `rule` onto `ruleId`, `record` onto the
+artifact location, `position` onto its region, the locus of the finding (`field`, extended by
+`absent` when given) onto the locus of the logical location, `severity` onto `level`, `message` onto
+`message.text`, and `discriminator` onto the partial fingerprint `discriminator/v1`. The module
+`ekthesis.sarif` writes that serialization.
 """
 
 from dataclasses import dataclass
@@ -68,7 +69,7 @@ class Position:
 
 
 @dataclass(frozen=True)
-class Finding:
+class Finding:  # pylint: disable=too-many-instance-attributes  # one per field of a result
     """
     One violation of a rule, located in a record.
 
@@ -89,8 +90,13 @@ class Finding:
         Offending content that separates this finding from another finding of its rule at the same
         field, or the empty string when the rule yields at most one finding per field.
     position : Position or None
-        Start of the node at fault in the record file, or `None` when the finding concerns the
-        whole record or its node cannot be located.
+        Start of the node at the locus of the finding in the record file, or of its closest
+        existing ancestor when the record does not hold that node; `None` when that node is the
+        whole record.
+    absent : str or None
+        Name of a property that the node at `field` lacks, when the finding concerns that absent
+        property, as a missing required property; `None` otherwise. The text line prints `field`
+        alone, and the locus of the finding extends `field` by this name.
     """
 
     rule: str
@@ -100,6 +106,11 @@ class Finding:
     message: str
     discriminator: str = ""
     position: Position | None = None
+    absent: str | None = None
+
+    def locus(self) -> FieldPath:
+        """Return the field path of the node that the finding concerns, absent or not."""
+        return self.field if self.absent is None else self.field.child(self.absent)
 
     def format(self) -> str:
         """Format the finding on one line, as `record:field: severity [rule] message`."""

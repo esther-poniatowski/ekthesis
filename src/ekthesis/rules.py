@@ -165,30 +165,32 @@ def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> It
             FieldPath(tuple(error.path)),
             rule.severity,
             error.message,
-            _offending_keyword(error),
+            str(error.validator),
+            absent=_absent_property(error),
         )
 
 
-def _offending_keyword(error: ValidationError) -> str:
+def _absent_property(error: ValidationError) -> str | None:
     """
-    Name what a validation error rejects, apart from the other errors at its field.
+    Name the property whose absence a validation error reports, or return `None`.
 
-    The name is the keyword that failed, followed for `required` by the missing property, since
-    that keyword yields one error per missing property. The message is not used whole, since its
-    wording belongs to the validator and may change between its versions.
+    The keyword `required` yields one error per missing property, located at the object that lacks
+    it; the property is read from the required list, and the message only selects which entry the
+    error reports. The other keywords concern a node that the record holds.
     """
-    keyword = str(error.validator)
     required = error.validator_value
-    if keyword == "required" and isinstance(error.instance, Mapping) and isinstance(required, list):
-        missing = (
-            name
-            for name in required
-            if name not in error.instance and error.message.startswith(f"{name!r} ")
-        )
-        name = next(missing, None)
-        if name is not None:
-            return f"{keyword}:{name}"
-    return keyword
+    if error.validator != "required" or not isinstance(error.instance, Mapping):
+        return None
+    if not isinstance(required, list):
+        return None
+    missing = (
+        name
+        for name in required
+        if isinstance(name, str)
+        and name not in error.instance
+        and error.message.startswith(f"{name!r} ")
+    )
+    return next(missing, None)
 
 
 def unique_identifiers(record: BoundRecord) -> Iterator[Finding]:

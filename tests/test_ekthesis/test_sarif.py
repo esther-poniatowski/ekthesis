@@ -16,7 +16,7 @@ from ekthesis.cli import app
 from ekthesis.layout import FieldPath
 from ekthesis.rules import RULES
 
-from .sarif_profile import profile_violations
+from .sarif_profile import profile_violations, rejections
 
 FIXTURES = Path(__file__).parent / "fixtures"
 RECORDS = [
@@ -46,12 +46,24 @@ def sarif(*paths: str) -> JsonObject:
     return log
 
 
-def results(log: JsonObject) -> list[JsonObject]:
-    """Return the results of the single run of `log`."""
+def single_run(log: JsonObject) -> JsonObject:
+    """Return the single run of `log`."""
     runs: list[Any] = log["runs"]  # type: ignore[assignment]
     [run] = runs
-    found: list[JsonObject] = run["results"]
+    found: JsonObject = run
     return found
+
+
+def results(log: JsonObject) -> list[JsonObject]:
+    """Return the results of the single run of `log`."""
+    found: list[JsonObject] = single_run(log)["results"]  # type: ignore[assignment]
+    return found
+
+
+def region(result: JsonObject) -> object:
+    """Return the region of the physical location of `result`, `None` when it holds none."""
+    physical: dict[str, object] = result["locations"][0]["physicalLocation"]  # type: ignore[index]
+    return physical.get("region")
 
 
 def logical_name(result: JsonObject) -> str:
@@ -230,21 +242,85 @@ def test_record_without_identifier_uses_its_path(
     assert uris == {"notes%231/record%25.yml"}
 
 
-def test_two_results_at_one_locus_get_distinct_discriminators(
+def test_missing_fields_keep_their_pointers_and_take_the_region_of_their_parent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Two schema errors at one field are separated by the property that each one misses."""
+    """Two missing properties of one item have two loci, and the region of that item."""
     record = yaml.safe_load((FIXTURES / "valid.yml").read_text())
     del record["ideas"][2]["id"], record["ideas"][2]["statement"]
+    text = yaml.safe_dump(record)
+    (tmp_path / "record.yml").write_text(text)
+    monkeypatch.chdir(tmp_path)
+    log = sarif("record.yml")
+    assert profile_violations(log) == []
+    found = [result for result in results(log) if "#/ideas/2/" in logical_name(result)]
+    assert sorted(logical_name(result) for result in found) == [
+        "id:valid-poster#/ideas/2/id",
+        "id:valid-poster#/ideas/2/statement",
+    ]
+    assert {discriminator(result) for result in found} == {"required"}
+    lines = text.splitlines()
+    line = next(number for number, item in enumerate(lines, 1) if item == "- kind: illustration")
+    assert [region(result) for result in found] == [{"startLine": line, "startColumn": 3}] * 2
+
+
+@pytest.mark.parametrize(
+    ("removed", "name"),
+    [("ideas", "id:valid-poster#/ideas"), ("_schema", "path:record.yml#/_schema")],
+)
+def test_missing_field_of_the_root_has_no_region(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, removed: str, name: str
+) -> None:
+    """A missing field whose closest existing ancestor is the whole record takes no region."""
+    record = yaml.safe_load((FIXTURES / "valid.yml").read_text())
+    del record[removed]
     (tmp_path / "record.yml").write_text(yaml.safe_dump(record))
     monkeypatch.chdir(tmp_path)
     log = sarif("record.yml")
     assert profile_violations(log) == []
-    found = [result for result in results(log) if logical_name(result).endswith("#/ideas/2")]
-    assert sorted(discriminator(result) for result in found) == [
-        "required:id",
-        "required:statement",
-    ]
+    [result] = [result for result in results(log) if logical_name(result) == name]
+    assert region(result) is None
+
+
+# --- Completeness of the run -----------------------------------------------------------------------
+
+
+def test_record_breaking_its_schema_makes_the_run_incomplete(in_fixtures: Path) -> None:
+    """A record that skips rules yields one failed invocation, with an error naming the record."""
+    log = sarif("valid.yml", "planted/schema-conformance.yml", "planted/source-links.yml")
+    assert profile_violations(log) == []
+    invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
+    [invocation] = invocations
+    assert invocation["executionSuccessful"] is False
+    [notification] = invocation["toolExecutionNotifications"]
+    assert notification["level"] == "error"
+    assert "planted/schema-conformance.yml" in notification["message"]["text"]
+    assert results(log), "the results detected before the stop are kept"
+
+
+@pytest.mark.parametrize("record", [path for path in RECORDS if "schema-conformance" not in path])
+def test_run_applying_every_rule_holds_no_invocation(in_fixtures: Path, record: str) -> None:
+    """A complete run omits the invocations, which the profile leaves optional."""
+    assert "invocations" not in single_run(sarif(record))
+
+
+# --- Output file -----------------------------------------------------------------------------------
+
+
+def test_output_option_writes_the_log_to_a_file(in_fixtures: Path, tmp_path: Path) -> None:
+    """The option `--output` writes to a file, in missing directories, what stdout would hold."""
+    target = tmp_path / "build" / "ekthesis.sarif"
+    code, output = run_check("--format", "sarif", "--output", str(target), *RECORDS)
+    assert output == ""
+    assert target.read_text(encoding="utf-8") == run_check("--format", "sarif", *RECORDS)[1]
+    assert code == run_check(*RECORDS)[0]
+
+
+def test_output_option_requires_the_sarif_format(in_fixtures: Path, tmp_path: Path) -> None:
+    """The option `--output` is a usage error with the text format."""
+    code, _ = run_check("--output", str(tmp_path / "log.txt"), "valid.yml")
+    assert code == 2
+    assert not (tmp_path / "log.txt").exists()
 
 
 def test_record_outside_the_working_directory_is_refused(in_fixtures: Path, tmp_path: Path) -> None:
@@ -280,7 +356,61 @@ def _unversioned_key(log: JsonObject) -> None:
 
 
 def _drop_column_kind(log: JsonObject) -> None:
-    del log["runs"][0]["columnKind"]  # type: ignore[index]
+    del single_run(log)["columnKind"]
+
+
+def _drop_rules(log: JsonObject) -> None:
+    del single_run(log)["tool"]["driver"]["rules"]  # type: ignore[index]
+
+
+def _not_comprehensive(log: JsonObject) -> None:
+    single_run(log)["tool"]["driver"]["isComprehensive"] = False  # type: ignore[index]
+
+
+def _gate_driver(log: JsonObject) -> None:
+    single_run(log)["tool"]["driver"]["name"] = "elenchos"  # type: ignore[index]
+
+
+def _drop_results(log: JsonObject) -> None:
+    del single_run(log)["results"]
+
+
+def _null_results(log: JsonObject) -> None:
+    single_run(log)["results"] = None
+
+
+def _path_without_file(log: JsonObject) -> None:
+    location = results(log)[0]["locations"][0]  # type: ignore[index]
+    location["logicalLocations"][0]["name"] = "path:planted/registry-membership.yml"
+    del location["physicalLocation"]
+
+
+def _path_beside_its_file(log: JsonObject) -> None:
+    logical = results(log)[0]["locations"][0]["logicalLocations"][0]  # type: ignore[index]
+    logical["name"] = "path:planted/other.yml#/ideas/3/kind"
+
+
+def _error_in_successful_run(log: JsonObject) -> None:
+    single_run(log)["invocations"] = [
+        {
+            "executionSuccessful": True,
+            "toolExecutionNotifications": [{"level": "error", "message": {"text": "stopped"}}],
+        }
+    ]
+
+
+def _silent_failure(log: JsonObject) -> None:
+    single_run(log)["invocations"] = [{"executionSuccessful": False}]
+
+
+def _error_without_text(log: JsonObject) -> None:
+    single_run(log)["invocations"] = [
+        {"executionSuccessful": False, "toolExecutionNotifications": [{"level": "error"}]}
+    ]
+
+
+def _two_invocations(log: JsonObject) -> None:
+    single_run(log)["invocations"] = [{"executionSuccessful": True}] * 2
 
 
 @pytest.mark.parametrize(
@@ -292,6 +422,17 @@ def _drop_column_kind(log: JsonObject) -> None:
         _break_pointer,
         _unversioned_key,
         _drop_column_kind,
+        _drop_rules,
+        _not_comprehensive,
+        _gate_driver,
+        _drop_results,
+        _null_results,
+        _path_without_file,
+        _path_beside_its_file,
+        _error_in_successful_run,
+        _silent_failure,
+        _error_without_text,
+        _two_invocations,
     ],
 )
 def test_validator_rejects_a_planted_violation(
@@ -299,23 +440,29 @@ def test_validator_rejects_a_planted_violation(
 ) -> None:
     """The validator fires on each planted violation of an otherwise conforming log."""
     log = sarif("planted/registry-membership.yml")
+    assert profile_violations(log) == []
     plant(log)
     assert profile_violations(log) != []
 
 
 @pytest.mark.skipif(not VECTORS.is_dir(), reason="the test vectors of Elenchos are not checked out")
 def test_validator_rejects_the_rejected_vectors() -> None:
-    """Each rejected vector of the profile breaks the validator."""
+    """Each rejected vector of the profile breaks the rules of section 5.6."""
     vectors = json.loads((VECTORS / "rejected.json").read_text(encoding="utf-8"))
     assert vectors
     for vector in vectors:
-        assert profile_violations(vector["log"]) != [], vector["case"]
+        assert rejections(vector["log"]) != [], vector["case"]
 
 
 @pytest.mark.skipif(not VECTORS.is_dir(), reason="the test vectors of Elenchos are not checked out")
 def test_validator_accepts_the_identity_vectors() -> None:
-    """Each identity vector of the profile, a conforming log, passes the validator."""
+    """
+    No identity vector of the profile breaks the rules of section 5.6.
+
+    The vectors are minimal logs for the identity, and omit objects that a producer writes but the
+    gate does not check, such as the list of rules; the full producer requirements do not apply.
+    """
     vectors = json.loads((VECTORS / "identity.json").read_text(encoding="utf-8"))
     assert vectors
     for vector in vectors:
-        assert profile_violations(vector["log"]) == [], vector["case"]
+        assert rejections(vector["log"]) == [], vector["case"]
