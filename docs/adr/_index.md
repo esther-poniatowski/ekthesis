@@ -9,15 +9,15 @@ aliases:
 
 Records the decisions that later work on `ekthesis` must respect, so that a reader can judge whether a changed constraint reopens one of them.
 
-> [!WARNING] Decisions carried whole from `gnomon`
-> Two decisions were carried from `gnomon` with their history, and still hold the parts that stay in `gnomon`: the notation, the concept record and the project specification. Those parts are removed when the glossary and the audience receive decisions of their own.
-
 ## Ideas and relations
 
 - [Provenance of ideas and relations](provenance-of-ideas.md): decides on what an idea or a relation of an exposition may rest, and what the source of its ideas must record
 - [Argument record and its check](argument-record.md): decides the form of the record of an exposition, of its registries and of its check, where the provenance of ideas leaves it open
 
-## Glossaries and audiences
+## Names, symbols and audiences
 
-- [Concepts, glossaries and notations](concepts-glossaries-notations.md): decides how the names of a concept are recorded, apart from the concept and its symbols kept by `gnomon`
-- [Terminology, audience and project specifications](terminology-audience-project-specifications.md): places the mechanism of a glossary or an audience apart from its instances
+- [Terminology, audience and project specifications](terminology-audience-project-specifications.md): assigns the mechanisms of glossaries and audiences, and each part of a project specification, to its owner
+- [Glossary entries apart from concepts](concepts-glossaries-notations.md): decides what an entry of a glossary holds, apart from the meaning of its concept
+- [Glossaries](glossaries.md): decides how a glossary refers to its concepts, binds a text and is checked
+- [Audiences](audiences.md): decides what an audience record holds, and how other records name it
+- [Renaming of a symbol for a venue](symbol-renaming.md): decides how an artifact prints a symbol of its source in the convention of its venue
