@@ -1,21 +1,22 @@
 ---
 tags:
   - proposal
-  - revision
 index: "[Proposals](docs/proposals/_index.md)"
 aliases:
   - Proposals for the exposition family
 ---
 # Proposals for the exposition family
 
-The goal [`exposition-family`](../../TODO.md) specifies the expositions as projections of research records that add no content.
+The goal [`exposition-family`](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/TODO.md#L76), carried from `gnomon`, specifies the records of an exposition. The [argument record](../adr/argument-record.md) fixes their first form.
 
-## Examples as relations
+## Illustration by an existing case
 
-An example enters an exposition as a research unit through a relation `exemplifies`, from an existing record to a concept or an answer, whose `use` takes one of five values: `instance`, `witness`, `boundary-case`, `counterexample` and `construction`. A counterexample also names the feature of the case that makes its target fail. The relation, not a record kind, carries the example, since an example is a role that a case plays relative to a target: a record of its own would misrepresent that role as content, against the condition of non-distortion of the retired notes.
+An illustration presents a case as an instance of a concept. Under the [provenance of ideas](../adr/provenance-of-ideas.md#^provenance), the case is either authored for the reader, or referenced from a source that already records it. The candidate covers the referenced case. Between two referenced ideas, an illustration is an elaboration, a subject-matter relation, so the export must record a relation of the class required by an elaboration. Rhetorical Structure Theory counts the pair of an abstraction and its instance among the forms of an elaboration, beside the pairs of a whole and its part or of a process and its step.
 
-**Literature.** None cited.
+`gnomon` records the relation from a case to a concept or an answer as `exemplifies`, whose use takes one of five values. Four uses stay in `gnomon`, since each tests or establishes a claim: `witness`, `counterexample`, `boundary-case` and `construction`. The use `instance` serves an illustration. The decision of `gnomon` on its scope moves that use to `ekthesis`, but an illustration by a referenced case then finds no recorded relation behind it. Therefore, the candidate keeps `instance` as a relation that `gnomon` records and exports, and maps it onto the class required by an elaboration in the contract of the export. A variant divides that class by the forms of an elaboration, so that an illustration requires a recorded instance rather than any recorded elaboration. The relation `exemplifies`, rather than a record kind, carries the example, since an example is a role played by a case relative to a target.
 
-**Bears on.** [`exposition-family`](../../TODO.md), and `relation-registry` for the relation `exemplifies`.
+**Literature.** Rhetorical Structure Theory, for the forms of an elaboration.
 
-**Retired source.** `docs/design/_backup/object-types-ontology/obj-example.md` and `docs/design/_backup/object-types-ontology/obj-counterexample.md`, at commit 9e138e2.
+**Bears on.** [`exposition-family`](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/TODO.md#L76), and the [classes required by rhetorical relations](../adr/argument-record.md#^required-classes), still provisional.
+
+**Retired source.** `docs/design/_backup/object-types-ontology/obj-example.md` and `docs/design/_backup/object-types-ontology/obj-counterexample.md` of `gnomon`, at commit 9e138e2.
