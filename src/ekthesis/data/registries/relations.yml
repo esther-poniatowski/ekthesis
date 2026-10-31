@@ -1,0 +1,176 @@
+# Closed registry of rhetorical relations, after the classification of Mann & Thompson (1988).
+#
+# Each entry states:
+#   kind: subject-matter or presentational, in Rhetorical Structure Theory;
+#   nuclearity: mononuclear (source = satellite, target = nucleus) or multinuclear (source and
+#     target are two nuclei, in reading order);
+#   requires: the class of a recorded relation that the export must hold when both ideas are
+#     referenced, or null when the relation requires none;
+#   admitted-authored-sources: in an exposition that presents research, the authored kinds
+#     admitted as source when the target is referenced, for a relation that requires a class.
+registry: relations
+description: the rhetorical relations that an exposition may assert between two ideas
+entries:
+  # Subject-matter relations: the reader recognizes a relation between the contents.
+  - id: elaboration
+    title: Elaboration
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: elaboration
+    admitted-authored-sources: [illustration]
+    description: the source presents additional detail on the target, such as an instance of a concept
+  - id: circumstance
+    title: Circumstance
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: circumstance
+    admitted-authored-sources: []
+    description: the source sets a framework in which the reader interprets the target
+  - id: solutionhood
+    title: Solutionhood
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: solutionhood
+    admitted-authored-sources: []
+    description: the source presents a problem that the target solves
+  - id: volitional-cause
+    title: Volitional cause
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: volitional-cause
+    admitted-authored-sources: []
+    description: the source presents a cause of the volitional action that the target presents
+  - id: volitional-result
+    title: Volitional result
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: volitional-result
+    admitted-authored-sources: []
+    description: the source presents a result of the volitional action that the target presents
+  - id: non-volitional-cause
+    title: Non-volitional cause
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: non-volitional-cause
+    admitted-authored-sources: []
+    description: the source presents a cause of the situation that the target presents
+  - id: non-volitional-result
+    title: Non-volitional result
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: non-volitional-result
+    admitted-authored-sources: []
+    description: the source presents a result of the situation that the target presents
+  - id: purpose
+    title: Purpose
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: purpose
+    admitted-authored-sources: []
+    description: the source presents a situation that the activity of the target is meant to realize
+  - id: condition
+    title: Condition
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: condition
+    admitted-authored-sources: []
+    description: the source presents a condition on which the realization of the target depends
+  - id: otherwise
+    title: Otherwise
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: otherwise
+    admitted-authored-sources: []
+    description: the realization of the target prevents the realization of the source
+  - id: interpretation
+    title: Interpretation
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: interpretation
+    admitted-authored-sources: []
+    description: the source relates the target to a framework of ideas not stated by the target
+  - id: evaluation
+    title: Evaluation
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: evaluation
+    admitted-authored-sources: []
+    description: the source assesses the target on a scale of value
+  - id: restatement
+    title: Restatement
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: restatement
+    admitted-authored-sources: [illustration, analogy, motivation, premise]
+    description: the source restates the target, in a form of comparable size
+  - id: summary
+    title: Summary
+    kind: subject-matter
+    nuclearity: mononuclear
+    requires: summary
+    admitted-authored-sources: [illustration, analogy, motivation, premise]
+    description: the source restates the target, in a shorter form
+  - id: sequence
+    title: Sequence
+    kind: subject-matter
+    nuclearity: multinuclear
+    requires: sequence
+    admitted-authored-sources: []
+    description: the source and the target present two situations in succession
+  - id: contrast
+    title: Contrast
+    kind: subject-matter
+    nuclearity: multinuclear
+    requires: contrast
+    admitted-authored-sources: []
+    description: the source and the target present two situations that differ in some respect
+  # Presentational relations: the source aims to increase an inclination of the reader.
+  - id: motivation
+    title: Motivation
+    kind: presentational
+    nuclearity: mononuclear
+    requires: null
+    admitted-authored-sources: []
+    description: the source increases the desire of the reader to perform the action of the target
+  - id: antithesis
+    title: Antithesis
+    kind: presentational
+    nuclearity: mononuclear
+    requires: incompatibility
+    admitted-authored-sources: []
+    description: the source presents a situation incompatible with the target, so that the reader favours the target
+  - id: background
+    title: Background
+    kind: presentational
+    nuclearity: mononuclear
+    requires: null
+    admitted-authored-sources: []
+    description: the source increases the ability of the reader to comprehend the target
+  - id: enablement
+    title: Enablement
+    kind: presentational
+    nuclearity: mononuclear
+    requires: null
+    admitted-authored-sources: []
+    description: the source increases the ability of the reader to perform the action of the target
+  - id: evidence
+    title: Evidence
+    kind: presentational
+    nuclearity: mononuclear
+    requires: support
+    admitted-authored-sources: []
+    description: the source increases the belief of the reader in the target, as its support
+  - id: justify
+    title: Justify
+    kind: presentational
+    nuclearity: mononuclear
+    requires: null
+    admitted-authored-sources: []
+    description: the source increases the readiness of the reader to accept the right of the author to present the target
+  - id: concession
+    title: Concession
+    kind: presentational
+    nuclearity: mononuclear
+    requires: null
+    admitted-authored-sources: []
+    description: the source concedes a situation apparently incompatible with the target, increasing the positive regard of the reader for the target

@@ -1,0 +1,199 @@
+# Argument record of one exposition, checked by `ekthesis check`.
+# The keywords prefixed by `x-` other than `x-kind` and `x-identifier` at the root are read by
+# ekthesis alone; the decision on the argument record states their meaning.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: exposition.schema.yaml
+title: Exposition
+description: >-
+  An argument record states the ideas that an exposition presents, the rhetorical relations
+  between them, and the parts that present them in order.
+type: object
+additionalProperties: false
+required: [_schema, exposition, ideas, parts]
+x-identifier: exposition.id
+properties:
+  _schema:
+    const: 'ekthesis:exposition@1'
+    title: Schema
+    description: identifier of the contract that the record follows
+    examples: ['ekthesis:exposition@1']
+  exposition:
+    $ref: '#/$defs/exposition'
+    title: Exposition
+    description: the identity of the exposition, and the records that fix its reader and its venue
+  ideas:
+    type: array
+    x-kind: records
+    minItems: 1
+    items: {$ref: '#/$defs/idea'}
+    title: Ideas
+    description: every idea that the exposition presents, each referenced or authored
+  relations:
+    type: array
+    x-kind: table
+    items: {$ref: '#/$defs/relation'}
+    title: Relations
+    description: the rhetorical relations that the exposition asserts between its ideas
+  parts:
+    type: array
+    x-kind: records
+    minItems: 1
+    items: {$ref: '#/$defs/part'}
+    title: Parts
+    description: the parts of the exposition in reading order, such as the cards of a poster
+
+$defs:
+  identifier:
+    type: string
+    pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    x-kind: label
+    description: an identifier in lower kebab-case
+
+  link:
+    type: string
+    pattern: '^\[[^\]]+\]\([^()\s]+\)$'
+    x-kind: markdown-line
+    description: a Markdown link, whose target holds no space
+
+  exposition:
+    type: object
+    additionalProperties: false
+    required: [id, title, presents-research]
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: identifier of the exposition, unique among the records of a project
+        examples: [mixture-input-encoding_poster_2026-11_pints]
+      title:
+        type: string
+        minLength: 1
+        x-kind: markdown-line
+        title: Title
+        description: title of the exposition, as its reader meets it
+        examples: ['How do recurrent networks encode mixtures?']
+      presents-research:
+        type: boolean
+        x-role: presents-research
+        title: Presents research
+        description: >-
+          whether the exposition presents research, so that each idea about the objects of the
+          inquiry must reference a research unit
+        examples: [true]
+      audience:
+        $ref: '#/$defs/link'
+        title: Audience
+        description: link to the record of the audience for which the exposition is written
+        examples: ['[Researchers studying biological networks](https://example.org/audiences/biological-networks-researchers.yml)']
+      glossary:
+        $ref: '#/$defs/link'
+        title: Glossary
+        description: link to the glossary that fixes the terms of the exposition
+        examples: ['[Glossary of the project](../../glossary.yml)']
+      venue-constraints:
+        $ref: '#/$defs/link'
+        title: Venue constraints
+        description: link to the constraints that the venue imposes on the exposition
+        examples: ['[Submission constraints](https://example.org/conferences/constraints_submission.md)']
+
+  idea:
+    type: object
+    additionalProperties: false
+    required: [id, statement]
+    x-identifier: id
+    oneOf:
+      - title: Referenced idea
+        description: an idea stated by a unit of a source, which the link designates
+        required: [source]
+        not: {required: [kind]}
+      - title: Authored idea
+        description: an idea written by the author, of one declared kind
+        required: [kind]
+        not: {required: [source]}
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: identifier of the idea, unique among the ideas of the record
+        examples: [mixture-input]
+      statement:
+        type: string
+        minLength: 1
+        x-kind: markdown
+        title: Statement
+        description: the idea in one sentence, as the exposition presents it
+        examples: ['A mixture input is a weighted sum of two component inputs.']
+      source:
+        $ref: '#/$defs/link'
+        x-resolves: file
+        title: Source
+        description: >-
+          for a referenced idea, a relative link to the note or the unit that states the idea,
+          with an optional anchor of a block or a heading
+        examples: ['[Mixture input](../../definitions/mixture-input.md#^definition)']
+      kind:
+        $ref: '#/$defs/identifier'
+        x-registry: authored-kinds
+        title: Kind
+        description: for an authored idea, its kind in the registry of authored kinds
+        examples: [illustration]
+
+  relation:
+    type: object
+    additionalProperties: false
+    required: [source, relation, target]
+    properties:
+      source:
+        $ref: '#/$defs/identifier'
+        x-refers: idea
+        x-role: relation-source
+        title: Source
+        description: >-
+          identifier of the satellite of a mononuclear relation, or of the first nucleus of a
+          multinuclear relation
+        examples: [plaid-illustration]
+      relation:
+        $ref: '#/$defs/identifier'
+        x-registry: relations
+        title: Relation
+        description: the relation in the registry of rhetorical relations
+        examples: [elaboration]
+      target:
+        $ref: '#/$defs/identifier'
+        x-refers: idea
+        x-role: relation-target
+        title: Target
+        description: >-
+          identifier of the nucleus of a mononuclear relation, or of the second nucleus of a
+          multinuclear relation
+        examples: [mixture-input]
+
+  part:
+    type: object
+    additionalProperties: false
+    required: [id, title, ideas]
+    x-identifier: id
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: identifier of the part, unique among the parts of the record
+        examples: [problem]
+      title:
+        type: string
+        minLength: 1
+        x-kind: markdown-line
+        title: Title
+        description: title of the part, as its reader meets it
+        examples: [Problem]
+      ideas:
+        type: array
+        x-kind: list
+        minItems: 1
+        items:
+          $ref: '#/$defs/identifier'
+          x-refers: idea
+          description: identifier of an idea that the part presents
+        title: Ideas
+        description: the ideas that the part presents, in reading order
+        examples: [[mixture-input, plaid-illustration]]

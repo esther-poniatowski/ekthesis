@@ -1,0 +1,16 @@
+# Closed registry of the kinds of authored idea, fixed by the decision on the provenance of ideas.
+registry: authored-kinds
+description: the kinds that an idea written by the author may declare
+entries:
+  - id: illustration
+    title: Illustration
+    description: a familiar case presented as an instance of a referenced concept
+  - id: analogy
+    title: Analogy
+    description: a situation of a source domain whose structure the reader maps onto the inquiry
+  - id: motivation
+    title: Motivation
+    description: a reason, drawn from the practice of the audience, to read or to want a unit
+  - id: premise
+    title: Premise
+    description: a premise granted by the audience, about matters other than the objects of the inquiry
