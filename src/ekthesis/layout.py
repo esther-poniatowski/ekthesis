@@ -46,6 +46,24 @@ class FieldPath:
         """Return the path of the child `segment` of this node."""
         return FieldPath((*self.segments, segment))
 
+    def pointer(self) -> str:
+        """
+        Return the JSON Pointer (RFC 6901) of this node, the empty string for the root.
+
+        Each key is escaped by writing `~` as `~0`, then `/` as `~1`; a position is written in
+        decimal.
+
+        Examples
+        --------
+        >>> FieldPath(("relations", 2, "target")).pointer()
+        '/relations/2/target'
+        >>> FieldPath(("a/b", "c~1d")).pointer()
+        '/a~1b/c~01d'
+        """
+        return "".join(
+            "/" + str(segment).replace("~", "~0").replace("/", "~1") for segment in self.segments
+        )
+
     def __str__(self) -> str:
         text = ""
         for segment in self.segments:

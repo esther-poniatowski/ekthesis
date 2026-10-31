@@ -28,6 +28,8 @@ relation_requirements(record)
 
 Attributes
 ----------
+RULES : tuple of Rule
+    Every rule of the check, with its summary and the severity of its findings.
 RECORD_RULES : tuple of callables
     The rules applied to a record that conforms to its schema, in order.
 """
@@ -36,14 +38,50 @@ from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
-from jsonschema import Draft202012Validator  # type: ignore[import-untyped]  # no stubs in the environment
+from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
 
 from .errors import ResourceError
 from .exposition import RELATION_SOURCE, Exposition, Idea
-from .findings import Finding, Severity
+from .findings import Finding, Rule, Severity
 from .layout import FieldPath, SchemaLayout
 from .links import resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
+
+SCHEMA_CONFORMANCE = Rule(
+    "schema-conformance",
+    "The record names a known contract and validates against its schema.",
+    Severity.ERROR,
+)
+UNIQUE_IDENTIFIERS = Rule(
+    "unique-identifiers",
+    "The items of each collection have distinct identifiers.",
+    Severity.ERROR,
+)
+EXISTING_REFERENCES = Rule(
+    "existing-references",
+    "Every field that identifies an item names an existing item.",
+    Severity.ERROR,
+)
+REGISTRY_MEMBERSHIP = Rule(
+    "registry-membership",
+    "Every value of a registry field belongs to its registry.",
+    Severity.ERROR,
+)
+SOURCE_LINKS = Rule(
+    "source-links",
+    "Every link to a source resolves to a file, and its anchor exists in that file.",
+    Severity.ERROR,
+)
+AUTHORED_RELATIONS = Rule(
+    "authored-relations",
+    "In an exposition bound to its sources, every relation with an authored idea is admitted.",
+    Severity.ERROR,
+)
+RELATION_REQUIREMENTS = Rule(
+    "relation-requirements",
+    "A relation between two referenced ideas that requires a recorded relation is unverified.",
+    Severity.WARNING,
+)
 
 
 @dataclass(frozen=True)
@@ -68,11 +106,9 @@ class BoundRecord:
     layout: SchemaLayout
     registries: Registries
 
-    def finding(
-        self, rule: str, field: FieldPath, message: str, severity: Severity = Severity.ERROR
-    ) -> Finding:
+    def finding(self, rule: Rule, field: FieldPath, message: str) -> Finding:
         """Build a finding of `rule` located at `field` of this record."""
-        return Finding(rule, self.path, str(field), severity, message)
+        return Finding(rule.identifier, self.path, field, rule.severity, message)
 
     def idea_definition(self) -> str:
         """Name of the definition of the ideas: the definition that a relation source identifies."""
@@ -100,31 +136,59 @@ def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> It
     catalog : SchemaCatalog
         Schemas indexed by contract identifier.
     """
-    rule = "schema-conformance"
+    rule = SCHEMA_CONFORMANCE
     contract = record.get(BINDING_FIELD) if isinstance(record, Mapping) else None
     if not isinstance(contract, str):
         yield Finding(
-            rule,
+            rule.identifier,
             path,
-            BINDING_FIELD,
-            Severity.ERROR,
+            FieldPath((BINDING_FIELD,)),
+            rule.severity,
             f"the record names no contract in its field {BINDING_FIELD}",
         )
         return
     schema = catalog.get(contract)
     if schema is None:
         yield Finding(
-            rule,
+            rule.identifier,
             path,
-            BINDING_FIELD,
-            Severity.ERROR,
+            FieldPath((BINDING_FIELD,)),
+            rule.severity,
             f"no schema of ekthesis binds the contract {contract}",
         )
         return
     validator = Draft202012Validator(schema)
     for error in sorted(validator.iter_errors(record), key=lambda error: list(error.path)):
-        field = FieldPath(tuple(error.path))
-        yield Finding(rule, path, str(field), Severity.ERROR, error.message)
+        yield Finding(
+            rule.identifier,
+            path,
+            FieldPath(tuple(error.path)),
+            rule.severity,
+            error.message,
+            _offending_keyword(error),
+        )
+
+
+def _offending_keyword(error: ValidationError) -> str:
+    """
+    Name what a validation error rejects, apart from the other errors at its field.
+
+    The name is the keyword that failed, followed for `required` by the missing property, since
+    that keyword yields one error per missing property. The message is not used whole, since its
+    wording belongs to the validator and may change between its versions.
+    """
+    keyword = str(error.validator)
+    required = error.validator_value
+    if keyword == "required" and isinstance(error.instance, Mapping) and isinstance(required, list):
+        missing = (
+            name
+            for name in required
+            if name not in error.instance and error.message.startswith(f"{name!r} ")
+        )
+        name = next(missing, None)
+        if name is not None:
+            return f"{keyword}:{name}"
+    return keyword
 
 
 def unique_identifiers(record: BoundRecord) -> Iterator[Finding]:
@@ -135,7 +199,7 @@ def unique_identifiers(record: BoundRecord) -> Iterator[Finding]:
             for _, identifier in collection.identifier.select(item):
                 if identifier in first:
                     yield record.finding(
-                        "unique-identifiers",
+                        UNIQUE_IDENTIFIERS,
                         path,
                         f"the identifier {identifier} repeats that of {first[identifier]}",
                     )
@@ -155,7 +219,7 @@ def existing_references(record: BoundRecord) -> Iterator[Finding]:
         for path, value in pattern.select(record.data):
             if value not in existing:
                 yield record.finding(
-                    "existing-references",
+                    EXISTING_REFERENCES,
                     path,
                     f"no item of {collection.items} has the identifier {value}",
                 )
@@ -170,7 +234,7 @@ def registry_membership(record: BoundRecord) -> Iterator[Finding]:
         for path, value in pattern.select(record.data):
             if value not in admitted:
                 yield record.finding(
-                    "registry-membership",
+                    REGISTRY_MEMBERSHIP,
                     path,
                     f"{value} belongs to no entry of the registry {registry}",
                 )
@@ -182,7 +246,7 @@ def source_links(record: BoundRecord) -> Iterator[Finding]:
         for path, value in pattern.select(record.data):
             reason = resolve_link(str(value), record.path.parent)
             if reason is not None:
-                yield record.finding("source-links", path, reason)
+                yield record.finding(SOURCE_LINKS, path, reason)
 
 
 def authored_relations(record: BoundRecord) -> Iterator[Finding]:
@@ -205,7 +269,7 @@ def authored_relations(record: BoundRecord) -> Iterator[Finding]:
             continue
         if (source.authored or target.authored) and not _admitted(entry, source, target):
             yield record.finding(
-                "authored-relations",
+                AUTHORED_RELATIONS,
                 relation.path,
                 f"the relation {relation.name} from {_describe(source)} "
                 f"to {_describe(target)} takes no admitted form: a presentational relation "
@@ -225,12 +289,11 @@ def relation_requirements(record: BoundRecord) -> Iterator[Finding]:
             continue
         if not source.authored and not target.authored:
             yield record.finding(
-                "relation-requirements",
+                RELATION_REQUIREMENTS,
                 relation.path,
                 f"unverified: the relation {relation.name} requires a recorded {entry.requires} "
                 f"from {relation.source} to {relation.target}, "
                 "and no source publishes its relations yet",
-                Severity.WARNING,
             )
 
 
@@ -251,6 +314,16 @@ def _describe(idea: Idea) -> str:
         else f"the referenced idea {idea.identifier}"
     )
 
+
+RULES: tuple[Rule, ...] = (
+    SCHEMA_CONFORMANCE,
+    UNIQUE_IDENTIFIERS,
+    EXISTING_REFERENCES,
+    REGISTRY_MEMBERSHIP,
+    SOURCE_LINKS,
+    AUTHORED_RELATIONS,
+    RELATION_REQUIREMENTS,
+)
 
 RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
     unique_identifiers,

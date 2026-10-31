@@ -57,7 +57,7 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
 def test_finding_locates_the_planted_field(checker: Checker, rule: str, field: str) -> None:
     """Each finding names the field path of the planted defect."""
     findings = checker.check_record(FIXTURES / "planted" / f"{rule}.yml")
-    assert [finding.field for finding in findings] == [field]
+    assert [str(finding.field) for finding in findings] == [field]
 
 
 def test_record_not_bound_to_sources_admits_any_relation_with_an_authored_idea(
@@ -77,7 +77,7 @@ def test_unknown_contract_is_reported(checker: Checker, tmp_path: Path) -> None:
     path = tmp_path / "record.yml"
     path.write_text("_schema: 'ekthesis:unknown@1'\n")
     [finding] = checker.check_record(path)
-    assert (finding.rule, finding.field) == ("schema-conformance", "_schema")
+    assert (finding.rule, str(finding.field)) == ("schema-conformance", "_schema")
 
 
 def test_unreadable_record_is_reported(checker: Checker, tmp_path: Path) -> None:
@@ -85,7 +85,7 @@ def test_unreadable_record_is_reported(checker: Checker, tmp_path: Path) -> None
     path = tmp_path / "record.yml"
     path.write_text("ideas: [unclosed\n")
     [finding] = checker.check_record(path)
-    assert (finding.rule, finding.field) == ("schema-conformance", "")
+    assert (finding.rule, str(finding.field)) == ("schema-conformance", "")
 
 
 @pytest.mark.parametrize(
