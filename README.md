@@ -37,7 +37,7 @@ ekthesis check --format sarif --output build/findings.sarif path/to/argument.yml
 
 The log writes the path of each record relative to the working directory, so every record must lie under that directory. A record that breaks its schema is checked by no other rule, and the log then declares its run incomplete. The exit code does not depend on the format. The [decision on the SARIF output](docs/adr/sarif-output.md) states how each finding maps onto a result.
 
-The repository also holds the decisions, theory notes and proposals carried from `gnomon` with their history. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/main/docs/adr/research-scope.md) states the boundary between the two tools.
+The repository also holds the decisions, theory notes and proposals carried from `gnomon` with their history. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/45de45d9f362ffc6340cba3837cd44a46cd3b172/docs/adr/research-scope.md) states the boundary between the two tools.
 
 ---
 

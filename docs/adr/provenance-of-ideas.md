@@ -12,7 +12,7 @@ aliases:
 
 > [!QUESTION] Goal: on what may each idea and each relation of an exposition rest, and what must the source of its ideas record for the exposition to present them?
 
-An exposition, such as an article, a talk, a course or a poster, presents ideas to an audience and relates them. Its ideas come from research, from teaching, from documentation or from the author alone. Under the earlier rule of `gnomon`, an exposition added no content. That rule required a research unit for every example and every motivation. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/main/docs/adr/research-scope.md) moves exposition to `ekthesis` and replaces that rule by a rule of provenance, stated below.
+An exposition, such as an article, a talk, a course or a poster, presents ideas to an audience and relates them. Its ideas come from research, from teaching, from documentation or from the author alone. Under the earlier rule of `gnomon`, an exposition added no content. That rule required a research unit for every example and every motivation. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/45de45d9f362ffc6340cba3837cd44a46cd3b172/docs/adr/research-scope.md) moves exposition to `ekthesis` and replaces that rule by a rule of provenance, stated below.
 
 ## Decision
 
