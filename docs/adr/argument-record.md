@@ -3,7 +3,7 @@ tags:
   - decision
 status: proposed
 created: 2026-10-31
-revised: 2026-10-31
+revised: 2026-11-01
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Argument record and its check
@@ -39,6 +39,8 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 **Required classes.** Each subject-matter relation requires a recorded relation of the class named after it. Among the presentational relations, an evidence requires a support and an antithesis requires an incompatibility. Every other presentational relation requires no class. A class named after a relation is provisional: no source publishes the classes of its relations yet. ^required-classes
 
+**Forms of an elaboration.** Rhetorical Structure Theory lists six forms of an elaboration: set and member, abstraction and instance, whole and part, process and step, object and attribute, generalization and specific [mann1988]. An elaboration between two referenced ideas states its form. An illustration takes the form abstraction and instance, and that form requires a recorded instance. `gnomon` records an instance as the use `instance` of its relation `exemplifies`, and maps that use onto the class `instance` of the contract. Every other form requires the class named after the elaboration. ^elaboration-forms
+
 **Direction.** In a mononuclear relation, the source is the satellite and the target is the nucleus. In a multinuclear relation, the source and the target are two nuclei, in reading order. ^direction
 
 **Admitted forms as data.** The two forms of the [admitted relations with an authored idea](provenance-of-ideas.md#^authored-relations) are read from the registries:
@@ -65,12 +67,15 @@ A [synthesis](provenance-of-ideas.md#^syntheses) adds no idea. Its part lists ag
 | Registries enumerated in the schema | A dropdown in the form of Ekphrasis | Two sources of each value; the schema rule and the registry rule fail together |
 | The two admitted forms written as conditions in the code | No field `admitted-authored-sources` | The forms change with the registry, and a condition naming a relation duplicates its entry |
 | A remote link admitted as a source | A unit of another repository can be cited | No anchor can be checked; the logical identifier of an export serves that case later |
+| An illustration between referenced ideas requires any recorded elaboration | No form on a relation | A recorded relation of a whole and its part would license presenting one unit as an instance of the other |
+| A relation `illustration` added to the registry of relations | A record states no form | The registry holds the relations of Rhetorical Structure Theory, which counts an illustration as a form of the elaboration, so a second relation would duplicate the elaboration |
 
 ## Consequences
 
 - **Exports.** A source that publishes an export replaces the relative links of its units by logical identifiers. Then, a new rule reads the recorded relations, and resolves each warning on a required class against the export.
 - **Classes.** The classes required by subject-matter relations are renamed after the classes that the contract of an export declares.
 - **Syntheses.** The decision on the provenance of ideas treats a synthesis as a device that adds no idea, rather than as an authored idea. Therefore, the check reports an authored source of a restatement or a summary as an error, and the registry of authored kinds keeps its four kinds.
+- **Forms.** The registry of relations lists the forms of the elaboration, each with the class that it requires, and the schema gains a field naming the form of a relation whose entry lists forms. Until that change, the check reads every elaboration as requiring the class named after it.
 - **Judgment.** No rule judges whether an authored idea carries content about the subject of the exposition. The author and the reviewer judge it, as the decision on the provenance of ideas states.
 - **Modularity.** The parts of a record are generic: they name no feature of one kind of artifact. A field specific to one kind, such as the panels of a poster or the frames of a slide deck, enters a contract of its own, which extends a common core holding the identity, the ideas, the relations and the parts. That split requires the layout of the check to follow a `$ref` into another schema file of the package.
 
