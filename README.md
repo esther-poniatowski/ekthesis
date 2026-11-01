@@ -10,7 +10,11 @@ Specifies how an author arranges an argument for an audience: the selection and 
 
 ## Overview
 
-An exposition, such as an article, a talk, a course or a poster, presents ideas to a reader. `ekthesis` specifies the records of an exposition independently of the activity that produced its ideas. An idea either references a unit of an external source, read through a published contract, or is an authored idea of a declared kind.
+An exposition, such as an article, a talk, a course or a poster, presents ideas to a reader. `ekthesis` answers one root question:
+
+> How can the content of a source, such as the records of a research inquiry, be presented to various audiences and in various formats?
+
+`ekthesis` specifies the records of an exposition independently of the activity that produced its ideas. An idea either references a unit of an external source, read through a published contract, or is an authored idea of a declared kind.
 
 ### Motivation
 
