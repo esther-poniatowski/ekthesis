@@ -1,9 +1,9 @@
 ---
 tags:
   - decision
-status: proposed
+status: accepted
 created: 2026-10-31
-revised: 2026-10-31
+revised: 2026-11-01
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Glossaries
@@ -26,7 +26,7 @@ The [decision on terminology, audience and project specifications](terminology-a
 
 - **A glossary defines no concept.** The meaning of a concept has one source, the unit that states it. A gloss of an entry restates that meaning for an audience, as the [theory of the glossary](../theory/glossary.md#^glossary) states.
 - **The ideas of an exposition come from any activity.** A course or a piece of documentation has no concept records of `gnomon` behind its terms. Therefore, a glossary cannot require that every concept be recorded in `gnomon`.
-- **A field refers to another field only by a logical target.** Under the draft decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/0712bb5136960141f82ec65d5ae475834293af4a/docs/_decisions/tool-roles.md), a record of one field names a record of another field by a logical target typed by its contract.
+- **A field refers to another field only by a logical target.** Under the decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/0712bb5136960141f82ec65d5ae475834293af4a/docs/_decisions/tool-roles.md), a record of one field names a record of another field by a logical target typed by its contract.
 - **A text has one glossary.** The decision on glossary entries binds one text to one glossary, so a binding needs one rule of precedence between an exposition and its project.
 
 ## Options weighed

@@ -1,9 +1,9 @@
 ---
 tags:
   - decision
-status: proposed
+status: accepted
 created: 2026-10-29
-revised: 2026-10-31
+revised: 2026-11-01
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Terminology, audience and project specifications
@@ -12,7 +12,7 @@ aliases:
 
 > [!QUESTION] Goal: which tool provides the mechanisms of glossaries, audience specifications and project specifications, and which repository holds their instances?
 
-A project names its concepts in a glossary. Its project specification binds its glossary, its notation and its audiences. Each exposition of the project calibrates its claims, its terminology and its level of technicity against the audiences named by its record. `geonexus` declares these records with schemas of its own, and checks them with a checker of its own. The [decision of `gnomon` on terminology, audience and project specifications](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/docs/adr/terminology-audience-project-specifications.md) first gave these mechanisms to `gnomon`. Two later drafts change that assignment: the decision of `gnomon` on its scope moves glossaries and audiences to `ekthesis`, and the draft decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/0712bb5136960141f82ec65d5ae475834293af4a/docs/_decisions/tool-roles.md) divides the project specification.
+A project names its concepts in a glossary. Its project specification binds its glossary, its notation and its audiences. Each exposition of the project calibrates its claims, its terminology and its level of technicity against the audiences named by its record. `geonexus` declares these records with schemas of its own, and checks them with a checker of its own. The [decision of `gnomon` on terminology, audience and project specifications](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/docs/adr/terminology-audience-project-specifications.md) first gave these mechanisms to `gnomon`. Two later decisions change that assignment: the decision of `gnomon` on its scope moves glossaries and audiences to `ekthesis`, and the decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/0712bb5136960141f82ec65d5ae475834293af4a/docs/_decisions/tool-roles.md) divides the project specification.
 
 ## Decision
 
@@ -38,7 +38,7 @@ The record of an exposition names its audiences, and `ekthesis` checks the terms
 - **One symbol has one declaration.** The notation of `gnomon` refers to the inquiry records for their symbols. If the binding of a project restated those symbols, it would hold a second copy. The [single field per fact](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/docs/adr/single-field-per-fact.md) excludes that copy. Therefore, the binding names the notation and holds no symbol.
 - **One question has one record.** If the binding of a project listed the questions of its scope, it would restate the question records. Therefore, those questions form the research root record of `gnomon`.
 - **A reference does not transfer ownership.** A record of another field may name an instance, such as a contact profile naming the audiences that include a researcher. That reference leaves the mechanism of audiences with `ekthesis`, and the contact profile with its own owner.
-- **A consumer defines no schema.** Under the draft decision on tool roles, `geonexus` keeps only the policy and the content of the consumer. Therefore, the project specification cannot remain a schema of the consumer.
+- **A consumer defines no schema.** Under the decision on tool roles, `geonexus` keeps only the policy and the content of the consumer. Therefore, the project specification cannot remain a schema of the consumer.
 
 ## Options weighed
 
