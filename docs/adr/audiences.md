@@ -35,7 +35,7 @@ The [audience](../theory/exposition.md#^audience) of an exposition is a readersh
 - **An audience serves every project.** A readership exists apart from the projects that address it, so an audience record names no form of a project. The forms forbidden by a project for an audience stay in its glossary, under the [decision on glossary entries](concepts-glossaries-notations.md).
 - **The meaning of a concept has one source.** If a knowledge item restated a concept, every audience would repeat its classification. If the item referenced a term of a glossary, the audience would depend on the glossary of one project.
 - **Shared knowledge is declared once.** The readerships of one field share knowledge and register rules. A parent audience declares them once for its subtypes.
-- **A field refers to another field only by a logical target.** Under the decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/0712bb5136960141f82ec65d5ae475834293af4a/docs/_decisions/tool-roles.md), Anagraphe checks each logical target and its contract. Therefore, `ekthesis` does not resolve a contact profile itself.
+- **A field refers to another field only by a logical target.** Under the decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/827474dca64daef110b9d7fe36a4127c2b32b167/docs/_decisions/tool-roles.md), Anagraphe checks each logical target and its contract. Therefore, `ekthesis` does not resolve a contact profile itself.
 
 ## Options weighed
 
