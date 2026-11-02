@@ -10,6 +10,9 @@ aliases:
 ---
 # Argument record and its check
 
+> [!WARNING] Amended
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) divides an exposition into an argument, valid for any audience, and a projection of that argument for one audience and one venue. The audience, the glossary and the notation of a projection are bound by keys that Anagraphe resolves, instead of links in the record.
+
 > [!QUESTION] Goal: which form do the record of an exposition, its registries and its check take, where the [decision on the provenance of ideas](provenance-of-ideas.md) leaves the form open?
 
 The decision on the provenance of ideas fixes three contents that an exposition must express: the provenance of each idea, whether the exposition is bound to its sources, and the requirements on each relation. The first version of `ekthesis` implements these rules in the contract `ekthesis:exposition@1`, two closed registries and the command `ekthesis check`. The first consumer is a poster of a research project, and the sources of that project publish no export yet.

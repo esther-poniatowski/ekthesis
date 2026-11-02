@@ -10,6 +10,9 @@ aliases:
 ---
 # Glossaries
 
+> [!WARNING] Amended
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) moves glossaries, their checks and the binding of a text to its glossary to one designation tool; the binding becomes a key resolved by Anagraphe along the directory chain.
+
 > [!QUESTION] Goal: to what does an entry of a glossary refer, how is a glossary bound to an exposition, and what does `ekthesis` check on glossaries?
 
 The [decision on terminology, audience and project specifications](terminology-audience-project-specifications.md) gives the mechanism of glossaries to `ekthesis`. The [decision on glossary entries](concepts-glossaries-notations.md) fixes the content of an entry: the names of one concept, its forbidden forms with their audiences, and the imports that compose a glossary. Three points remain open: the target of the reference from an entry to its concept, the binding of a glossary to an exposition, and the checks. Today, the project and audience schemas of `geonexus` reference its glossary schema by `$ref`.

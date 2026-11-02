@@ -10,6 +10,9 @@ aliases:
 ---
 # Terminology, audience and project specifications
 
+> [!WARNING] Amended
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) moves the mechanism of the glossary to one designation tool, keeps the audience in `ekthesis` without its register, and replaces the binding record of a project by binding keys resolved by Anagraphe.
+
 > [!QUESTION] Goal: which tool provides the mechanisms of glossaries, audience specifications and project specifications, and which repository holds their instances?
 
 A project names its concepts in a glossary. Its project specification binds its glossary, its notation and its audiences. Each exposition of the project calibrates its claims, its terminology and its level of technicity against the audiences named by its record. `geonexus` declares these records with schemas of its own, and checks them with a checker of its own. The [decision of `gnomon` on terminology, audience and project specifications](https://github.com/esther-poniatowski/gnomon/blob/ac7816bf9c51630d5024d4c00d1c882a0df833f6/docs/adr/terminology-audience-project-specifications.md) first gave these mechanisms to `gnomon`. Two later decisions change that assignment: the decision of `gnomon` on its scope moves glossaries and audiences to `ekthesis`, and the decision of `geonexus` on [tool roles](https://github.com/esther-poniatowski/geonexus/blob/827474dca64daef110b9d7fe36a4127c2b32b167/docs/_decisions/tool-roles.md) divides the project specification.

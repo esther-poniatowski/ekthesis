@@ -10,6 +10,9 @@ aliases:
 ---
 # Renaming of a symbol for a venue
 
+> [!WARNING] Amended
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) replaces the renaming of a symbol by an overlay notation of the designation tool, bound per projection, which overrides entries by identifier. The collision check of printed forms moves to the designation tool.
+
 > [!QUESTION] Goal: may an artifact print a symbol of its source in a form other than the one declared by the notation of that source, and what must `ekthesis` check when it does?
 
 The notation of a research project stays in `gnomon`: its rules of composition, its conventions of typography, and the LaTeX macros generated from its symbols. A researcher writes derivations in that notation. An artifact presents few of those symbols, and its venue may follow other conventions, such as the letters used by a community for a quantity or the typography of its vectors. The contract of the export of a source holds one entry per symbol, with the identifier of the symbol and its LaTeX macro.

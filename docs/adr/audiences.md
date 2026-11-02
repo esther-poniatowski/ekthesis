@@ -10,6 +10,9 @@ aliases:
 ---
 # Audiences
 
+> [!WARNING] Amended
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) keeps the audience in `ekthesis` as a profile of its readers, and moves its register into lexical rules of the designation tool scoped by audience. `ekthesis` generates the scope table that lists the ancestors and the descendants of each audience.
+
 > [!QUESTION] Goal: what does an audience record hold, how does it refer to concepts and to other audiences, and which records name it?
 
 The [audience](../theory/exposition.md#^audience) of an exposition is a readership described by its knowledge, its skills and its register. The [decision on terminology, audience and project specifications](terminology-audience-project-specifications.md) gives the mechanism of audiences to `ekthesis`. `geonexus` already declares audiences, one file per readership. Its decisions on [audience knowledge by reference](https://github.com/esther-poniatowski/geonexus/blob/42d8a238991105b3c1640a69d5bfe27c8db703e0/docs/_decisions/audience-knowledge-by-reference.md) and on [audience subtypes](https://github.com/esther-poniatowski/geonexus/blob/42d8a238991105b3c1640a69d5bfe27c8db703e0/docs/_decisions/audience-subtypes.md) fix the form of those files. In that form, a knowledge item references a term of a glossary.
