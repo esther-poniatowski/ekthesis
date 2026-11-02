@@ -11,7 +11,7 @@ aliases:
 # Glossaries
 
 > [!WARNING] Amended
-> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) moves glossaries, their checks and the binding of a text to its glossary to one designation tool; the binding becomes a key resolved by Anagraphe along the directory chain.
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) moves glossaries, their checks and the binding of a text to its glossary to Onomasia, the designation tool; the binding becomes a key resolved by Anagraphe along the directory chain.
 
 > [!QUESTION] Goal: to what does an entry of a glossary refer, how is a glossary bound to an exposition, and what does `ekthesis` check on glossaries?
 

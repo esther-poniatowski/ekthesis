@@ -12,7 +12,7 @@ aliases:
 # Glossary entries apart from concepts
 
 > [!WARNING] Amended
-> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) moves glossary entries and notations to one designation tool, which owns the forbidden forms with their audiences.
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) moves glossary entries and notations to Onomasia, the designation tool, which owns the forbidden forms with their audiences.
 
 > [!QUESTION] Goal: which record holds the meaning of a concept, which record holds its names, and how does a glossary compose its sources?
 

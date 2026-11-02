@@ -11,7 +11,7 @@ aliases:
 # Renaming of a symbol for a venue
 
 > [!WARNING] Amended
-> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) replaces the renaming of a symbol by an overlay notation of the designation tool, bound per projection, which overrides entries by identifier. The collision check of printed forms moves to the designation tool.
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) replaces the renaming of a symbol by an overlay notation of Onomasia, the designation tool, bound per projection, which overrides entries by identifier. The collision check of printed forms moves to Onomasia.
 
 > [!QUESTION] Goal: may an artifact print a symbol of its source in a form other than the one declared by the notation of that source, and what must `ekthesis` check when it does?
 

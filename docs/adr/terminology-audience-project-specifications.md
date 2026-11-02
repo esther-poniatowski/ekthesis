@@ -11,7 +11,7 @@ aliases:
 # Terminology, audience and project specifications
 
 > [!WARNING] Amended
-> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/dc3ed97106ae909724fdad76c5e88e01a10ae043/docs/_decisions/designation-and-typography.md) moves the mechanism of the glossary to one designation tool, keeps the audience in `ekthesis` without its register, and replaces the binding record of a project by binding keys resolved by Anagraphe.
+> On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) moves the mechanism of the glossary to Onomasia, the designation tool, keeps the audience in `ekthesis` without its register, and replaces the binding record of a project by binding keys resolved by Anagraphe.
 
 > [!QUESTION] Goal: which tool provides the mechanisms of glossaries, audience specifications and project specifications, and which repository holds their instances?
 
