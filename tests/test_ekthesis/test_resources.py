@@ -93,3 +93,80 @@ def test_only_the_elaboration_admits_an_authored_source() -> None:
         if entry.admitted_authored_sources
     }
     assert admitting == {"elaboration": frozenset({"illustration"})}
+
+
+EXPORT = "ekthesis:export@1"
+
+
+def _export() -> dict[str, object]:
+    """A valid export: two answers, a law that supports one of them, and an incompatible set."""
+    unit = {"unit": "", "kind": "claim", "record_kind": "answer", "statement": "", "status": ""}
+    return {
+        "_schema": EXPORT,
+        "id": "export.mixture",
+        "type": "export",
+        "source": {"repository": "mixture", "tool": "gnomon"},
+        "generated_by": "gnomon export",
+        "findings_overridden": False,
+        "units": [
+            {**unit, "id": "ans.a.x", "record": "ans.a.x"},
+            {**unit, "id": "ans.a.y", "record": "ans.a.y"},
+            {**unit, "id": "ans.a.z", "record": "ans.a.z", "superseded_by": ["ans.a.y"]},
+            {**unit, "id": "mod.a.m.law", "record": "mod.a.m", "unit": "law", "kind": "law"},
+        ],
+        "relations": [
+            {
+                "id": "ans.a.x.shape",
+                "class": "support",
+                "source": "mod.a.m.law",
+                "target": "ans.a.x",
+                "relation": "grounds[].record",
+                "use": "warrant",
+            },
+            {
+                "id": "incompatible-with:ans.a.x,ans.a.y,ans.a.z",
+                "class": "incompatibility",
+                "members": ["ans.a.x", "ans.a.y", "ans.a.z"],
+                "symmetric": True,
+                "relation": "incompatible-with",
+            },
+        ],
+    }
+
+
+def _export_errors(export: object) -> list[str]:
+    schema = RESOURCES.schemas.schemas[EXPORT]
+    return [error.message for error in Draft202012Validator(schema).iter_errors(export)]
+
+
+def test_export_schema_binds_its_contract_and_admits_a_valid_export() -> None:
+    """The export schema is indexed by its contract, and a valid export conforms to it."""
+    assert "_schema" in RESOURCES.schemas.schemas[EXPORT]["required"]
+    assert _export_errors(_export()) == []
+
+
+def test_export_rejects_a_class_outside_the_contract() -> None:
+    """A class that the contract does not publish cannot be read by the check."""
+    export = _export()
+    export["relations"][0]["class"] = "volitional-cause"  # type: ignore[index]
+    assert len(_export_errors(export)) == 1
+
+
+def test_export_rejects_a_set_of_one_member_and_a_relation_with_both_forms_of_ends() -> None:
+    """A set relation holds of two members or more, and a relation names either a source and a
+    target or its members, never both."""
+    export = _export()
+    export["relations"][1]["members"] = ["ans.a.x"]  # type: ignore[index]
+    assert len(_export_errors(export)) == 1
+    export = _export()
+    export["relations"][1]["source"] = "ans.a.x"  # type: ignore[index]
+    assert len(_export_errors(export)) == 1
+
+
+def test_every_example_of_the_export_schema_validates_against_its_field() -> None:
+    """An example that its own field rejects would mislead a reader of the contract."""
+    schema = RESOURCES.schemas.schemas[EXPORT]
+    for node in _annotated_nodes(schema):
+        validator = Draft202012Validator({"$defs": schema["$defs"], **node})
+        for example in node["examples"]:
+            assert not list(validator.iter_errors(example)), (node.get("title"), example)

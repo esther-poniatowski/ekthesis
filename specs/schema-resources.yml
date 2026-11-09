@@ -5,4 +5,5 @@ paths:
   owned_schemas: src/ekthesis/data/schemas
 
 exports:
+  - ekthesis:export@1
   - ekthesis:exposition@1
