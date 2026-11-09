@@ -109,7 +109,11 @@ class Checker:
             return findings
         assert isinstance(data, Mapping), "a conforming record is a mapping"
         record = BoundRecord(
-            path, data, self._layout(data[BINDING_FIELD]), self.resources.registries
+            path,
+            data,
+            self._layout(data[BINDING_FIELD]),
+            self.resources.registries,
+            self.resources.schemas,
         )
         for rule in RECORD_RULES:
             findings.extend(rule(record))

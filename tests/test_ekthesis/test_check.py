@@ -19,6 +19,9 @@ PLANTED = {
     "registry-membership": Severity.ERROR,
     "source-links": Severity.ERROR,
     "authored-relations": Severity.ERROR,
+    "export-conformance": Severity.ERROR,
+    "existing-units": Severity.ERROR,
+    "recorded-relations": Severity.ERROR,
     "relation-requirements": Severity.WARNING,
 }
 
@@ -52,6 +55,9 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
         ("source-links", "ideas[0].source"),
         ("authored-relations", "relations[0]"),
         ("relation-requirements", "relations[2]"),
+        ("export-conformance", "exposition.exports[1]"),
+        ("existing-units", "ideas[6].unit"),
+        ("recorded-relations", "relations[4]"),
     ],
 )
 def test_finding_locates_the_planted_field(checker: Checker, rule: str, field: str) -> None:

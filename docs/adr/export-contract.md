@@ -45,7 +45,7 @@ A subject-matter relation whose class is not in this list remains reported as un
 - the closed list of the kinds of a unit, which a rule of `ekthesis` must first read;
 - the status of a presented unit, such as an entertained or a superseded claim, and the conditions of each unit for the check of traces, which the exposition pilot settles;
 - the subject-matter classes without a source, such as a cause or an evaluation, which require a decision on whether a relation stated inside a claim licenses them;
-- the logical target of a referenced idea, whose form Anagraphe publishes, and which replaces the relative link of the [referenced idea](argument-record.md#^referenced-idea).
+- the logical target of a referenced idea, whose form Anagraphe publishes. Until then, a record names each export by a relative link and each unit by its identifier, as the [referenced idea](argument-record.md#^referenced-idea) states; the logical target then replaces the link to the export, and the identifier of the unit stays.
 
 A source publishes no symbol and no formula in this version, since no rule of `ekthesis` reads them, and the printed form of a symbol belongs to Onomasia. ^export-deferred
 
@@ -69,5 +69,5 @@ A source publishes no symbol and no formula in this version, since no rule of `e
 ## Consequences
 
 - The schema `export.schema.yaml` joins the contracts that `ekthesis` exports through `kleisis`.
-- The classes required by the [registry of relations](../../src/ekthesis/data/registries/relations.yml) keep their names; a later rule of the check reads the class of each recorded relation from the export, and resolves each warning on a required class against it.
+- The classes required by the [registry of relations](../../src/ekthesis/data/registries/relations.yml) keep their names. The rule `recorded-relations` reads the class of each recorded relation from the export, and an antithesis is verified by an incompatibility between its two units in either direction, or by a set of exactly those two members.
 - A source that depends on the contract validates its export against the materialized schema in its own tests.

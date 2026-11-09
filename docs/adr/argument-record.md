@@ -28,7 +28,7 @@ The decision on the provenance of ideas fixes three contents that an exposition 
 
 Each part lists its ideas in order, and one idea may appear in several parts. The audience, the glossary and the venue constraints are named by links, since the schema takes no `$ref` into another repository. ^record
 
-**Referenced idea.** A referenced idea names its unit by a relative Markdown link to the file that states it, with an optional anchor of a block (`#^id`) or of a heading. The check resolves the link from the directory of the record. A link to a remote address is rejected, since no remote file can be checked for its anchor. The logical identifier of a unit in an export replaces the link once a source publishes an export. ^referenced-idea
+**Referenced idea.** A referenced idea names its unit by a relative Markdown link to the file that states it, with an optional anchor of a block (`#^id`) or of a heading. The check resolves the link from the directory of the record. A link to a remote address is rejected, since no remote file can be checked for its anchor. When the source of an idea publishes an export, the idea names its unit instead, by the identifier of the unit under `unit`, and the record names that export under `exports`, by a relative link that the check resolves as it resolves a link to a source. An idea takes one of the two forms, never both. ^referenced-idea
 
 **Roles of the fields.** Annotations of the schema state which field holds each identifier, reference, registry value, source link and binding to the sources. Therefore, the check names no field of a record:
 
@@ -53,7 +53,7 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 A [synthesis](provenance-of-ideas.md#^syntheses) adds no idea. Its part lists again the referenced ideas reformulated by the synthesis. Therefore, the restatement and the summary list no authored kind.
 
-**Severities and order.** The check applies the rules on the provenance of ideas only to a record that conforms to its schema. These rules read the fields of the record through the annotations of the schema. Until a source publishes its relations, the check reports each relation that requires a class between two referenced ideas as unverified, at the severity of a warning. Every other finding is an error. ^severities
+**Severities and order.** The check applies the rules on the provenance of ideas only to a record that conforms to its schema. These rules read the fields of the record through the annotations of the schema. A relation that requires a class between two ideas naming units, when the contract of an export publishes that class, is an error unless an export that the record names records it. The check reports every other relation that requires a class between two referenced ideas as unverified, at the severity of a warning: an idea referenced by a link names no unit, and a class outside the contract has no source. Every other finding is an error. ^severities
 
 ## Constraints that decide the form
 
@@ -75,7 +75,7 @@ A [synthesis](provenance-of-ideas.md#^syntheses) adds no idea. Its part lists ag
 
 ## Consequences
 
-- **Exports.** A source that publishes an export replaces the relative links of its units by logical identifiers. Then, a new rule reads the recorded relations, and resolves each warning on a required class against the export.
+- **Exports.** An idea whose source publishes an export names its unit, and the rule `recorded-relations` verifies each relation between two such ideas against the export, under the [contract of a research export](export-contract.md). The rules `export-conformance` and `existing-units` check that each named export follows the contract and holds each named unit.
 - **Classes.** The classes required by subject-matter relations are renamed after the classes that the contract of an export declares.
 - **Syntheses.** The decision on the provenance of ideas treats a synthesis as a device that adds no idea, rather than as an authored idea. Therefore, the check reports an authored source of a restatement or a summary as an error, and the registry of authored kinds keeps its four kinds.
 - **Forms.** The registry of relations lists the forms of the elaboration, each with the class that it requires, and the schema gains a field naming the form of a relation whose entry lists forms. Until that change, the check reads every elaboration as requiring the class named after it.

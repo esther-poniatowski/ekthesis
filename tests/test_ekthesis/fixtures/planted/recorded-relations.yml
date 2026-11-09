@@ -1,0 +1,43 @@
+# Planted record: fails the rule recorded-relations alone.
+_schema: 'ekthesis:exposition@1'
+exposition:
+  id: valid-poster
+  title: A valid poster
+  source-bound: true
+  audience: '[Readers](https://example.org/audience.yml)'
+  exports: ['[Export of the project](../exports/mixture.yml)']
+ideas:
+  - id: mixture-input
+    statement: A mixture input is a weighted sum of two component inputs.
+    source: '[Mixture input](../sources/note.md#^mixture-input)'
+  - id: operations
+    statement: The map of the network factorizes into two operations.
+    source: '[Two network operations](../sources/note.md#Two%20network%20operations)'
+  - id: plaid
+    statement: Two superimposed gratings form a plaid.
+    kind: illustration
+  - id: scenes
+    statement: Natural scenes often combine several sources.
+    kind: motivation
+  - id: gain-shift
+    statement: The gain shifts the fixed points of the network.
+    unit: ans.mixture.gain-shift
+  - id: rate-law
+    statement: The rate law of the network.
+    unit: mod.mixture.rate.law
+  - id: rival
+    statement: The input weights alone would shift the fixed points.
+    unit: ans.mixture.rival
+relations:
+  - {source: plaid, relation: elaboration, target: mixture-input}
+  - {source: scenes, relation: motivation, target: mixture-input}
+  - {source: mixture-input, relation: background, target: operations}
+  - {source: rate-law, relation: evidence, target: gain-shift}
+  - {source: rival, relation: evidence, target: gain-shift}
+parts:
+  - id: problem
+    title: Problem
+    ideas: [scenes, mixture-input, plaid]
+  - id: mechanism
+    title: Mechanism
+    ideas: [operations, rate-law, gain-shift, rival]

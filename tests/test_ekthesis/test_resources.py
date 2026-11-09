@@ -33,7 +33,10 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
         (f"ideas{ITEM}.kind", "authored-kinds"),
         (f"relations{ITEM}.relation", "relations"),
     }
-    assert [str(pattern) for pattern in layout.source_links] == [f"ideas{ITEM}.source"]
+    assert [str(pattern) for pattern in layout.source_links] == [
+        f"exposition.exports{ITEM}",
+        f"ideas{ITEM}.source",
+    ]
 
 
 def test_registries_state_the_requirements_of_the_decision() -> None:

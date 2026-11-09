@@ -23,8 +23,14 @@ source_links(record)
     Every link to a source resolves to a file, and its anchor exists in that file.
 authored_relations(record)
     In an exposition bound to its sources, every relation with an authored idea is admitted.
+export_conformance(record)
+    Every export that the record names follows the contract of an export.
+existing_units(record)
+    Every unit that an idea names is held by an export that the record names.
+recorded_relations(record)
+    A relation between two ideas naming units holds in an export, for a class that it publishes.
 relation_requirements(record)
-    A relation between two referenced ideas that requires a recorded relation is unverified.
+    A relation between two referenced ideas that no export can verify is unverified.
 
 Attributes
 ----------
@@ -41,10 +47,11 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
 
 from .errors import ResourceError
+from .exports import EXPORT_CONTRACT, Export, published_classes, read_export, recorded
 from .exposition import RELATION_SOURCE, Exposition, Idea
 from .findings import Finding, Rule, Severity
 from .layout import FieldPath, SchemaLayout
-from .links import resolve_link
+from .links import link_path, resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
 
 SCHEMA_CONFORMANCE = Rule(
@@ -77,9 +84,24 @@ AUTHORED_RELATIONS = Rule(
     "In an exposition bound to its sources, every relation with an authored idea is admitted.",
     Severity.ERROR,
 )
+EXPORT_CONFORMANCE = Rule(
+    "export-conformance",
+    "Every export that the record names follows the contract of an export.",
+    Severity.ERROR,
+)
+EXISTING_UNITS = Rule(
+    "existing-units",
+    "Every unit that an idea names is held by an export that the record names.",
+    Severity.ERROR,
+)
+RECORDED_RELATIONS = Rule(
+    "recorded-relations",
+    "A relation between two ideas naming units holds in an export, for a class that it publishes.",
+    Severity.ERROR,
+)
 RELATION_REQUIREMENTS = Rule(
     "relation-requirements",
-    "A relation between two referenced ideas that requires a recorded relation is unverified.",
+    "A relation between two referenced ideas that no export can verify is unverified.",
     Severity.WARNING,
 )
 
@@ -105,6 +127,25 @@ class BoundRecord:
     data: object
     layout: SchemaLayout
     registries: Registries
+    schemas: SchemaCatalog
+
+    def export_schema(self) -> Mapping[str, object]:
+        """The schema of the contract of an export, which the package publishes."""
+        schema = self.schemas.get(EXPORT_CONTRACT)
+        if schema is None:
+            raise ResourceError(f"no schema of ekthesis binds the contract {EXPORT_CONTRACT}")
+        return schema
+
+    def exports(self) -> list[tuple[FieldPath, Export | None, str | None]]:
+        """Read each export that the record names, with its field path, or the reason for which it
+        breaks its contract; a link that names no file is left to the rule on source links."""
+        found: list[tuple[FieldPath, Export | None, str | None]] = []
+        for path, link in self.exposition().exports:
+            target = link_path(link, self.path.parent)
+            if target is not None:
+                export, reason = read_export(target, self.export_schema())
+                found.append((path, export, reason))
+        return found
 
     def finding(self, rule: Rule, field: FieldPath, message: str) -> Finding:
         """Build a finding of `rule` located at `field` of this record."""
@@ -289,13 +330,68 @@ def relation_requirements(record: BoundRecord) -> Iterator[Finding]:
         entry = record.registries.relations.get(relation.name)
         if source is None or target is None or entry is None or entry.requires is None:
             continue
-        if not source.authored and not target.authored:
+        if source.authored or target.authored:
+            continue
+        units = source.unit is not None and target.unit is not None
+        if units and entry.requires in published_classes(record.export_schema()):
+            continue
+        reason = (
+            "and no export contract publishes that class"
+            if units
+            else "and an idea referenced by a link names no unit of an export"
+        )
+        yield record.finding(
+            RELATION_REQUIREMENTS,
+            relation.path,
+            f"unverified: the relation {relation.name} requires a recorded {entry.requires} "
+            f"from {relation.source} to {relation.target}, {reason}",
+        )
+
+
+def export_conformance(record: BoundRecord) -> Iterator[Finding]:
+    """Yield a finding for each export that the record names and that breaks its contract."""
+    for path, _, reason in record.exports():
+        if reason is not None:
+            yield record.finding(EXPORT_CONFORMANCE, path, reason)
+
+
+def existing_units(record: BoundRecord) -> Iterator[Finding]:
+    """Yield a finding for each idea whose unit no conforming export of the record holds."""
+    held = {unit for _, export, _ in record.exports() if export for unit in export.units}
+    for idea in record.exposition().ideas.values():
+        if idea.unit is not None and idea.unit not in held:
             yield record.finding(
-                RELATION_REQUIREMENTS,
+                EXISTING_UNITS,
+                idea.path.child("unit"),
+                f"the unit {idea.unit} lies in no export that the record names",
+            )
+
+
+def recorded_relations(record: BoundRecord) -> Iterator[Finding]:
+    """
+    Yield a finding for each relation between two ideas naming units that no export records.
+
+    The relation requires a recorded relation of a class that the contract of an export publishes;
+    an export records it when one of its relations of that class joins the two units, in the
+    direction of the relation, or in either direction for a symmetric one.
+    """
+    exposition = record.exposition()
+    exports = [export for _, export, _ in record.exports() if export is not None]
+    published = published_classes(record.export_schema())
+    for relation in exposition.relations:
+        source = exposition.ideas.get(relation.source)
+        target = exposition.ideas.get(relation.target)
+        entry = record.registries.relations.get(relation.name)
+        if source is None or target is None or entry is None or entry.requires not in published:
+            continue
+        if source.unit is None or target.unit is None:
+            continue
+        if not recorded(exports, entry.requires, source.unit, target.unit):
+            yield record.finding(
+                RECORDED_RELATIONS,
                 relation.path,
-                f"unverified: the relation {relation.name} requires a recorded {entry.requires} "
-                f"from {relation.source} to {relation.target}, "
-                "and no source publishes its relations yet",
+                f"the relation {relation.name} requires a recorded {entry.requires} from "
+                f"{source.unit} to {target.unit}, and no export that the record names records it",
             )
 
 
@@ -324,6 +420,9 @@ RULES: tuple[Rule, ...] = (
     REGISTRY_MEMBERSHIP,
     SOURCE_LINKS,
     AUTHORED_RELATIONS,
+    EXPORT_CONFORMANCE,
+    EXISTING_UNITS,
+    RECORDED_RELATIONS,
     RELATION_REQUIREMENTS,
 )
 
@@ -333,5 +432,8 @@ RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
     registry_membership,
     source_links,
     authored_relations,
+    export_conformance,
+    existing_units,
+    recorded_relations,
     relation_requirements,
 )

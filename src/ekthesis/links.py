@@ -68,3 +68,27 @@ def resolve_link(link: str, base: Path) -> str | None:
         found = any(match["text"].casefold() == heading for match in _HEADING.finditer(text))
         kind = "heading"
     return None if found else f"the file {location} holds no {kind} {anchor}"
+
+
+def link_path(link: str, base: Path) -> Path | None:
+    """
+    Return the local file that the Markdown `link` names from the directory `base`, or `None`.
+
+    Parameters
+    ----------
+    link : str
+        Markdown link, written `[text](path#anchor)`.
+    base : Path
+        Directory against which a relative path is resolved.
+
+    Examples
+    --------
+    >>> link_path("[note](https://example.org/note.md)", Path(".")) is None
+    True
+    """
+    match = _LINK.match(link)
+    if match is None or urlsplit(match["target"]).scheme:
+        return None
+    location = match["target"].partition("#")[0]
+    path = (base / unquote(location)).resolve()
+    return path if location and path.is_file() else None

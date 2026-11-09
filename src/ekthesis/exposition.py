@@ -21,6 +21,8 @@ from .resources import AUTHORED_KINDS, RELATIONS
 SOURCE_BOUND = "source-bound"
 RELATION_SOURCE = "relation-source"
 RELATION_TARGET = "relation-target"
+REFERENCED_UNIT = "referenced-unit"
+EXPORT_LINK = "export-link"
 
 
 @dataclass(frozen=True)
@@ -36,11 +38,14 @@ class Idea:
         Field path of the idea in its record.
     kind : str or None
         Declared kind of an authored idea, or `None` for a referenced idea.
+    unit : str or None
+        Identifier of the unit of an export that the idea names, or `None`.
     """
 
     identifier: str
     path: FieldPath
     kind: str | None
+    unit: str | None = None
 
     @property
     def authored(self) -> bool:
@@ -71,11 +76,14 @@ class Exposition:
         Ideas by identifier; the first of two ideas sharing an identifier is kept.
     relations : tuple of Relation
         Relations in the order of the record.
+    exports : tuple of (FieldPath, str)
+        Each link to an export that the exposition names, with its field path.
     """
 
     source_bound: bool
     ideas: Mapping[str, Idea]
     relations: tuple[Relation, ...]
+    exports: tuple[tuple[FieldPath, str], ...] = ()
 
     @classmethod
     def read(cls, record: object, layout: SchemaLayout, idea_definition: str) -> "Exposition":
@@ -94,16 +102,37 @@ class Exposition:
         flags = [value for _, value in layout.role(SOURCE_BOUND).select(record)]
         ideas_collection = layout.collections[idea_definition]
         kind_field = _field_in(layout.registries, AUTHORED_KINDS, ideas_collection.items)
+        unit_field = (
+            layout.roles[REFERENCED_UNIT].relative_to(ideas_collection.items)
+            if REFERENCED_UNIT in layout.roles
+            else None
+        )
         ideas: dict[str, Idea] = {}
         for path, item in ideas_collection.items.select(record):
             identifier = _single(ideas_collection.identifier, item)
             kind = _single(kind_field, item) if kind_field is not None else None
+            unit = _single(unit_field, item) if unit_field else None
             if isinstance(identifier, str) and identifier not in ideas:
-                ideas[identifier] = Idea(identifier, path, kind if isinstance(kind, str) else None)
+                ideas[identifier] = Idea(
+                    identifier,
+                    path,
+                    kind if isinstance(kind, str) else None,
+                    unit if isinstance(unit, str) else None,
+                )
+        exports = (
+            tuple(
+                (path, value)
+                for path, value in layout.roles[EXPORT_LINK].select(record)
+                if isinstance(value, str)
+            )
+            if EXPORT_LINK in layout.roles
+            else ()
+        )
         return cls(
             source_bound=bool(flags and flags[0] is True),
             ideas=ideas,
             relations=tuple(_relations(record, layout)),
+            exports=exports,
         )
 
 
