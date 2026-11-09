@@ -52,7 +52,7 @@ properties:
     x-kind: table
     items: {$ref: '#/$defs/unit'}
     title: Units
-    description: every unit that a relation of the export names, each with its statement
+    description: the units of the source, each with its statement; every end of a relation is one of them
   relations:
     type: array
     x-kind: table
