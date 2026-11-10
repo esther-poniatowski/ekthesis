@@ -33,13 +33,13 @@ Pre-alpha. The package provides the contract `ekthesis:exposition@1` of an argum
 ekthesis check path/to/argument.yml
 ```
 
-The command reports each finding with its rule, its field and its severity, and exits with a nonzero code on an error. The option `--format sarif` replaces these lines with one SARIF 2.1.0 log in the [findings profile of Elenchos](https://github.com/esther-poniatowski/elenchos/blob/main/docs/profile.md), the format read by the gate Elenchos. The log goes to the standard output, or to the file named by `--output`, which a command run without a shell needs:
+The command reports each finding with its rule, its field and its severity. The exit status is 0 without an error, 1 with an error, and 2 on a usage error. The option `--format sarif` replaces these lines with one SARIF 2.1.0 log in the [findings profile of Elenchos](https://github.com/esther-poniatowski/elenchos/blob/main/docs/profile.md), the format read by the gate Elenchos. The output goes to the standard output, or to the file named by `-o`, `--output`, which a command run without a shell needs:
 
 ```sh
-ekthesis check --format sarif --output build/findings.sarif path/to/argument.yml
+ekthesis check --format sarif -o build/findings.sarif path/to/argument.yml
 ```
 
-The log writes the path of each record relative to the working directory, so every record must lie under that directory. A record that breaks its schema is checked by no other rule, and the log then declares its run incomplete. The exit code does not depend on the format. The [decision on the SARIF output](docs/adr/sarif-output.md) states how each finding maps onto a result.
+The log writes the path of each record relative to the root of the repository, so every record must lie under the root. The root is the option `-r`, `--root PATH`, otherwise the environment variable `EKTHESIS_ROOT`, otherwise the working directory. Ekthesis reads no settings file, so it searches no ancestor directory for one. A record that breaks its schema is checked by no other rule, and the log then declares its run incomplete. The exit status does not depend on the format. The option `-v`, `--version` prints the version. The [decision on the SARIF output](docs/adr/sarif-output.md) states how each finding maps onto a result.
 
 The repository also holds the decisions, theory notes and proposals carried from `gnomon` with their history. The [decision of `gnomon` on its scope](https://github.com/esther-poniatowski/gnomon/blob/45de45d9f362ffc6340cba3837cd44a46cd3b172/docs/adr/research-scope.md) states the boundary between the two tools.
 

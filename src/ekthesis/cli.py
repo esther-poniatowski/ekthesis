@@ -8,7 +8,12 @@ Commands
 info : Display diagnostic information.
 check : Check argument records against their schema and the rules on the provenance of ideas, and
     report the findings as text lines or as a SARIF log (`--format sarif`), written to the standard
-    output or to a file (`--output`).
+    output or to a file (`-o`, `--output`).
+
+The options follow the command-line conventions of the workspace. The root of the paths of a SARIF
+log is the option `-r`, `--root`, otherwise the environment variable `EKTHESIS_ROOT`, otherwise the
+working directory. Ekthesis reads no settings file, so it searches no ancestor directory for one.
+The exit status is 0 without a blocking finding, 1 with one, and 2 on a usage error.
 
 See Also
 --------
@@ -28,6 +33,9 @@ from .resources import packaged_resources
 from .sarif import repository_path, sarif_log
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
+
+ROOT_VARIABLE = "EKTHESIS_ROOT"
+"""Environment variable that names the root when the option `--root` is absent."""
 
 
 class OutputFormat(StrEnum):
@@ -57,41 +65,52 @@ def cli_check(
     output: Path | None = typer.Option(
         None,
         "--output",
+        "-o",
         dir_okay=False,
         help=(
-            "File to which the SARIF log is written, with its missing parent directories, in "
-            "place of the standard output; valid with --format sarif only."
+            "File to which the output is written, with its missing parent directories, in "
+            "place of the standard output."
+        ),
+    ),
+    root: Path | None = typer.Option(
+        None,
+        "--root",
+        "-r",
+        envvar=ROOT_VARIABLE,
+        exists=True,
+        file_okay=False,
+        help=(
+            "Root of the repository, against which a SARIF log writes the path of each record; "
+            f"defaults to ${ROOT_VARIABLE}, then to the working directory."
         ),
     ),
 ) -> None:
-    """Check argument records, and exit non-zero on a blocking finding."""
-    if output is not None and output_format is not OutputFormat.SARIF:
-        raise typer.BadParameter("requires --format sarif", param_hint="--output")
+    """Check argument records, and exit with status 1 on a blocking finding."""
     checker = Checker(packaged_resources())
     if output_format is OutputFormat.SARIF:
-        root = Path.cwd()
+        base = (root or Path.cwd()).resolve()
         for path in paths:
             try:
-                repository_path(path, root)
+                repository_path(path, base)
             except ValueError:
                 raise typer.BadParameter(
-                    f"{path} lies outside the working directory {root}", param_hint="PATHS"
+                    f"{path} lies outside the root {base}", param_hint="PATHS"
                 ) from None
         reports = [checker.report(path) for path in paths]
         findings = [finding for report in reports for finding in report.findings]
-        text = json.dumps(sarif_log(reports, root), indent=2, ensure_ascii=False)
-        if output is None:
-            typer.echo(text)
-        else:
-            _write(output, text + "\n")
+        lines = [json.dumps(sarif_log(reports, base), indent=2, ensure_ascii=False)]
     else:
         findings = checker.check(paths)
-        for finding in findings:
-            typer.echo(finding.format())
         blocking = sum(finding.severity.blocking for finding in findings)
-        typer.echo(
+        lines = [finding.format() for finding in findings]
+        lines.append(
             f"{len(paths)} records checked: {blocking} errors, {len(findings) - blocking} warnings"
         )
+    if output is None:
+        for line in lines:
+            typer.echo(line)
+    else:
+        _write(output, "".join(f"{line}\n" for line in lines))
     if any(finding.severity.blocking for finding in findings):
         raise typer.Exit(code=1)
 
@@ -102,17 +121,26 @@ def _write(path: Path, text: str) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
     except OSError as error:
-        typer.echo(f"cannot write the log {path}: {error}", err=True)
+        typer.echo(f"cannot write the output {path}: {error}", err=True)
         raise typer.Exit(code=2) from None
+
+
+def _print_version(value: bool) -> None:
+    """Print the version and exit, before the group requires a command."""
+    if value:
+        typer.echo(__version__)
+        raise typer.Exit()
 
 
 @app.callback()
 def main_callback(
-    version: bool = typer.Option(
-        False, "--version", "-v", help="Show the package version and exit."
+    version: bool = typer.Option(  # pylint: disable=unused-argument
+        False,
+        "--version",
+        "-v",
+        is_eager=True,
+        callback=_print_version,
+        help="Show the package version and exit.",
     )
 ) -> None:
     """Root command for the package command-line interface."""
-    if version:
-        typer.echo(__version__)
-        raise typer.Exit()

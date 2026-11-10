@@ -316,11 +316,14 @@ def test_output_option_writes_the_log_to_a_file(in_fixtures: Path, tmp_path: Pat
     assert code == run_check(*RECORDS)[0]
 
 
-def test_output_option_requires_the_sarif_format(in_fixtures: Path, tmp_path: Path) -> None:
-    """The option `--output` is a usage error with the text format."""
-    code, _ = run_check("--output", str(tmp_path / "log.txt"), "valid.yml")
-    assert code == 2
-    assert not (tmp_path / "log.txt").exists()
+def test_short_output_option_writes_the_text_lines_to_a_file(
+    in_fixtures: Path, tmp_path: Path
+) -> None:
+    """The option `-o` writes the text lines to a file, as the standard output would hold them."""
+    target = tmp_path / "build" / "findings.txt"
+    code, output = run_check("-o", str(target), *RECORDS)
+    assert output == ""
+    assert (code, target.read_text(encoding="utf-8")) == run_check(*RECORDS)
 
 
 def test_record_outside_the_working_directory_is_refused(in_fixtures: Path, tmp_path: Path) -> None:
@@ -328,6 +331,46 @@ def test_record_outside_the_working_directory_is_refused(in_fixtures: Path, tmp_
     (tmp_path / "record.yml").write_text((FIXTURES / "valid.yml").read_text())
     code, _ = run_check("--format", "sarif", str(tmp_path / "record.yml"))
     assert code == 2
+
+
+# --- Root ------------------------------------------------------------------------------------------
+
+
+def _artifact_uri(log: JsonObject) -> str:
+    """Return the URI of the first artifact location of the single run of `log`."""
+    location = results(log)[0]["locations"][0]["physicalLocation"]  # type: ignore[index]
+    uri: str = location["artifactLocation"]["uri"]  # type: ignore[index]
+    return uri
+
+
+def test_root_option_and_variable_set_the_root_of_the_paths(
+    in_fixtures: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`-r`, `--root` and `EKTHESIS_ROOT` replace the working directory, the option first."""
+    record = "planted/unique-identifiers.yml"
+    expected = _artifact_uri(sarif(record))
+    for option in ("-r", "--root"):
+        monkeypatch.delenv("EKTHESIS_ROOT", raising=False)
+        log = json.loads(run_check("--format", "sarif", option, "planted", record)[1])
+        assert _artifact_uri(log) == expected.replace("planted/", "", 1)
+    monkeypatch.setenv("EKTHESIS_ROOT", str(FIXTURES / "planted"))
+    assert _artifact_uri(sarif(record)) == expected.replace("planted/", "", 1)
+    log = json.loads(run_check("--format", "sarif", "--root", ".", record)[1])
+    assert _artifact_uri(log) == expected
+
+
+def test_record_outside_the_root_option_is_refused(in_fixtures: Path) -> None:
+    """A record outside the root named by `--root` is a usage error."""
+    code, _ = run_check("--format", "sarif", "--root", "planted", "valid.yml")
+    assert code == 2
+
+
+def test_short_version_option_prints_the_version() -> None:
+    """The option `-v` prints the version, as `--version` does."""
+    for option in ("-v", "--version"):
+        result = CliRunner().invoke(app, [option])
+        assert result.exit_code == 0
+        assert result.output.strip()
 
 
 # --- Known failures of the validator ---------------------------------------------------------------

@@ -16,7 +16,7 @@ The [findings profile](https://github.com/esther-poniatowski/elenchos/blob/main/
 
 ## Decision
 
-**Root.** The working directory stands for the root `SRCROOT` of the repository. Each artifact URI and each resource `path:` is the path of the record relative to that directory. A record outside the working directory has no such path, so the command refuses it with the exit code 2 of a usage error, before checking any record. ^root
+**Root.** The root `SRCROOT` of the repository is the option `-r`, `--root`, otherwise the environment variable `EKTHESIS_ROOT`, otherwise the working directory, as the command-line conventions of the workspace order them. Each artifact URI and each resource `path:` is the path of the record relative to that root. A record outside the root has no such path, so the command refuses it with the exit code 2 of a usage error, before checking any record. ^root
 
 **Resource.** The resource is `id:<identifier>` when three conditions hold:
 
@@ -36,7 +36,7 @@ Otherwise the resource is `path:<path>`. The identifier is read even when the re
 
 **Completeness.** A record that cannot be read, or that fails `schema-conformance`, is checked by no other rule, since those rules read the record through the layout of its schema. A run that holds such a record is therefore incomplete. It declares one invocation whose `executionSuccessful` is `false`, with one notification of level `error` per such record, naming the record and the skipped rules. A run that applies every rule to every record writes no invocation, which the profile leaves optional. ^completeness
 
-**Output path.** The option `--output PATH` writes the log to a file, creating its missing parent directories, in place of the standard output. It is valid with `--format sarif` only, and is otherwise refused with the exit code 2 of a usage error. A log that cannot be written ends the command with the exit code 2, outside the exit statuses that a consumer declares, so the gate reports the check as failed. ^output
+**Output path.** The option `-o`, `--output PATH` writes the output to a file, creating its missing parent directories, in place of the standard output. Under the command-line conventions of the workspace, it writes the text lines as well as the log. An output that cannot be written ends the command with the exit code 2, outside the exit statuses that a consumer declares, so the gate reports the check as failed. ^output
 
 ## Constraints that decide the form
 
