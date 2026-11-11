@@ -37,3 +37,6 @@ docs/_build/
 
 # Schema closure materialized by kleisis
 .schema-resources/
+
+# Task workspaces of agents, kept out of the repository.
+.agent-work/

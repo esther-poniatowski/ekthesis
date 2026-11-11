@@ -1,5 +1,9 @@
 """
-Check of argument records against their schema and the rules on the provenance of ideas.
+Check of records against their schema and the rules of their contract.
+
+A record of the contract `ekthesis:exposition@1` is checked by the rules on the provenance of
+ideas, and a record of `ekthesis:audience@1` by the rules on audiences. The audience records of one
+run are also checked together, since their parents and their confused communities name each other.
 
 Classes
 -------
@@ -16,15 +20,31 @@ from pathlib import Path
 
 import yaml
 
-from .findings import Finding, Position
-from .layout import FieldPath, SchemaLayout
-from .resources import BINDING_FIELD, Resources
-from .rules import RECORD_RULES, RULES, SCHEMA_CONFORMANCE, BoundRecord, schema_conformance
-
-SKIPPED_ON_NONCONFORMANCE: tuple[str, ...] = tuple(
-    rule.identifier for rule in RULES if rule is not SCHEMA_CONFORMANCE
+from .audiences import (
+    AUDIENCE_CONTRACT,
+    Audience,
+    RunEntry,
+    read_audience,
+    record_findings,
+    run_findings,
 )
-"""Rules that a record breaking `schema-conformance` is not checked by, in the order of `RULES`."""
+from .findings import Finding
+from .layout import FieldPath, SchemaLayout
+from .positions import parse, position
+from .resources import BINDING_FIELD, Resources
+from .rules import (
+    CONTRACT_RULES,
+    EXPOSITION_CONTRACT,
+    RECORD_RULES,
+    SCHEMA_CONFORMANCE,
+    BoundRecord,
+    schema_conformance,
+)
+
+SKIPPED_ON_UNKNOWN_CONTRACT: tuple[str, ...] = tuple(
+    dict.fromkeys(rule.identifier for rules in CONTRACT_RULES.values() for rule in rules)
+)
+"""Rules that a record naming no known contract is not checked by: the rules of every contract."""
 
 
 @dataclass(frozen=True)
@@ -46,14 +66,33 @@ class RecordReport:
         ancestor of that node.
     skipped : tuple of str
         Identifiers of the rules that were not applied to the record, empty when every rule was
-        applied. A record that cannot be read, or that breaks `schema-conformance`, skips every
-        other rule.
+        applied. A record that breaks `schema-conformance` skips the other rules of its contract,
+        and a record that cannot be read, or names no known contract, skips the rules of every
+        contract.
+    contract : str or None
+        Contract that the record names in its field `_schema`, known or not, or `None` when the
+        record cannot be read or names none.
     """
 
     path: Path
     identifier: str | None
     findings: tuple[Finding, ...]
     skipped: tuple[str, ...] = ()
+    contract: str | None = None
+
+    @property
+    def breaks_schema(self) -> bool:
+        """Whether the record cannot be read or breaks its schema, so that its check is partial."""
+        return any(finding.rule == SCHEMA_CONFORMANCE.identifier for finding in self.findings)
+
+
+@dataclass(frozen=True)
+class _Reading:
+    """One record of a run, read and checked alone, with its node tree and its audience."""
+
+    report: RecordReport
+    node: yaml.Node | None
+    audience: Audience | None = None
 
 
 @dataclass
@@ -61,8 +100,9 @@ class Checker:
     """
     Applies the rules to records, with given schemas and registries.
 
-    A record is checked by the rules of the provenance of ideas only once it conforms to its schema,
-    since these rules read its fields through the layout of that schema.
+    A record is checked by the rules of its contract only once it conforms to its schema, since
+    these rules read its fields through that schema. The audience records of a run are then checked
+    together.
 
     Attributes
     ----------
@@ -75,16 +115,47 @@ class Checker:
 
     def check(self, paths: Iterable[Path]) -> list[Finding]:
         """Return the findings of every record of `paths`, record by record."""
-        return [finding for path in paths for finding in self.check_record(path)]
+        return [finding for report in self.reports(paths) for finding in report.findings]
 
     def check_record(self, path: Path) -> list[Finding]:
-        """Return the findings of the record at `path`."""
+        """Return the findings of the record at `path`, checked as a run of one record."""
         return list(self.report(path).findings)
 
     def report(self, path: Path) -> RecordReport:
-        """Return the findings of the record at `path`, with the identifier that it declares."""
+        """Return the report of the record at `path`, checked as a run of one record."""
+        [report] = self.reports([path])
+        return report
+
+    def reports(self, paths: Iterable[Path]) -> list[RecordReport]:
+        """
+        Return the report of each record of `paths`, in order, the records forming one run.
+
+        Each record is first checked alone. The audience records of the run that declare an
+        identifier are then checked together, and each finding of that check joins the report of
+        the record at fault.
+        """
+        readings = [self._read(path) for path in paths]
+        owners: list[int] = []
+        entries: list[RunEntry] = []
+        for index, reading in enumerate(readings):
+            report = reading.report
+            if report.contract == AUDIENCE_CONTRACT and report.identifier is not None:
+                owners.append(index)
+                entries.append(RunEntry(report.path, report.identifier, reading.audience))
+        added = {owners[position]: found for position, found in run_findings(entries).items()}
+        return [
+            replace(
+                reading.report,
+                findings=reading.report.findings
+                + tuple(_located(finding, reading.node) for finding in added.get(index, [])),
+            )
+            for index, reading in enumerate(readings)
+        ]
+
+    def _read(self, path: Path) -> _Reading:
+        """Read the record at `path`, and check it alone."""
         try:
-            data, node = _parse(path)
+            data, node = parse(path)
         except (OSError, UnicodeDecodeError, yaml.YAMLError) as error:
             finding = Finding(
                 SCHEMA_CONFORMANCE.identifier,
@@ -93,31 +164,44 @@ class Checker:
                 SCHEMA_CONFORMANCE.severity,
                 f"cannot read the record: {error}",
             )
-            return RecordReport(path, None, (finding,), SKIPPED_ON_NONCONFORMANCE)
-        findings = tuple(
-            replace(finding, position=_position(node, finding.locus()))
-            for finding in self._findings(path, data)
-        )
-        conforms = all(finding.rule != SCHEMA_CONFORMANCE.identifier for finding in findings)
-        skipped = () if conforms else SKIPPED_ON_NONCONFORMANCE
-        return RecordReport(path, self._identifier(data), findings, skipped)
-
-    def _findings(self, path: Path, data: object) -> list[Finding]:
-        """Return the findings of the record `data` read from `path`."""
+            return _Reading(RecordReport(path, None, (finding,), SKIPPED_ON_UNKNOWN_CONTRACT), None)
+        named = data.get(BINDING_FIELD) if isinstance(data, Mapping) else None
+        contract = named if isinstance(named, str) else None
         findings = list(schema_conformance(path, data, self.resources.schemas))
-        if findings:
-            return findings
-        assert isinstance(data, Mapping), "a conforming record is a mapping"
+        audience = None
+        if not findings:
+            if contract == AUDIENCE_CONTRACT:
+                audience = read_audience(path, data)
+                findings.extend(record_findings(audience))
+            elif contract == EXPOSITION_CONTRACT:
+                findings.extend(self._exposition_findings(path, data, contract))
+        report = RecordReport(
+            path,
+            self._identifier(data),
+            tuple(_located(finding, node) for finding in findings),
+            self._skipped(contract, findings),
+            contract,
+        )
+        return _Reading(report, node, audience)
+
+    def _exposition_findings(self, path: Path, data: object, contract: str) -> list[Finding]:
+        """Return the findings of the rules on argument records, for a conforming record."""
         record = BoundRecord(
             path,
             data,
-            self._layout(data[BINDING_FIELD]),
+            self._layout(contract),
             self.resources.registries,
             self.resources.schemas,
         )
-        for rule in RECORD_RULES:
-            findings.extend(rule(record))
-        return findings
+        return [finding for rule in RECORD_RULES for finding in rule(record)]
+
+    def _skipped(self, contract: str | None, findings: list[Finding]) -> tuple[str, ...]:
+        """Return the rules skipped on a record of `contract` with the findings `findings`."""
+        if all(finding.rule != SCHEMA_CONFORMANCE.identifier for finding in findings):
+            return ()
+        if contract is None or self.resources.schemas.get(contract) is None:
+            return SKIPPED_ON_UNKNOWN_CONTRACT
+        return tuple(rule.identifier for rule in CONTRACT_RULES.get(contract, ()))
 
     def _identifier(self, data: object) -> str | None:
         """Return the identifier that the record `data` declares, if it can be read."""
@@ -141,46 +225,6 @@ class Checker:
         return self._layouts[contract]
 
 
-def _parse(path: Path) -> tuple[object, yaml.Node | None]:
-    """Parse the record at `path` as `yaml.safe_load` does, and return its node tree as well."""
-    loader = yaml.SafeLoader(path.read_text(encoding="utf-8"))
-    try:
-        node = loader.get_single_node()
-        return (loader.construct_document(node) if node is not None else None), node
-    finally:
-        loader.dispose()
-
-
-def _position(node: yaml.Node | None, at: FieldPath) -> Position | None:
-    """
-    Return where the node at `at` starts in the tree `node`, or else its closest existing ancestor.
-
-    A key is matched by its text as written, and the last of two equal keys is kept, as the
-    loader keeps it. When the path leaves the tree, the last node that it reaches is located, since
-    the absence of a node is detected in its parent. The root, the whole record, yields `None`.
-    """
-    if node is None:
-        return None
-    current, depth = node, 0
-    for segment in at.segments:
-        child = _child(current, segment)
-        if child is None:
-            break
-        current, depth = child, depth + 1
-    if not depth:
-        return None
-    return Position(current.start_mark.line + 1, current.start_mark.column + 1)
-
-
-def _child(node: yaml.Node, segment: str | int) -> yaml.Node | None:
-    """Return the child of `node` at `segment`, or `None` when `node` holds no such child."""
-    if isinstance(node, yaml.SequenceNode) and isinstance(segment, int):
-        return node.value[segment] if 0 <= segment < len(node.value) else None
-    if isinstance(node, yaml.MappingNode):
-        values = [
-            value
-            for key, value in node.value
-            if isinstance(key, yaml.ScalarNode) and key.value == str(segment)
-        ]
-        return values[-1] if values else None
-    return None
+def _located(finding: Finding, node: yaml.Node | None) -> Finding:
+    """Return `finding` with the position of its locus in the node tree `node` of its record."""
+    return replace(finding, position=position(node, finding.locus()))

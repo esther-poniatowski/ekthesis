@@ -6,9 +6,11 @@ Defines commands available via `python -m ekthesis` or `ekthesis` if installed a
 Commands
 --------
 info : Display diagnostic information.
-check : Check argument records against their schema and the rules on the provenance of ideas, and
-    report the findings as text lines or as a SARIF log (`--format sarif`), written to the standard
-    output or to a file (`-o`, `--output`).
+check : Check argument records and audience records against their schema and the rules of their
+    contract, and report the findings as text lines or as a SARIF log (`--format sarif`), written to
+    the standard output or to a file (`-o`, `--output`).
+scope-table : Derive the scope table of audience records and write it (`-t`, `--table`), or, with
+    `--check`, report a written table that differs from the derived one, in the formats of `check`.
 
 The options follow the command-line conventions of the workspace. The root of the paths of a SARIF
 log is the option `-r`, `--root`, otherwise the environment variable `EKTHESIS_ROOT`, otherwise the
@@ -22,15 +24,19 @@ typer.Typer
 """
 
 import json
+from dataclasses import replace
 from enum import StrEnum
 from pathlib import Path
 
 import typer
 
 from . import info, __version__
-from .check import Checker
+from .audiences import AUDIENCE_CONTRACT, load_audience
+from .check import Checker, RecordReport
+from .provenance import git_sources
 from .resources import packaged_resources
 from .sarif import repository_path, sarif_log
+from .scope_table import ScopeTable
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -51,68 +57,158 @@ def cli_info() -> None:
     typer.echo(info())
 
 
+FORMAT_OPTION = typer.Option(
+    OutputFormat.TEXT,
+    "--format",
+    help=(
+        "Output format: one line per finding and a summary, or one SARIF 2.1.0 log in the "
+        "findings profile of Elenchos, whose paths are relative to the root."
+    ),
+)
+OUTPUT_OPTION = typer.Option(
+    None,
+    "--output",
+    "-o",
+    dir_okay=False,
+    help=(
+        "File to which the output is written, with its missing parent directories, in "
+        "place of the standard output."
+    ),
+)
+ROOT_OPTION = typer.Option(
+    None,
+    "--root",
+    "-r",
+    envvar=ROOT_VARIABLE,
+    exists=True,
+    file_okay=False,
+    help=(
+        "Root of the repository, against which a SARIF log writes the path of each record; "
+        f"defaults to ${ROOT_VARIABLE}, then to the working directory."
+    ),
+)
+
+
 @app.command("check")
 def cli_check(
     paths: list[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Records to check."),
-    output_format: OutputFormat = typer.Option(
-        OutputFormat.TEXT,
-        "--format",
-        help=(
-            "Output format: one line per finding and a summary, or one SARIF 2.1.0 log in the "
-            "findings profile of Elenchos, whose paths are relative to the working directory."
-        ),
-    ),
-    output: Path | None = typer.Option(
-        None,
-        "--output",
-        "-o",
-        dir_okay=False,
-        help=(
-            "File to which the output is written, with its missing parent directories, in "
-            "place of the standard output."
-        ),
-    ),
-    root: Path | None = typer.Option(
-        None,
-        "--root",
-        "-r",
-        envvar=ROOT_VARIABLE,
-        exists=True,
-        file_okay=False,
-        help=(
-            "Root of the repository, against which a SARIF log writes the path of each record; "
-            f"defaults to ${ROOT_VARIABLE}, then to the working directory."
-        ),
-    ),
+    output_format: OutputFormat = FORMAT_OPTION,
+    output: Path | None = OUTPUT_OPTION,
+    root: Path | None = ROOT_OPTION,
 ) -> None:
-    """Check argument records, and exit with status 1 on a blocking finding."""
-    checker = Checker(packaged_resources())
+    """Check argument and audience records, and exit with status 1 on a blocking finding."""
+    base = _base(root, paths if output_format is OutputFormat.SARIF else [])
+    reports = Checker(packaged_resources()).reports(paths)
+    findings = [finding for report in reports for finding in report.findings]
+    blocking = sum(finding.severity.blocking for finding in findings)
+    summary = (
+        f"{len(paths)} records checked: {blocking} errors, {len(findings) - blocking} warnings"
+    )
+    _emit(reports, output_format, output, base, summary)
+    if blocking:
+        raise typer.Exit(code=1)
+
+
+@app.command("scope-table")
+def cli_scope_table(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    paths: list[Path] = typer.Argument(
+        ..., exists=True, dir_okay=False, help="Audience records of the table."
+    ),
+    table: Path = typer.Option(
+        ..., "--table", "-t", dir_okay=False, help="File of the scope table."
+    ),
+    check: bool = typer.Option(
+        False,
+        "--check",
+        help=(
+            "Write nothing, and report a table that differs from the one derived from the records."
+        ),
+    ),
+    output_format: OutputFormat = FORMAT_OPTION,
+    output: Path | None = OUTPUT_OPTION,
+    root: Path | None = ROOT_OPTION,
+) -> None:
+    """Derive the scope table of audience records, and write it or check it."""
+    located = [*paths, table] if check else paths
+    base = _base(root, located if output_format is OutputFormat.SARIF else [])
+    errors = _audience_errors(paths)
+    blocking = sum(len(report.findings) for report in errors)
+    if blocking:
+        summary = f"{len(paths)} audience records checked: {blocking} errors; no table derived"
+        _emit(errors, output_format, output, base, summary)
+        raise typer.Exit(code=1)
+    derived = ScopeTable.derive(load_audience(path) for path in paths)
+    if check:
+        stale = RecordReport(table, None, tuple(derived.differences(table)))
+        state = f"{len(stale.findings)} differences" if stale.findings else "current"
+        summary = f"{table}: {state}, {len(derived.rows)} audiences derived"
+        _emit([*errors, stale], output_format, output, base, summary)
+        if stale.findings:
+            raise typer.Exit(code=1)
+        return
+    _write(table, derived.text(git_sources(base, paths)))
+    _emit(errors, output_format, output, base, f"{table}: {len(derived.rows)} audiences written")
+
+
+def _audience_errors(paths: list[Path]) -> list[RecordReport]:
+    """
+    Check the audience records `paths` as one run, and return the report of each with its errors.
+
+    The warnings of the records are left to `ekthesis check`. A record naming a known contract
+    other than the audience contract ends the command with the exit code 2 of a usage error. A
+    record naming no known contract fails `schema-conformance`, as in `ekthesis check`.
+    """
+    resources = packaged_resources()
+    reports = Checker(resources).reports(paths)
+    for report in reports:
+        contract = report.contract
+        if contract not in (None, AUDIENCE_CONTRACT) and resources.schemas.get(contract):
+            raise typer.BadParameter(
+                f"{report.path} names the contract {contract}, not {AUDIENCE_CONTRACT}",
+                param_hint="PATHS",
+            )
+    return [
+        replace(report, findings=tuple(f for f in report.findings if f.severity.blocking))
+        for report in reports
+    ]
+
+
+def _base(root: Path | None, located: list[Path]) -> Path:
+    """
+    Return the root of the paths of a SARIF log, and refuse each path of `located` outside it.
+
+    The root is `root`, otherwise the working directory. A path outside it ends the command with
+    the exit code 2 of a usage error, before any record is checked.
+    """
+    base = (root or Path.cwd()).resolve()
+    for path in located:
+        try:
+            repository_path(path, base)
+        except ValueError:
+            raise typer.BadParameter(
+                f"{path} lies outside the root {base}", param_hint="PATHS"
+            ) from None
+    return base
+
+
+def _emit(
+    reports: list[RecordReport],
+    output_format: OutputFormat,
+    output: Path | None,
+    base: Path,
+    summary: str,
+) -> None:
+    """Write the findings of `reports`, as text lines closed by `summary` or as a SARIF log."""
     if output_format is OutputFormat.SARIF:
-        base = (root or Path.cwd()).resolve()
-        for path in paths:
-            try:
-                repository_path(path, base)
-            except ValueError:
-                raise typer.BadParameter(
-                    f"{path} lies outside the root {base}", param_hint="PATHS"
-                ) from None
-        reports = [checker.report(path) for path in paths]
-        findings = [finding for report in reports for finding in report.findings]
         lines = [json.dumps(sarif_log(reports, base), indent=2, ensure_ascii=False)]
     else:
-        findings = checker.check(paths)
-        blocking = sum(finding.severity.blocking for finding in findings)
-        lines = [finding.format() for finding in findings]
-        lines.append(
-            f"{len(paths)} records checked: {blocking} errors, {len(findings) - blocking} warnings"
-        )
+        lines = [finding.format() for report in reports for finding in report.findings]
+        lines.append(summary)
     if output is None:
         for line in lines:
             typer.echo(line)
     else:
         _write(output, "".join(f"{line}\n" for line in lines))
-    if any(finding.severity.blocking for finding in findings):
-        raise typer.Exit(code=1)
 
 
 def _write(path: Path, text: str) -> None:

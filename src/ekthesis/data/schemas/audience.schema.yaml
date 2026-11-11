@@ -1,0 +1,231 @@
+# Audience record of one readership, checked by `ekthesis check`.
+# The decision on audiences states the meaning of each field. A record of another field names an
+# audience by a logical target typed by this contract; the record itself declares no register.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: audience.schema.yaml
+title: Audience
+description: >-
+  An audience record describes one readership independently of any project: who its readers are,
+  the concepts that they hold, and how they judge a claim.
+type: object
+additionalProperties: false
+required: [_schema, identity]
+x-identifier: identity.id
+properties:
+  _schema:
+    const: 'ekthesis:audience@1'
+    title: Schema
+    description: identifier of the contract that the record follows
+    examples: ['ekthesis:audience@1']
+  metadata:
+    type: object
+    title: Metadata
+    description: >-
+      fields reserved to the consumer, such as those of the index entry of the file; the consumer
+      fixes them, and `ekthesis` does not check them
+  identity:
+    $ref: '#/$defs/identity'
+    title: Identity
+    description: who the readers are, which readerships they narrow, and which readerships they must not be confused with
+  knowledge:
+    type: array
+    x-kind: table
+    items: {$ref: '#/$defs/knowledge-item'}
+    title: Knowledge
+    description: >-
+      the concepts held by the readers, each with its levels; a concept that the readers do not
+      hold is absent, and the meaning of a concept lives in the unit that states it
+  evaluation:
+    $ref: '#/$defs/evaluation'
+    title: Evaluation
+    description: the conditions under which the readers accept a claim, and the constructions that they cannot assess
+
+$defs:
+  id:
+    type: string
+    pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    x-kind: label
+    description: a stable key in lower kebab-case, so that renaming a label leaves every reference valid
+
+  label:
+    type: string
+    pattern: '^\S(?:[^\n]*[^.\s])?$'
+    x-kind: markdown-line
+    description: a plain-text name on one line, without surrounding spaces and without a final period
+
+  gloss:
+    type: string
+    pattern: '^(?![^\n]*(?:(?<!\be\.g)(?<!\bi\.e)(?<!\bcf)(?<!\bvs)(?<!\betc)(?<!\bal)\.|[!?])\s+[A-Z])[^\n]*(?:[^.\s]|\betc\.|\bal\.)$'
+    x-kind: markdown-line
+    description: >-
+      a single sentence on one line, closing without a period, as a dictionary gloss does; a
+      period, an exclamation or a question mark followed by a capital marks a second sentence,
+      except after the abbreviations e.g., i.e., cf., vs., etc. and et al.
+
+  text:
+    type: string
+    minLength: 1
+    x-kind: markdown-line
+    description: a non-empty text on one line
+
+  logical-target:
+    type: string
+    minLength: 1
+    x-kind: label
+    description: >-
+      a logical target, written in the form of its consumer until Anagraphe publishes the form of
+      a logical target; like the field `denotes` of a notation entry of Onomasia, it is checked
+      only as non-empty text
+
+  identity:
+    type: object
+    additionalProperties: false
+    required: [id, label, gloss]
+    properties:
+      id:
+        $ref: '#/$defs/id'
+        title: Identifier
+        description: the identifier of the audience, unique among the audience records of a run, by which other records name it
+        examples: [artificial-networks-researchers]
+      label:
+        $ref: '#/$defs/label'
+        title: Label
+        description: the name of the readership
+        examples: [researchers studying artificial networks]
+      gloss:
+        $ref: '#/$defs/gloss'
+        title: Gloss
+        description: the readers, described in one sentence
+        examples: [readers who study information processing in artificial networks]
+      narrows:
+        type: array
+        x-kind: list
+        uniqueItems: true
+        items: {$ref: '#/$defs/id'}
+        title: Narrows
+        description: >-
+          the identifiers of the parent audiences, of which this one is a subtype; a subtype
+          inherits the knowledge of each parent, and no chain of parents returns to the audience
+        examples: [[artificial-networks-researchers]]
+      representatives:
+        type: array
+        x-kind: table
+        items: {$ref: '#/$defs/representative'}
+        title: Representatives
+        description: researchers typical of the readership, which calibrate what a text may assume
+      confusions:
+        type: array
+        x-kind: records
+        items: {$ref: '#/$defs/confusion'}
+        title: Confusions
+        description: the readerships that a text for these readers must not address instead
+
+  representative:
+    type: object
+    additionalProperties: false
+    required: [name]
+    properties:
+      name:
+        $ref: '#/$defs/text'
+        title: Name
+        description: the name of the researcher
+        examples: [Claire Sergent]
+      profile:
+        $ref: '#/$defs/logical-target'
+        title: Profile
+        description: the logical target of the contact profile of the researcher, when one exists
+        examples: [sergent_claire]
+
+  confusion:
+    type: object
+    additionalProperties: false
+    required: [target_readers, non_target_readers]
+    oneOf:
+      - title: Declared community
+        description: a readership described by an audience record of the run
+        required: [community]
+      - title: Undeclared community
+        description: a readership described by no audience record
+        required: [undeclared]
+    properties:
+      community:
+        $ref: '#/$defs/id'
+        title: Community
+        description: the identifier of an audience record confused with this one
+        examples: [biological-networks-researchers]
+      undeclared:
+        $ref: '#/$defs/text'
+        title: Undeclared community
+        description: a community confused with this one, and described by no audience record
+        examples: [machine-learning engineers]
+      target_readers:
+        $ref: '#/$defs/text'
+        title: Target readers
+        description: the object of study and the approach of the readers of this record
+      non_target_readers:
+        $ref: '#/$defs/text'
+        title: Non-target readers
+        description: the object of study and the approach of the community confused with the readers
+
+  knowledge-item:
+    type: object
+    additionalProperties: false
+    oneOf:
+      - title: Declared concept
+        description: a concept stated by a unit of a source, which its logical target designates
+        required: [concept]
+      - title: Undeclared concept
+        description: a concept stated by no source yet, reported as a warning until a source states it
+        required: [undeclared]
+    properties:
+      concept:
+        $ref: '#/$defs/logical-target'
+        title: Concept
+        description: the logical target of the unit that states the concept
+        examples: ['gnomon:concept.population-coding']
+      undeclared:
+        $ref: '#/$defs/text'
+        title: Undeclared concept
+        description: a concept stated by no source yet, named until a source states it
+        examples: [spectral analysis]
+      depth:
+        title: Depth
+        description: how much of the content of the concept the readers know, in the terms of education
+        x-kind: label
+        oneOf:
+          - {const: basic, description: the readers know the elementary content}
+          - {const: undergraduate, description: the readers know the content of an undergraduate course}
+          - {const: graduate, description: the readers know the content of a graduate course}
+          - {const: research, description: the readers know the content of current research}
+      skill:
+        title: Skill
+        description: what the readers can do with the concept
+        x-kind: label
+        oneOf:
+          - {const: reads, description: the readers follow a text using the concept}
+          - {const: applies, description: the readers use the concept in their own work, as a given tool}
+          - {const: masters, description: the readers adapt and combine the concept with other tools}
+          - {const: develops, description: the readers extend the concept itself}
+      example_skills:
+        type: array
+        x-kind: list
+        items: {$ref: '#/$defs/text'}
+        title: Example skills
+        description: examples of what the readers can do with the concept
+
+  evaluation:
+    type: object
+    additionalProperties: false
+    properties:
+      accepts:
+        type: array
+        x-kind: list
+        items: {$ref: '#/$defs/gloss'}
+        title: Accepts
+        description: the conditions under which the readers accept a claim, one per item
+      cannot_assess:
+        type: array
+        x-kind: list
+        items: {$ref: '#/$defs/gloss'}
+        title: Cannot assess
+        description: the constructions that the readers cannot assess, one per item

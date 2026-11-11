@@ -1,0 +1,9 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: readers-with-an-undeclared-concept
+  label: readers with an undeclared concept
+  gloss: readers whose record names a concept that no source states yet
+
+knowledge:
+  - {undeclared: spectral analysis, depth: undergraduate}

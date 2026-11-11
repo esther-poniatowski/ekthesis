@@ -2,7 +2,9 @@
 Rules checked on an argument record, one function per rule.
 
 The first rule binds a record to its schema and validates it. The other rules read a record that
-conforms to its schema, through the layout of that schema; each rule yields its findings.
+conforms to its schema, through the layout of that schema; each rule yields its findings. The rules
+on audience records are stated in `ekthesis.audiences`, and the rule on a scope table in
+`ekthesis.scope_table`; this module gathers every rule, and the rules applied to each contract.
 
 Classes
 -------
@@ -34,10 +36,15 @@ relation_requirements(record)
 
 Attributes
 ----------
+EXPOSITION_CONTRACT : str
+    The contract that an argument record follows.
+CONTRACT_RULES : Mapping of str to tuple of Rule
+    The rules applied to a record of each contract once it conforms to its schema.
 RULES : tuple of Rule
-    Every rule of the check, with its summary and the severity of its findings.
+    Every rule of `ekthesis`, with its summary and the severity of its findings: the rules on
+    argument records, the rules on audience records, and the rule on a scope table.
 RECORD_RULES : tuple of callables
-    The rules applied to a record that conforms to its schema, in order.
+    The rules applied to an argument record that conforms to its schema, in order.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -46,6 +53,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
 
+from .audiences import AUDIENCE_CONTRACT, AUDIENCE_RULES
 from .errors import ResourceError
 from .exports import EXPORT_CONTRACT, Export, published_classes, read_export, recorded
 from .exposition import RELATION_SOURCE, Exposition, Idea
@@ -53,6 +61,9 @@ from .findings import Finding, Rule, Severity
 from .layout import FieldPath, SchemaLayout
 from .links import link_path, resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
+from .scope_table import SCOPE_TABLE_CURRENT
+
+EXPOSITION_CONTRACT = "ekthesis:exposition@1"
 
 SCHEMA_CONFORMANCE = Rule(
     "schema-conformance",
@@ -413,8 +424,7 @@ def _describe(idea: Idea) -> str:
     )
 
 
-RULES: tuple[Rule, ...] = (
-    SCHEMA_CONFORMANCE,
+EXPOSITION_RULES: tuple[Rule, ...] = (
     UNIQUE_IDENTIFIERS,
     EXISTING_REFERENCES,
     REGISTRY_MEMBERSHIP,
@@ -424,6 +434,18 @@ RULES: tuple[Rule, ...] = (
     EXISTING_UNITS,
     RECORDED_RELATIONS,
     RELATION_REQUIREMENTS,
+)
+
+CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
+    EXPOSITION_CONTRACT: EXPOSITION_RULES,
+    AUDIENCE_CONTRACT: AUDIENCE_RULES,
+}
+
+RULES: tuple[Rule, ...] = (
+    SCHEMA_CONFORMANCE,
+    *EXPOSITION_RULES,
+    *AUDIENCE_RULES,
+    SCOPE_TABLE_CURRENT,
 )
 
 RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (

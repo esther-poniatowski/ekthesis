@@ -1,0 +1,9 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: readers-with-register
+  label: readers with a register
+  gloss: readers whose record still declares a register
+
+register:
+  forbidden: {}

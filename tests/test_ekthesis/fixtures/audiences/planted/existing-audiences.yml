@@ -1,0 +1,7 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: orphan-readers
+  label: orphan readers
+  gloss: readers whose parent is described by no audience record
+  narrows: [missing-parent]

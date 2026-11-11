@@ -298,6 +298,21 @@ def test_record_breaking_its_schema_makes_the_run_incomplete(in_fixtures: Path) 
     assert results(log), "the results detected before the stop are kept"
 
 
+def test_record_of_any_contract_breaking_its_schema_makes_the_run_incomplete(
+    in_fixtures: Path,
+) -> None:
+    """An export that breaks its schema makes the run incomplete, though no other rule reads it."""
+    log = sarif("exports/broken.yml")
+    assert profile_violations(log) == []
+    invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
+    [invocation] = invocations
+    assert invocation["executionSuccessful"] is False
+    [notification] = invocation["toolExecutionNotifications"]
+    assert notification["message"]["text"] == (
+        "exports/broken.yml fails the rule schema-conformance, so no other rule was applied to it"
+    )
+
+
 @pytest.mark.parametrize("record", [path for path in RECORDS if "schema-conformance" not in path])
 def test_run_applying_every_rule_holds_no_invocation(in_fixtures: Path, record: str) -> None:
     """A complete run omits the invocations, which the profile leaves optional."""

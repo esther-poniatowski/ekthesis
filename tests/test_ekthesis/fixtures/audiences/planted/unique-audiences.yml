@@ -1,0 +1,6 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: neuroscientists
+  label: neuroscientists again
+  gloss: a second record declaring the identifier of the neuroscientists

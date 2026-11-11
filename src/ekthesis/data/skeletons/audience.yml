@@ -1,0 +1,28 @@
+# one readership, independent of any project; checked by `ekthesis check`
+_schema: ekthesis:audience@1
+# placeholders stay quoted; an optional key left unfilled is deleted
+
+metadata: {}                                            # optional; fields reserved to the consumer, which ekthesis does not check
+
+identity:                                               # who the readers are
+  id: '{{AUDIENCE ID}}'                                 # kebab-case; unique among the audience records of a run
+  label: '{{AUDIENCE NAME}}'                            # one line; no final period
+  gloss: '{{ONE-SENTENCE DESCRIPTION OF THE READERS}}'  # one sentence; no final period
+  narrows: ['{{PARENT AUDIENCE ID}}']                   # optional; this audience inherits the knowledge of each parent
+  representatives:                                      # optional; researchers typical of the readership
+    - name: '{{RESEARCHER NAME}}'
+      profile: '{{CONTACT PROFILE TARGET}}'             # optional; logical target of the contact profile, in the form of the consumer
+  confusions:                                           # optional; readerships that a text must not address instead
+    - community: '{{AUDIENCE ID}}'                      # or undeclared: '{{COMMUNITY DESCRIBED BY NO AUDIENCE RECORD}}'
+      target_readers: '{{OBJECT OF STUDY AND APPROACH OF THESE READERS}}'
+      non_target_readers: '{{OBJECT OF STUDY AND APPROACH OF THE OTHER COMMUNITY}}'
+
+knowledge:                                              # optional; one item per concept held; a concept not held is absent
+  - concept: '{{CONCEPT UNIT TARGET}}'                  # logical target of the unit stating the concept, in the form of the consumer; or undeclared: '{{CONCEPT STATED BY NO SOURCE YET}}', reported as a warning
+    depth: '{{DEPTH OF CONTENT}}'                       # optional; basic | undergraduate | graduate | research
+    skill: '{{SKILL}}'                                  # optional; reads | applies | masters | develops
+    example_skills: ['{{WHAT THE READERS CAN DO WITH THE CONCEPT}}']  # optional
+
+evaluation:                                             # optional; how the readers judge a claim
+  accepts: ['{{CONDITION UNDER WHICH THE READERS ACCEPT A CLAIM}}']
+  cannot_assess: ['{{CONSTRUCTION THAT THE READERS CANNOT ASSESS}}']

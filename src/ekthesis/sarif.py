@@ -17,10 +17,10 @@ holds one run, whose results map the fields of each finding as follows:
   for the whole record;
 - `discriminator` onto `partialFingerprints["discriminator/v1"]`, when it is non-empty.
 
-A run that skips rules on a record, since the record fails `schema-conformance`, is incomplete. It
-then holds one invocation, whose `executionSuccessful` is false and which holds one notification of
-level `error` per skipped record. A complete run holds no invocation, which the profile leaves
-optional.
+A run holding a record that fails `schema-conformance` is incomplete, whatever the contract of the
+record, since no other rule reads that record. It then holds one invocation, whose
+`executionSuccessful` is false and which holds one notification of level `error` per such record.
+A complete run holds no invocation, which the profile leaves optional.
 The gate alone writes `fingerprints` and `suppressions`, so the log holds neither.
 
 Functions
@@ -130,9 +130,9 @@ def sarif_log(reports: Iterable[RecordReport], root: Path) -> JsonObject:
         for finding in report.findings
     ]
     run: JsonObject = {"tool": {"driver": _driver()}}
-    skipped = [report for report in reports if report.skipped]
-    if skipped:
-        run["invocations"] = [_failed_invocation(skipped, root)]
+    partial = [report for report in reports if report.breaks_schema]
+    if partial:
+        run["invocations"] = [_failed_invocation(partial, root)]
     run["columnKind"] = "unicodeCodePoints"
     run["results"] = results
     return {"version": "2.1.0", "$schema": SARIF_SCHEMA, "runs": [run]}
@@ -154,8 +154,8 @@ def _driver() -> JsonObject:
     }
 
 
-def _failed_invocation(skipped: list[RecordReport], root: Path) -> JsonObject:
-    """Declare a run that skipped rules on the records `skipped`, as the profile requires."""
+def _failed_invocation(partial: list[RecordReport], root: Path) -> JsonObject:
+    """Declare a run holding records `partial` that break their schema, as the profile requires."""
     return {
         "executionSuccessful": False,
         "toolExecutionNotifications": [
@@ -164,14 +164,20 @@ def _failed_invocation(skipped: list[RecordReport], root: Path) -> JsonObject:
                 "message": {
                     "text": (
                         f"{repository_path(report.path, root)} fails the rule "
-                        f"{SCHEMA_CONFORMANCE.identifier}, so the rules "
-                        f"{", ".join(report.skipped)} were skipped on it"
+                        f"{SCHEMA_CONFORMANCE.identifier}, so {_skipped_text(report)}"
                     )
                 },
             }
-            for report in skipped
+            for report in partial
         ],
     }
+
+
+def _skipped_text(report: RecordReport) -> str:
+    """State the rules skipped on a record that breaks its schema."""
+    if report.skipped:
+        return f"the rules {", ".join(report.skipped)} were skipped on it"
+    return "no other rule was applied to it"
 
 
 def _resource(report: RecordReport, root: Path) -> str:

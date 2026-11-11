@@ -86,6 +86,15 @@ def test_unknown_contract_is_reported(checker: Checker, tmp_path: Path) -> None:
     assert (finding.rule, str(finding.field)) == ("schema-conformance", "_schema")
 
 
+def test_record_of_a_contract_without_rules_is_checked_against_its_schema(
+    checker: Checker,
+) -> None:
+    """An export follows a contract of ekthesis that no rule reads, so only its schema applies."""
+    assert checker.check_record(FIXTURES / "exports" / "mixture.yml") == []
+    [finding] = checker.check_record(FIXTURES / "exports" / "broken.yml")
+    assert finding.rule == "schema-conformance"
+
+
 def test_unreadable_record_is_reported(checker: Checker, tmp_path: Path) -> None:
     """A record that is no YAML fails the schema rule on the whole record."""
     path = tmp_path / "record.yml"

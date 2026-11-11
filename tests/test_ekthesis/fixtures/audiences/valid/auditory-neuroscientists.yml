@@ -1,0 +1,7 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: auditory-neuroscientists
+  label: auditory neuroscientists
+  gloss: systems neuroscientists who study the auditory pathway
+  narrows: [systems-neuroscientists]

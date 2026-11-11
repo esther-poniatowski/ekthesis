@@ -1,0 +1,24 @@
+_schema: ekthesis:audience@1
+
+metadata:
+  role: spec
+  status: draft
+  index: "[Audiences](audiences/_index.md)"
+  aliases: [Neuroscientists]
+  purpose: "profiles the readers who study nervous systems"
+
+identity:
+  id: neuroscientists
+  label: neuroscientists
+  gloss: researchers who study how nervous systems process information
+  confusions:
+    - undeclared: neurologists
+      target_readers: study how nervous systems process information
+      non_target_readers: diagnose and treat disorders of the nervous system
+
+knowledge:
+  - {concept: 'gnomon:concept.population-coding', depth: graduate, skill: applies}
+
+evaluation:
+  accepts: [a claim supported by recordings of neuronal activity]
+  cannot_assess: [a derivation in random matrix theory]

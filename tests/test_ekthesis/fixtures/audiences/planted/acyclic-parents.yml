@@ -1,0 +1,7 @@
+_schema: ekthesis:audience@1
+
+identity:
+  id: self-narrowing-readers
+  label: self-narrowing readers
+  gloss: readers whose record names itself as a parent
+  narrows: [self-narrowing-readers]
