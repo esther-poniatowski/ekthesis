@@ -12,8 +12,8 @@ check : Check argument records against their schema and the rules on the provena
 
 The options follow the command-line conventions of the workspace. The root of the paths of a SARIF
 log is the option `-r`, `--root`, otherwise the environment variable `EKTHESIS_ROOT`, otherwise the
-working directory. Ekthesis reads no settings file, so it searches no ancestor directory for one.
-The exit status is 0 without a blocking finding, 1 with one, and 2 on a usage error.
+working directory. Ekthesis reads no configuration file, so it searches no ancestor directory for
+one. The exit status is 0 without a blocking finding, 1 with one, and 2 on a usage error.
 
 See Also
 --------
