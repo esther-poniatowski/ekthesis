@@ -13,10 +13,10 @@ required: [_schema, exposition, ideas, parts]
 x-identifier: exposition.id
 properties:
   _schema:
-    const: 'ekthesis:exposition@1'
+    const: 'ekthesis:exposition@2'
     title: Schema
     description: identifier of the contract that the record follows
-    examples: ['ekthesis:exposition@1']
+    examples: ['ekthesis:exposition@2']
   exposition:
     $ref: '#/$defs/exposition'
     title: Exposition
@@ -102,37 +102,21 @@ $defs:
         title: Venue constraints
         description: link to the constraints that the venue imposes on the exposition
         examples: ['[Submission constraints](https://example.org/conferences/constraints_submission.md)']
-      exports:
-        type: array
-        x-kind: list
-        items:
-          $ref: '#/$defs/link'
-          x-resolves: file
-          x-role: export-link
-        title: Exports
-        description: >-
-          relative links to the exports of the sources whose units the ideas name, each following
-          the contract ekthesis:export@1
-        examples: [['[Export of the project](../../export.yml)']]
 
   idea:
     type: object
     additionalProperties: false
-    required: [id, statement]
+    required: [id, statement, kind]
     x-identifier: id
     oneOf:
       - title: Referenced idea
         description: an idea stated by a unit of a source, which the link designates
         required: [source]
-        not: {anyOf: [{required: [kind]}, {required: [unit]}]}
-      - title: Referenced unit
-        description: an idea stated by a unit of an export that the exposition names
-        required: [unit]
-        not: {anyOf: [{required: [kind]}, {required: [source]}]}
       - title: Authored idea
-        description: an idea written by the author, of one declared kind
-        required: [kind]
-        not: {anyOf: [{required: [source]}, {required: [unit]}]}
+        description: an idea written by the author, of one kind of the registry of authored kinds
+        not: {required: [source]}
+        properties:
+          kind: {x-registry: authored-kinds}
     properties:
       id:
         $ref: '#/$defs/identifier'
@@ -154,22 +138,13 @@ $defs:
           for a referenced idea, a relative link to the note or the unit that states the idea,
           with an optional anchor of a block or a heading
         examples: ['[Mixture input](../../definitions/mixture-input.md#^definition)']
-      unit:
-        type: string
-        pattern: '^[a-z][a-z0-9-]*(\.[A-Za-z0-9][A-Za-z0-9_-]*)+$'
-        x-kind: label
-        x-role: referenced-unit
-        title: Unit
-        description: >-
-          for an idea referenced in an export, the identifier of its unit, which an export named by
-          the exposition holds
-        examples: [ans.mixture.gain-shift]
       kind:
         $ref: '#/$defs/identifier'
-        x-registry: authored-kinds
         title: Kind
-        description: for an authored idea, its kind in the registry of authored kinds
-        examples: [illustration]
+        description: >-
+          for an authored idea, its kind in the registry of authored kinds; for a referenced idea,
+          the kind of its unit in the source, which no registry of ekthesis closes
+        examples: [illustration, claim]
 
   relation:
     type: object

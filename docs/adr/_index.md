@@ -13,7 +13,7 @@ Records the decisions that later work on `ekthesis` must respect, so that a read
 
 - [Provenance of ideas and relations](provenance-of-ideas.md): decides on what an idea or a relation of an exposition may rest, and what the source of its ideas must record
 - [Argument record and its check](argument-record.md): decides the form of the record of an exposition, of its registries and of its check, where the provenance of ideas leaves it open
-- [Contract of a research export](export-contract.md): decides which units and relations a source publishes for an exposition, and which classes an exposition reads from them
+- [Contract of a research export](export-contract.md): records the retired contract of a research export, superseded by the decision of `geonexus` on independent research and exposition
 - [SARIF output of the check](sarif-output.md): decides how a finding of the check becomes a result of the findings profile of Elenchos, where the profile leaves the mapping open
 
 ## Names, symbols and audiences

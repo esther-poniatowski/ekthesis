@@ -6,5 +6,5 @@ paths:
 
 exports:
   - ekthesis:audience@1
-  - ekthesis:export@1
   - ekthesis:exposition@1
+  - ekthesis:exposition@2

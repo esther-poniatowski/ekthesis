@@ -1,5 +1,5 @@
 # Planted record: fails the rule unique-identifiers alone.
-_schema: 'ekthesis:exposition@1'
+_schema: 'ekthesis:exposition@2'
 exposition:
   id: valid-poster
   title: A valid poster
@@ -9,9 +9,11 @@ ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.
     source: '[Mixture input](../sources/note.md#^mixture-input)'
+    kind: definition
   - id: operations
     statement: The map of the network factorizes into two operations.
     source: '[Two network operations](../sources/note.md#Two%20network%20operations)'
+    kind: claim
   - id: plaid
     statement: Two superimposed gratings form a plaid.
     kind: illustration

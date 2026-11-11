@@ -12,6 +12,8 @@ aliases:
 
 > [!WARNING] Amended
 > On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) moves glossaries, their checks and the binding of a text to its glossary to Onomasia, the designation tool; the binding becomes a key resolved by Anagraphe along the directory chain.
+>
+> On 2026-11-11, the decision of `geonexus` on [independent research and exposition](https://github.com/esther-poniatowski/geonexus/blob/269af033895ef4258724dfc779086d32826be631/docs/_decisions/independent-research-and-exposition.md) retires the research export. A reference to a concept is a relative link until Anagraphe publishes the form of a logical target, and no export admits a concept as a presented unit.
 
 > [!QUESTION] Goal: to what does an entry of a glossary refer, how is a glossary bound to an exposition, and what does `ekthesis` check on glossaries?
 

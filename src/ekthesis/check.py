@@ -1,9 +1,10 @@
 """
 Check of records against their schema and the rules of their contract.
 
-A record of the contract `ekthesis:exposition@1` is checked by the rules on the provenance of
-ideas, and a record of `ekthesis:audience@1` by the rules on audiences. The audience records of one
-run are also checked together, since their parents and their confused communities name each other.
+A record of the contract `ekthesis:exposition@2`, or of its retained version
+`ekthesis:exposition@1`, is checked by the rules on the provenance of ideas, and a record of
+`ekthesis:audience@1` by the rules on audiences. The audience records of one run are also checked
+together, since their parents and their confused communities name each other.
 
 Classes
 -------
@@ -34,7 +35,7 @@ from .positions import parse, position
 from .resources import BINDING_FIELD, Resources
 from .rules import (
     CONTRACT_RULES,
-    EXPOSITION_CONTRACT,
+    EXPOSITION_CONTRACTS,
     RECORD_RULES,
     SCHEMA_CONFORMANCE,
     BoundRecord,
@@ -173,7 +174,7 @@ class Checker:
             if contract == AUDIENCE_CONTRACT:
                 audience = read_audience(path, data)
                 findings.extend(record_findings(audience))
-            elif contract == EXPOSITION_CONTRACT:
+            elif contract in EXPOSITION_CONTRACTS:
                 findings.extend(self._exposition_findings(path, data, contract))
         report = RecordReport(
             path,
@@ -186,13 +187,7 @@ class Checker:
 
     def _exposition_findings(self, path: Path, data: object, contract: str) -> list[Finding]:
         """Return the findings of the rules on argument records, for a conforming record."""
-        record = BoundRecord(
-            path,
-            data,
-            self._layout(contract),
-            self.resources.registries,
-            self.resources.schemas,
-        )
+        record = BoundRecord(path, data, self._layout(contract), self.resources.registries)
         return [finding for rule in RECORD_RULES for finding in rule(record)]
 
     def _skipped(self, contract: str | None, findings: list[Finding]) -> tuple[str, ...]:

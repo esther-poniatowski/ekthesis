@@ -14,26 +14,26 @@ An exposition, such as an article, a talk, a course or a poster, presents ideas 
 
 > How can the content of a source, such as the records of a research inquiry, be presented to various audiences and in various formats?
 
-`ekthesis` specifies the records of an exposition independently of the activity that produced its ideas. An idea either references a unit of an external source, read through a published contract, or is an authored idea of a declared kind.
+`ekthesis` specifies the records of an exposition independently of the activity that produced its ideas. An idea either references a unit of an external source and states the kind of that unit, or is an authored idea of a declared kind.
 
 ### Motivation
 
 An argument written as prose alone gives no handle on two questions:
 
-- which source supports each claim, and whether a relation asserted between two claims holds in that source;
+- which source supports each claim, and which relation a source must record for each relation asserted between two claims;
 - which ideas, names and symbols suit a given audience and venue.
 
 Research records, such as those of [`gnomon`](https://github.com/esther-poniatowski/gnomon), answer neither question, since research does not depend on a reader. `ekthesis` answers both for any argument, whether or not research produced its ideas.
 
 ### Status
 
-Pre-alpha. The package provides the contract `ekthesis:exposition@1` of an argument record, the contract `ekthesis:export@1` of the export of a research source, the contract `ekthesis:audience@1` of an audience record with its skeleton, the closed registries of authored kinds and of rhetorical relations, and a command that checks records against them:
+Pre-alpha. The package provides the contract `ekthesis:exposition@2` of an argument record, with its earlier version `ekthesis:exposition@1` retained until every record has migrated, the contract `ekthesis:audience@1` of an audience record with its skeleton, the closed registries of authored kinds and of rhetorical relations, and a command that checks records against them:
 
 ```sh
 ekthesis check path/to/argument.yml
 ```
 
-The command reports each finding with its rule, its field and its severity. The audience records passed to one run are checked together. Each parent and each confused community that an audience names must be an audience record of the run, no two records may declare one identifier, and no chain of parents may return to its audience. Each concept named under `undeclared` is reported as a warning. A concept and the contact profile of a representative are named by logical targets; until Anagraphe publishes the form of a logical target, the schema requires only non-empty text. The optional field `metadata` is reserved to the consumer, and Ekthesis does not check it. The [decision on audiences](docs/adr/audiences.md) states the content of an audience record. The exit status is 0 without an error, 1 with an error, and 2 on a usage error. The option `--format sarif` replaces these lines with one SARIF 2.1.0 log in the [findings profile of Elenchos](https://github.com/esther-poniatowski/elenchos/blob/main/docs/profile.md), the format read by the gate Elenchos. The output goes to the standard output, or to the file named by `-o`, `--output`, which a command run without a shell needs:
+The command reports each finding with its rule, its field and its severity. Ekthesis reads no source, so it reports each relation between two referenced ideas that requires a recorded relation as unverified, at the severity of a warning; the [decision on the argument record](docs/adr/argument-record.md) states the form of a record. The audience records passed to one run are checked together. Each parent and each confused community that an audience names must be an audience record of the run, no two records may declare one identifier, and no chain of parents may return to its audience. Each concept named under `undeclared` is reported as a warning. A concept and the contact profile of a representative are named by logical targets; until Anagraphe publishes the form of a logical target, the schema requires only non-empty text. The optional field `metadata` is reserved to the consumer, and Ekthesis does not check it. The [decision on audiences](docs/adr/audiences.md) states the content of an audience record. The exit status is 0 without an error, 1 with an error, and 2 on a usage error. The option `--format sarif` replaces these lines with one SARIF 2.1.0 log in the [findings profile of Elenchos](https://github.com/esther-poniatowski/elenchos/blob/main/docs/profile.md), the format read by the gate Elenchos. The output goes to the standard output, or to the file named by `-o`, `--output`, which a command run without a shell needs:
 
 ```sh
 ekthesis check --format sarif -o build/findings.sarif path/to/argument.yml

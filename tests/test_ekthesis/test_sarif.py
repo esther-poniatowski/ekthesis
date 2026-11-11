@@ -12,10 +12,13 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from ekthesis.check import Checker
 from ekthesis.cli import app
 from ekthesis.layout import FieldPath
 from ekthesis.rules import RULES
+from ekthesis.sarif import sarif_log
 
+from .other_contract import OTHER_CONTRACT, contract_without_rules
 from .sarif_profile import profile_violations, rejections
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -221,7 +224,7 @@ def test_finding_on_the_whole_record_has_no_region(
     ("text", "name"),
     [
         ("_schema: 'ekthesis:unknown@1'\n", "path:notes%231/record%25.yml#/_schema"),
-        ("_schema: 'ekthesis:exposition@1'\n", "path:notes%231/record%25.yml"),
+        ("_schema: 'ekthesis:exposition@2'\n", "path:notes%231/record%25.yml"),
     ],
 )
 def test_record_without_identifier_uses_its_path(
@@ -299,17 +302,21 @@ def test_record_breaking_its_schema_makes_the_run_incomplete(in_fixtures: Path) 
 
 
 def test_record_of_any_contract_breaking_its_schema_makes_the_run_incomplete(
-    in_fixtures: Path,
+    tmp_path: Path,
 ) -> None:
-    """An export that breaks its schema makes the run incomplete, though no other rule reads it."""
-    log = sarif("exports/broken.yml")
+    """A record of a contract that no rule reads makes the run incomplete when it breaks its
+    schema."""
+    path = tmp_path / "record.yml"
+    path.write_text(f"_schema: '{OTHER_CONTRACT}'\nvalue: 1\n")
+    reports = Checker(contract_without_rules(tmp_path)).reports([path])
+    log = sarif_log(reports, tmp_path)
     assert profile_violations(log) == []
     invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
     [invocation] = invocations
     assert invocation["executionSuccessful"] is False
     [notification] = invocation["toolExecutionNotifications"]
     assert notification["message"]["text"] == (
-        "exports/broken.yml fails the rule schema-conformance, so no other rule was applied to it"
+        "record.yml fails the rule schema-conformance, so no other rule was applied to it"
     )
 
 

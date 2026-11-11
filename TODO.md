@@ -8,13 +8,11 @@ aliases:
 
 This list holds the goals of `ekthesis` that span several parts of the project, grouped in families.
 
-## 1. Contract of a research export
+## 1. Referenced ideas
 
-The [contract of a research export](docs/adr/export-contract.md) carries the units and the relations of a source that the checks of `ekthesis` read.
+A [referenced idea](docs/adr/argument-record.md#^referenced-idea) names a unit of a source and states the kind of that unit, and the check reads no source.
 
-- [ ] Add to the relation entry of the contract `ekthesis:export@1` a field for the warrant of a relation of class `support`: its mode of inference, such as deductive or abductive, and its reading, which states why the source supports the target. An exposition then references the warrant of a research relation and never authors one. The contract admits only a field that a check reads, as its [constraints](docs/adr/export-contract.md#constraints-that-decide-the-contract) state. The next action is therefore to choose the check that reads the field, such as the check of [required classes](docs/adr/argument-record.md), which already requires a support for each evidence. The task `warrant-export` of `gnomon` waits on this field. 🆔 warrant-field
-- [ ] Name the owner of the status of a presented unit and of the trace of its conditions. The [deferred parts of the contract](docs/adr/export-contract.md#^export-deferred) leave them to the exposition pilot of `geonexus`, which is retired. The next action is to state the owner in that decision. 🆔 presented-unit-status
-- [ ] Decide whether the relation `tests` of a source reaches an exposition. It carries a warrant in `gnomon` but has no class in the contract, so a warrant of a test cannot be cited. The next action is to decide whether the contract gives it a class. 🆔 test-warrant
+- [ ] Name the owner of the status of a presented unit, such as an entertained or a superseded claim, and of the trace of its conditions. The retired [contract of a research export](docs/adr/export-contract.md#^export-deferred) left them to the exposition pilot of `geonexus`, which is retired too. The next action is to decide whether the record of an exposition states the status of a referenced idea, as it states its [kind](docs/adr/argument-record.md#^referenced-kind). 🆔 presented-unit-status
 
 ## 2. Relations of the registry
 

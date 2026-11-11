@@ -12,6 +12,8 @@ aliases:
 
 > [!WARNING] Amended
 > On 2026-11-02, the decision of `geonexus` on [designation and typography](https://github.com/esther-poniatowski/geonexus/blob/584a14f134e7b6231eeae31518622439acf10d00/docs/_decisions/designation-and-typography.md) replaces the renaming of a symbol by an overlay notation of Onomasia, the designation tool, bound per projection, which overrides entries by identifier. The collision check of printed forms moves to Onomasia.
+>
+> On 2026-11-11, the decision of `geonexus` on [independent research and exposition](https://github.com/esther-poniatowski/geonexus/blob/269af033895ef4258724dfc779086d32826be631/docs/_decisions/independent-research-and-exposition.md) retires the research export, so no contract carries the symbol entries of a source to `ekthesis`.
 
 > [!QUESTION] Goal: may an artifact print a symbol of its source in a form other than the one declared by the notation of that source, and what must `ekthesis` check when it does?
 

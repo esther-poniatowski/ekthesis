@@ -2,10 +2,10 @@
 _schema: kleisis:schema-registry@2
 schemas:
   "ekthesis:audience@1": "src/ekthesis/data/schemas/audience.schema.yaml"
-  "ekthesis:export@1": "src/ekthesis/data/schemas/export.schema.yaml"
-  "ekthesis:exposition@1": "src/ekthesis/data/schemas/exposition.schema.yaml"
+  "ekthesis:exposition@1": "src/ekthesis/data/schemas/exposition.v1.schema.yaml"
+  "ekthesis:exposition@2": "src/ekthesis/data/schemas/exposition.schema.yaml"
 exports:
   - "ekthesis:audience@1"
-  - "ekthesis:export@1"
   - "ekthesis:exposition@1"
+  - "ekthesis:exposition@2"
 resources: {}

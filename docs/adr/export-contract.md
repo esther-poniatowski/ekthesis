@@ -1,14 +1,17 @@
 ---
 tags:
   - decision
-status: accepted
+status: superseded
 created: 2026-11-09
-revised: 2026-11-09
+revised: 2026-11-11
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Contract of a research export
 ---
 # Contract of a research export
+
+> [!WARNING] Superseded
+> On 2026-11-11, the decision of `geonexus` on [independent research and exposition](https://github.com/esther-poniatowski/geonexus/blob/269af033895ef4258724dfc779086d32826be631/docs/_decisions/independent-research-and-exposition.md) retires the research export with this contract, `ekthesis:export@1`. An exposition cites the records of its consumer by logical target, and states the kind of each referenced idea and the relations between its ideas itself. The check reports each relation between two referenced ideas that requires a recorded relation as unverified, as the [argument record](argument-record.md#^referenced-idea) states. The body below records the retired design.
 
 > [!QUESTION] Goal: which units and which relations does a source publish in its export, in which form, and which classes may an exposition read from it?
 
