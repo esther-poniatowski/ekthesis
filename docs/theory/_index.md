@@ -11,3 +11,4 @@ States the concepts of an exposition and the grounds behind them, so that a deci
 
 - [Exposition](exposition.md): defines an exposition, and states the grounds on which its records rest
 - [Glossary](glossary.md): separates the names of a concept, which serve a reader, from its meaning
+- [Selection of ideas](selection-of-ideas.md): decides which units of its sources an exposition presents to its audience

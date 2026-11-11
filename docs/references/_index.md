@@ -11,3 +11,4 @@ States external work on reasoning and argumentation on its own terms, so that a 
 
 - [Reasoning principles by field](reasoning-argumentation-principles-by-field.md): compares the principles that rhetoric, communication theory and the learning sciences state for the presentation of an argument
 - [Reasoning principles across fields](reasoning-argumentation-principles-cross-field.md): groups the principles of presentation shared across fields
+- [Accounts of discourse and argument structure](discourse-argument-structure.md): compares how four accounts relate the parts of a text or of an argument
