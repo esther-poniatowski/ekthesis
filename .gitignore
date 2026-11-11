@@ -35,8 +35,8 @@ htmlcov/
 ## Documentation Build
 docs/_build/
 
-# Schema closure materialized by kleisis
-.schema-resources/
+# State of Kleisis: the materialized schema closure and the staging folders
+.kleisis/
 
 # Task workspaces of agents, kept out of the repository.
 .agent-work/

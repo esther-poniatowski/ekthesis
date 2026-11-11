@@ -1,5 +1,5 @@
 # Inputs of the schema closure of ekthesis; generated files remain outside this record.
-format_version: 1
+_schema: kleisis:schema-resources@2
 
 paths:
   owned_schemas: src/ekthesis/data/schemas
