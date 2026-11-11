@@ -49,6 +49,8 @@ The repository also holds the decisions, theory notes and proposals carried from
 
 The [documentation index](docs/_index.md) is the entry point.
 
+Open goals, the open design decisions included, are recorded in the [project goals](TODO.md).
+
 ---
 
 ## Contributing
