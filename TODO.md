@@ -31,7 +31,7 @@ The [record of an exposition](docs/adr/argument-record.md#^record) states its id
 
 - [ ] Let the record of an exposition state an idea excluded because a reader of a declared audience would expect it. The entry names that audience and the reason, as the [exclusions tied to an audience](docs/theory/selection-of-ideas.md#^exclusions) require. The next action is to weigh a field of the record against an extension of the audience record. 🆔 audience-exclusions
 - [ ] Add a field naming the root of an exposition, its central claim or its question. Add a check that reports each idea reaching no root through its relations, as the [reachability from the root](docs/proposals/argument-specification.md#^reachability) proposes. The next action is to decide whether an exposition admits several roots. The task `forward-consequence` bears on that decision. 🆔 root-reachability
-- [ ] Decide whether the status by which an idea is core or only deepens another one keeps the name `elaboration`, shared with a relation, or takes a name of its own. The [name of the status](docs/proposals/assembly-schema.md#^status-name) states the cost of each. The next action is the choice of the researcher. 🆔 status-name
+- [x] Decide whether the status by which an idea is core or only deepens another one keeps the name `elaboration`, shared with a relation, or takes a name of its own. The researcher kept `elaboration`, as [the name of the status](docs/proposals/assembly-schema.md#^status-name) records 🆔 status-name ✅ 2026-11-11
 
 ## 4. Package data
 
