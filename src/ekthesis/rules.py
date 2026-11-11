@@ -42,7 +42,7 @@ CONTRACT_RULES : Mapping of str to tuple of Rule
     The rules applied to a record of each contract once it conforms to its schema.
 RULES : tuple of Rule
     Every rule of `ekthesis`, with its summary and the severity of its findings: the rules on
-    argument records, the rules on audience records, and the rule on a scope table.
+    argument records, the rules on audience records, and the rules on a scope table.
 RECORD_RULES : tuple of callables
     The rules applied to an argument record that conforms to its schema, in order.
 """
@@ -61,7 +61,7 @@ from .findings import Finding, Rule, Severity
 from .layout import FieldPath, SchemaLayout
 from .links import link_path, resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
-from .scope_table import SCOPE_TABLE_CURRENT
+from .scope_table import SCOPE_TABLE_CURRENT, SCOPE_TABLE_DERIVABLE
 
 EXPOSITION_CONTRACT = "ekthesis:exposition@1"
 
@@ -446,6 +446,7 @@ RULES: tuple[Rule, ...] = (
     *EXPOSITION_RULES,
     *AUDIENCE_RULES,
     SCOPE_TABLE_CURRENT,
+    SCOPE_TABLE_DERIVABLE,
 )
 
 RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (

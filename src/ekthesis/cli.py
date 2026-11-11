@@ -24,7 +24,6 @@ typer.Typer
 """
 
 import json
-from dataclasses import replace
 from enum import StrEnum
 from pathlib import Path
 
@@ -36,7 +35,7 @@ from .check import Checker, RecordReport
 from .provenance import git_sources
 from .resources import packaged_resources
 from .sarif import repository_path, sarif_log
-from .scope_table import ScopeTable
+from .scope_table import ScopeTable, underived
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -129,34 +128,33 @@ def cli_scope_table(  # pylint: disable=too-many-arguments,too-many-positional-a
     root: Path | None = ROOT_OPTION,
 ) -> None:
     """Derive the scope table of audience records, and write it or check it."""
-    located = [*paths, table] if check else paths
-    base = _base(root, located if output_format is OutputFormat.SARIF else [])
-    errors = _audience_errors(paths)
-    blocking = sum(len(report.findings) for report in errors)
-    if blocking:
-        summary = f"{len(paths)} audience records checked: {blocking} errors; no table derived"
-        _emit(errors, output_format, output, base, summary)
+    base = _base(root, [*paths, table] if output_format is OutputFormat.SARIF else [])
+    failing = _failing_records(paths)
+    if failing:
+        report = RecordReport(table, None, (underived(table, failing),))
+        _emit([report], output_format, output, base, f"{table}: not derived")
         raise typer.Exit(code=1)
     derived = ScopeTable.derive(load_audience(path) for path in paths)
     if check:
         stale = RecordReport(table, None, tuple(derived.differences(table)))
         state = f"{len(stale.findings)} differences" if stale.findings else "current"
         summary = f"{table}: {state}, {len(derived.rows)} audiences derived"
-        _emit([*errors, stale], output_format, output, base, summary)
+        _emit([stale], output_format, output, base, summary)
         if stale.findings:
             raise typer.Exit(code=1)
         return
     _write(table, derived.text(git_sources(base, paths)))
-    _emit(errors, output_format, output, base, f"{table}: {len(derived.rows)} audiences written")
+    _emit([], output_format, output, base, f"{table}: {len(derived.rows)} audiences written")
 
 
-def _audience_errors(paths: list[Path]) -> list[RecordReport]:
+def _failing_records(paths: list[Path]) -> int:
     """
-    Check the audience records `paths` as one run, and return the report of each with its errors.
+    Check the audience records `paths` as one run, and return how many of them hold an error.
 
-    The warnings of the records are left to `ekthesis check`. A record naming a known contract
-    other than the audience contract ends the command with the exit code 2 of a usage error. A
-    record naming no known contract fails `schema-conformance`, as in `ekthesis check`.
+    The findings themselves are left to `ekthesis check`, which reports each of them. A record
+    naming a known contract other than the audience contract ends the command with the exit code
+    2 of a usage error. A record naming no known contract fails `schema-conformance`, so it counts
+    as a record holding an error.
     """
     resources = packaged_resources()
     reports = Checker(resources).reports(paths)
@@ -167,10 +165,7 @@ def _audience_errors(paths: list[Path]) -> list[RecordReport]:
                 f"{report.path} names the contract {contract}, not {AUDIENCE_CONTRACT}",
                 param_hint="PATHS",
             )
-    return [
-        replace(report, findings=tuple(f for f in report.findings if f.severity.blocking))
-        for report in reports
-    ]
+    return sum(any(finding.severity.blocking for finding in report.findings) for report in reports)
 
 
 def _base(root: Path | None, located: list[Path]) -> Path:

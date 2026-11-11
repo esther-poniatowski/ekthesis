@@ -183,13 +183,43 @@ def test_stale_table_in_sarif_conforms_to_the_profile(
     assert len(results) == len(DERIVED)
 
 
-def test_records_with_errors_derive_no_table(tmp_path: Path) -> None:
-    """A run of audience records with an error reports it, and writes no table."""
+@pytest.mark.parametrize("mode", [[], ["--check"]], ids=["write", "check"])
+def test_errors_of_the_records_are_counted_and_not_repeated(
+    tmp_path: Path, mode: list[str]
+) -> None:
+    """Records with errors yield one finding at the table naming their count, and no table."""
     table = tmp_path / "scope-table.yml"
-    code, output = run(str(FIXTURES / "planted" / "existing-audiences.yml"), "-t", str(table))
+    if mode:
+        table.write_text("kept: true\n")
+    orphan = yaml.safe_load((FIXTURES / "planted" / "existing-audiences.yml").read_text())
+    orphan["identity"]["narrows"] = ["missing-a", "missing-b"]
+    (tmp_path / "orphan.yml").write_text(yaml.safe_dump(orphan))
+    planted = [tmp_path / "orphan.yml", FIXTURES / "planted" / "schema-conformance.yml"]
+    code, output = run(*map(str, [*VALID, *planted]), "-t", str(table), *mode)
+    assert code == 1, output
+    assert output.splitlines() == [
+        f"{table}: error [scope-table-derivable] the scope table is not derived, since 2 audience "
+        "records hold errors; ekthesis check reports them",
+        f"{table}: not derived",
+    ]
+    assert table.read_text() == "kept: true\n" if mode else not table.exists()
+
+
+def test_errors_of_the_records_yield_one_sarif_result(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """In SARIF, the records with errors yield one result of a rule of its own, at the table."""
+    shutil.copy(FIXTURES / "planted" / "existing-audiences.yml", tmp_path / "orphan.yml")
+    monkeypatch.chdir(tmp_path)
+    code, output = run("orphan.yml", "-t", "scope-table.yml", "--format", "sarif")
     assert code == 1
-    assert "[existing-audiences]" in output
-    assert not table.exists()
+    log = json.loads(output)
+    assert profile_violations(log) == []
+    [result] = log["runs"][0]["results"]
+    assert result["ruleId"] == "scope-table-derivable"
+    assert "1 audience record holds errors" in result["message"]["text"]
+    assert result["locations"][0]["logicalLocations"] == [{"name": "path:scope-table.yml"}]
+    assert "invocations" not in log["runs"][0]
 
 
 def test_warnings_of_the_records_are_not_repeated(tmp_path: Path) -> None:
@@ -323,7 +353,7 @@ def test_table_outside_the_root_is_refused_in_sarif_check(tmp_path: Path) -> Non
 
 
 def test_misspelt_contract_is_a_schema_error(tmp_path: Path) -> None:
-    """A record naming no known contract fails its schema, as in `ekthesis check`."""
+    """A record naming no known contract holds an error, as in `ekthesis check`, not a usage error."""
     record = tmp_path / "readers.yml"
     record.write_text(
         (FIXTURES / "valid" / "neuroscientists.yml")
@@ -332,7 +362,8 @@ def test_misspelt_contract_is_a_schema_error(tmp_path: Path) -> None:
     )
     code, output = run(str(record), "-t", str(tmp_path / "scope-table.yml"))
     assert code == 1, output
-    assert "[schema-conformance] no schema of ekthesis binds the contract" in output
+    assert "[scope-table-derivable]" in output
+    assert "1 audience record holds errors" in output
 
 
 # --- Provenance ------------------------------------------------------------------------------------

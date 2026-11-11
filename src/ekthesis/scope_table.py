@@ -27,6 +27,13 @@ SCOPE_TABLE_CONTRACT : str
     The contract of the scope table, published by Onomasia.
 SCOPE_TABLE_CURRENT : Rule
     The rule that a scope table equals the table derived from the audience records.
+SCOPE_TABLE_DERIVABLE : Rule
+    The rule that the audience records of a scope table hold no error, so that it is derived.
+
+Functions
+---------
+underived(path, failing) -> Finding
+    The finding of a table that is not derived, since some of its records hold errors.
 """
 
 import re
@@ -47,6 +54,12 @@ SCOPE_TABLE_CONTRACT = "onomasia:scope-table@1"
 SCOPE_TABLE_CURRENT = Rule(
     "scope-table-current",
     "The scope table equals the table derived from the parents of the audience records.",
+    Severity.ERROR,
+)
+
+SCOPE_TABLE_DERIVABLE = Rule(
+    "scope-table-derivable",
+    "The audience records of the scope table hold no error, so that the table is derived.",
     Severity.ERROR,
 )
 
@@ -271,6 +284,24 @@ def _same_row(written: object, derived: Row) -> bool:
         if sorted(values) != list(expected):
             return False
     return True
+
+
+def underived(path: Path, failing: int) -> Finding:
+    """
+    Return the finding of the table at `path`, not derived since `failing` records hold errors.
+
+    The finding names the count alone. The errors of the records are reported by `ekthesis
+    check`, so that a gate running both commands reports each of them once.
+    """
+    rule = SCOPE_TABLE_DERIVABLE
+    records = "1 audience record holds" if failing == 1 else f"{failing} audience records hold"
+    return Finding(
+        rule.identifier,
+        path,
+        FieldPath(),
+        rule.severity,
+        f"the scope table is not derived, since {records} errors; ekthesis check reports them",
+    )
 
 
 def _finding(path: Path, field: FieldPath, message: str, absent: str | None = None) -> Finding:
