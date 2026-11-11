@@ -90,12 +90,17 @@ ROOT_OPTION = typer.Option(
 
 @app.command("check")
 def cli_check(
-    paths: list[Path] = typer.Argument(..., exists=True, dir_okay=False, help="Records to check."),
+    paths: list[Path] = typer.Argument(
+        ...,
+        exists=True,
+        help="Records to check, or folders whose YAML files are records.",
+    ),
     output_format: OutputFormat = FORMAT_OPTION,
     output: Path | None = OUTPUT_OPTION,
     root: Path | None = ROOT_OPTION,
 ) -> None:
     """Check argument and audience records, and exit with status 1 on a blocking finding."""
+    paths = expand_paths(paths)
     base = _base(root, paths if output_format is OutputFormat.SARIF else [])
     reports = Checker(packaged_resources()).reports(paths)
     findings = [finding for report in reports for finding in report.findings]
@@ -111,7 +116,9 @@ def cli_check(
 @app.command("scope-table")
 def cli_scope_table(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     paths: list[Path] = typer.Argument(
-        ..., exists=True, dir_okay=False, help="Audience records of the table."
+        ...,
+        exists=True,
+        help="Audience records of the table, or folders whose YAML files are records.",
     ),
     table: Path = typer.Option(
         ..., "--table", "-t", dir_okay=False, help="File of the scope table."
@@ -128,6 +135,7 @@ def cli_scope_table(  # pylint: disable=too-many-arguments,too-many-positional-a
     root: Path | None = ROOT_OPTION,
 ) -> None:
     """Derive the scope table of audience records, and write it or check it."""
+    paths = expand_paths(paths)
     base = _base(root, [*paths, table] if output_format is OutputFormat.SARIF else [])
     failing = _failing_records(paths)
     if failing:
@@ -144,7 +152,45 @@ def cli_scope_table(  # pylint: disable=too-many-arguments,too-many-positional-a
             raise typer.Exit(code=1)
         return
     _write(table, derived.text(git_sources(base, paths)))
-    _emit([], output_format, output, base, f"{table}: {len(derived.rows)} audiences written")
+    _emit(
+        [],
+        output_format,
+        output,
+        base,
+        f"{table}: {len(derived.rows)} audiences written",
+    )
+
+
+def expand_paths(paths: list[Path]) -> list[Path]:
+    """
+    Return the record files that `paths` name, a folder standing for its own YAML files.
+
+    A folder contributes the files ending in ``.yml`` or ``.yaml`` that it holds directly, in name
+    order, and none of its subfolders. A file stands for itself. A file named twice is kept once, at
+    its first place.
+
+    Examples
+    --------
+    >>> import tempfile
+    >>> folder = Path(tempfile.mkdtemp())
+    >>> for name in ("b.yml", "a.yaml", "notes.md"):
+    ...     _ = (folder / name).write_text("", encoding="utf-8")
+    >>> [path.name for path in expand_paths([folder, folder / "b.yml"])]
+    ['a.yaml', 'b.yml']
+    """
+    expanded: list[Path] = []
+    for path in paths:
+        members = (
+            sorted(
+                item
+                for item in path.iterdir()
+                if item.is_file() and item.suffix in (".yml", ".yaml")
+            )
+            if path.is_dir()
+            else [path]
+        )
+        expanded.extend(member for member in members if member not in expanded)
+    return expanded
 
 
 def _failing_records(paths: list[Path]) -> int:

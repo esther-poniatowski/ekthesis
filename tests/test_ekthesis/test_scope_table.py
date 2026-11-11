@@ -450,3 +450,30 @@ def test_sources_describe_the_records_alone(tmp_path: Path) -> None:
     assert code == 0, output
     [source] = yaml.safe_load(table.read_text())["sources"]
     assert source["dirty"] is True, "an ignored record lies outside every commit"
+
+
+def test_folder_stands_for_the_yaml_files_it_holds(tmp_path: Path) -> None:
+    """A folder argument yields the table of its YAML files, ignoring other files and subfolders."""
+    folder = tmp_path / "audiences"
+    (folder / "nested").mkdir(parents=True)
+    for path in VALID:
+        (folder / path.name).write_bytes(path.read_bytes())
+    (folder / "_index.md").write_text("# Audiences\n", encoding="utf-8")
+    (folder / "nested" / "broken.yml").write_text("_schema: [unclosed\n", encoding="utf-8")
+    from_files = tmp_path / "from-files.yml"
+    from_folder = tmp_path / "from-folder.yml"
+    assert run(*map(str, VALID), "-t", str(from_files), "-r", str(tmp_path))[0] == 0
+    code, output = run(str(folder), "-t", str(from_folder), "-r", str(tmp_path))
+    assert code == 0, output
+    assert from_folder.read_bytes() == from_files.read_bytes()
+
+
+def test_check_reads_a_folder_of_records(tmp_path: Path) -> None:
+    """`ekthesis check` on a folder checks each YAML record it holds, and counts each once."""
+    folder = tmp_path / "audiences"
+    folder.mkdir()
+    for path in VALID:
+        (folder / path.name).write_bytes(path.read_bytes())
+    result = CliRunner().invoke(app, ["check", str(folder), str(folder / VALID[0].name)])
+    assert result.exit_code == 0, result.output
+    assert f"{len(VALID)} records checked: 0 errors" in result.output
