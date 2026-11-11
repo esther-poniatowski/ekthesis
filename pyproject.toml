@@ -51,7 +51,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-ekthesis = ["data/schemas/*.schema.yaml", "data/registries/*.yml"]
+ekthesis = ["data/schemas/*.schema.yaml", "data/registries/*.yml", "data/skeletons/*.md"]
 
 # --- CLI Entry Points -----------------------------------------------------------------------------
 
