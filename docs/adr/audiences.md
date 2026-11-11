@@ -24,7 +24,7 @@ The decision of `geonexus` on [designation and typography](https://github.com/es
 - its knowledge, under `knowledge`, as a list of items;
 - its evaluation, under `evaluation`: the conditions under which the readers accept a claim (`accepts`), and the constructions that they cannot assess (`cannot_assess`). ^audience-content
 
-The record declares no register. A form that some readers do not share is a lexical rule of a glossary of Onomasia, whose field `audiences` names the audiences that the rule binds.
+The record declares no register. A form that some readers do not share is a lexical rule of a glossary of Onomasia, whose field `audiences` names the audiences that the rule binds. The record may also carry a block `metadata` reserved to its consumer, such as the fields by which `geonexus` lists the file in an index; `ekthesis` admits any content there and checks none.
 
 **Knowledge.** A knowledge item references the unit that states a concept, under `concept`, by its logical target, in the form that Onomasia uses for the field `denotes` of a notation entry. The item adds the depth of the content known, from `basic` to `research`, and the skill of the readers with the concept, from `reads` to `develops`, with optional example skills. A concept stated by no source yet is named under `undeclared`, and reported as a warning. A concept that the readers do not hold is absent from the record. ^knowledge
 
@@ -32,7 +32,7 @@ The record declares no register. A form that some readers do not share is a lexi
 
 **Scope table.** `ekthesis` derives the scope table from the parents declared by a set of audience records, in the contract `onomasia:scope-table@1`. The ancestors of an audience are the transitive closure of its parents, and its descendants are the transitive closure of the inverse relation. The command `ekthesis scope-table` takes the audience records and the path of the table, and writes the table. With the option `--check`, the command writes nothing, and reports a table that differs from the one derived from the records. The consumer runs that check in its gate, so a change of parents cannot leave the table stale. ^scope-table
 
-**Names of an audience.** The record of an exposition and the binding of a text name their audiences by id. A record of another field, such as a contact profile naming the readerships of a researcher, names an audience by a logical target typed by the audience contract. A representative of an audience names the contact profile of a researcher in the same way. ^audience-names
+**Names of an audience.** The record of an exposition and the binding of a text name their audiences by id. A record of another field, such as a contact profile naming the readerships of a researcher, names an audience by a logical target typed by the audience contract. A representative of an audience names the contact profile of a researcher in the same way. Anagraphe has not yet published the form of a logical target. Until it does, a target is written in the form of its consumer, such as the contact id of a profile in `geonexus`, and `ekthesis` checks only that it is non-empty text, as Onomasia does for `denotes`. ^audience-names
 
 ## Constraints that decide the form
 
@@ -53,6 +53,8 @@ The record declares no register. A form that some readers do not share is a lexi
 | Flat audiences without parents | One record per readership, with no inheritance | The knowledge shared by the readerships of a field is repeated in each record |
 | A register declared in the audience record | The readers and their forbidden forms read in one file | Onomasia would read the audience format to match forms, which couples the two tools |
 | Onomasia deriving the ancestors from the audience records | No generated table | Onomasia would read the audience format; the table keeps the relation between audiences in `ekthesis`, which owns it |
+| A block `metadata` in the format of `geonexus` | The consumer validates its index fields with the record | The contract would carry the index format of one consumer, while an audience serves every project |
+| A form of logical target fixed by `ekthesis` before Anagraphe publishes one | Every target is checked now | Two forms may diverge, and every record would change when Anagraphe fixes its own |
 | `ekthesis` resolving the contact profile of a representative | The membership of a representative is checked with the audience | `ekthesis` would read the contact format of the consumer, which a logical target avoids |
 
 The present decision takes the third option for knowledge, with parents for shared knowledge, and leaves both the register and the derivation of ancestors out of the record and out of Onomasia.
@@ -61,7 +63,7 @@ The present decision takes the third option for knowledge, with parents for shar
 
 - The schema `ekthesis:audience@1` replaces the audience schema of `geonexus`, in the order of extraction set by the decision on tool roles. Its knowledge items no longer resolve through the imports of a glossary.
 - The audience records stay in the content of the consumer, such as the folder `audiences/` of `geonexus`. `ekthesis` provides their schema, their template and their checks.
-- The check validates each audience record against its schema, resolves its parents and the communities of its confusions among the audience records of the run, reports a repeated id and a cycle among parents, checks the form of each logical target, and reports each undeclared concept as a warning.
+- The check validates each audience record against its schema, resolves its parents and the communities of its confusions among the audience records of the run, reports a repeated id and a cycle among parents, and reports each undeclared concept as a warning. The form of a logical target is checked once Anagraphe publishes it.
 - The membership of a representative in the audience, which reads the communities of a contact profile, is checked by the consumer that holds the contact profiles.
 - The consumer points the key `texts.scope_table` of its configuration of Onomasia to the generated table, and runs `ekthesis scope-table --check` in its gate.
 - No check reads the knowledge of an audience yet: the knowledge serves the author until a check or a view uses it.
