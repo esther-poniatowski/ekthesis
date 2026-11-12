@@ -13,6 +13,8 @@ This list holds the goals of `ekthesis` that span several parts of the project, 
 A [referenced idea](docs/adr/argument-record.md#^referenced-idea) names a unit of a source and states the kind of that unit, and the check reads no source.
 
 - [ ] Name the owner of the status of a presented unit, such as an entertained or a superseded claim, and of the trace of its conditions. The retired [contract of a research export](docs/adr/export-contract.md#^export-deferred) left them to the exposition pilot of `geonexus`, which is retired too. The next action is to decide whether the record of an exposition states the status of a referenced idea, as it states its [kind](docs/adr/argument-record.md#^referenced-kind). 🆔 presented-unit-status
+- [ ] Replace the relative link under `source` of a referenced idea, and the text of `concept` and `profile` in an audience record, by the logical target that Anagraphe publishes, under a new version of each contract. The [referenced idea](docs/adr/argument-record.md#^referenced-idea) and the [names of an audience](docs/adr/audiences.md#^audience-names) state the interim forms. The next action waits on the decision of Anagraphe on logical targets. 🆔 logical-target-references
+- [ ] Retire the contract `ekthesis:exposition@1` once no record uses it: remove `exposition.v1.schema.yaml`, its entry in `EXPOSITION_CONTRACTS` and in `specs/schema-resources.yml`, and its retained fixture. Its last record is the argument of the PINTS 2026 poster of Mixture-Input Encoding, which stays at `@1` until the project is reconstructed from scratch, as the researcher decided on 2026-11-12. 🆔 retire-exposition-v1
 
 ## 2. Relations of the registry
 
