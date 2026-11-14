@@ -117,7 +117,7 @@ def test_referenced_idea_with_an_authored_kind_stays_referenced(
 def test_referenced_idea_states_its_kind_and_names_no_unit(
     checker: Checker, tmp_path: Path, field: str, value: str | None, locus: str
 ) -> None:
-    """The contract ekthesis:exposition@2 requires the kind of a referenced idea, and drops the
+    """The contract ekthesis:exposition@3 requires the kind of a referenced idea, and drops the
     unit of an export."""
     record = _valid()
     if value is None:
@@ -130,7 +130,7 @@ def test_referenced_idea_states_its_kind_and_names_no_unit(
 
 
 def test_record_names_no_export(checker: Checker, tmp_path: Path) -> None:
-    """The contract ekthesis:exposition@2 drops the exports of a record."""
+    """The contract ekthesis:exposition@3 drops the exports of a record."""
     record = _valid()
     record["exposition"]["exports"] = ["[Export of the project](../exports/mixture.yml)"]
     [finding] = _check(checker, record, tmp_path)

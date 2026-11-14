@@ -7,7 +7,7 @@ paths:
 exports:
   - ekthesis:audience@2
   - ekthesis:exposition@1
-  - ekthesis:exposition@2
+  - ekthesis:exposition@3
 
 dependencies:
   # Anagraphe supplies the addressing primitives that a logical target references by its absolute

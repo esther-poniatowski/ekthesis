@@ -224,7 +224,7 @@ def test_finding_on_the_whole_record_has_no_region(
     ("text", "name"),
     [
         ("_schema: 'ekthesis:unknown@1'\n", "path:notes%231/record%25.yml#/_schema"),
-        ("_schema: 'ekthesis:exposition@2'\n", "path:notes%231/record%25.yml"),
+        ("_schema: 'ekthesis:exposition@3'\n", "path:notes%231/record%25.yml"),
     ],
 )
 def test_record_without_identifier_uses_its_path(

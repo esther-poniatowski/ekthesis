@@ -1,5 +1,5 @@
 # Planted record: fails the rule existing-references alone.
-_schema: 'ekthesis:exposition@2'
+_schema: 'ekthesis:exposition@3'
 exposition:
   id: valid-poster
   title: A valid poster
@@ -8,11 +8,11 @@ exposition:
 ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.
-    source: '[Mixture input](../sources/note.md#^mixture-input)'
+    source: {id: note, unit: mixture-input}
     kind: definition
   - id: operations
     statement: The map of the network factorizes into two operations.
-    source: '[Two network operations](../sources/note.md#Two%20network%20operations)'
+    source: {id: note}
     kind: claim
   - id: plaid
     statement: Two superimposed gratings form a plaid.

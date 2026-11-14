@@ -1,5 +1,5 @@
 # Retained version 1 of the argument record, checked by `ekthesis check` until every record has
-# migrated to `ekthesis:exposition@2`, as the decision on the argument record states. The fields
+# migrated to `ekthesis:exposition@3`, as the decision on the argument record states. The fields
 # `exports` and `unit` serve the retired contract of a research export, and no rule reads them.
 # The keywords prefixed by `x-` other than `x-kind` and `x-identifier` at the root are read by
 # ekthesis alone; the decision on the argument record states their meaning.

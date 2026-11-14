@@ -3,10 +3,10 @@ _schema: kleisis:schema-registry@2
 schemas:
   "ekthesis:audience@2": "src/ekthesis/data/schemas/audience.schema.yaml"
   "ekthesis:exposition@1": "src/ekthesis/data/schemas/exposition.v1.schema.yaml"
-  "ekthesis:exposition@2": "src/ekthesis/data/schemas/exposition.schema.yaml"
+  "ekthesis:exposition@3": "src/ekthesis/data/schemas/exposition.schema.yaml"
 exports:
   - "ekthesis:audience@2"
   - "ekthesis:exposition@1"
-  - "ekthesis:exposition@2"
+  - "ekthesis:exposition@3"
 resources:
   "https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml": ".kleisis/resources/anagraphe/src/anagraphe/data/schemas/addressing.v1.schema.yml"

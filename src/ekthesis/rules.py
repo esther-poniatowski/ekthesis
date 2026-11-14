@@ -49,8 +49,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
-from referencing import Registry, Resource
-from referencing.jsonschema import DRAFT202012
 
 from .audiences import AUDIENCE_CONTRACTS, AUDIENCE_RULES
 from .errors import ResourceError
@@ -61,7 +59,7 @@ from .links import resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
 from .scope_table import SCOPE_TABLE_CURRENT, SCOPE_TABLE_DERIVABLE
 
-EXPOSITION_CONTRACT = "ekthesis:exposition@2"
+EXPOSITION_CONTRACT = "ekthesis:exposition@3"
 EXPOSITION_CONTRACTS: tuple[str, ...] = (EXPOSITION_CONTRACT, "ekthesis:exposition@1")
 
 SCHEMA_CONFORMANCE = Rule(
@@ -140,14 +138,6 @@ class BoundRecord:
         return Exposition.read(self.data, self.layout, self.idea_definition())
 
 
-def _registry(catalog: SchemaCatalog) -> Registry:
-    """Return the registry through which a contract resolves an absolute `$ref` to another tool."""
-    return Registry().with_resources(
-        (identifier, Resource.from_contents(schema, default_specification=DRAFT202012))
-        for identifier, schema in catalog.references.items()
-    )
-
-
 def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> Iterator[Finding]:
     """
     Yield a finding when `record` names no known contract, or breaks the schema of its contract.
@@ -182,7 +172,7 @@ def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> It
             f"no schema of ekthesis binds the contract {contract}",
         )
         return
-    validator = Draft202012Validator(schema, registry=_registry(catalog))
+    validator = Draft202012Validator(schema, registry=catalog.registry())
     for error in sorted(validator.iter_errors(record), key=lambda error: list(error.path)):
         yield Finding(
             rule.identifier,

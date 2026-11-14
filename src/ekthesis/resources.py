@@ -30,6 +30,8 @@ from pathlib import Path
 from typing import cast
 
 import yaml
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT202012
 
 from .errors import ResourceError
 
@@ -94,6 +96,13 @@ class SchemaCatalog:
     def get(self, contract: str) -> JsonObject | None:
         """Return the schema of `contract`, or `None` when no schema binds it."""
         return self.schemas.get(contract)
+
+    def registry(self) -> Registry:
+        """Return the registry resolving the absolute `$ref` of a contract to another tool."""
+        return Registry().with_resources(
+            (identifier, Resource.from_contents(schema, default_specification=DRAFT202012))
+            for identifier, schema in self.references.items()
+        )
 
 
 @dataclass(frozen=True)

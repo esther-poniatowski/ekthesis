@@ -13,10 +13,10 @@ required: [_schema, exposition, ideas, parts]
 x-identifier: exposition.id
 properties:
   _schema:
-    const: 'ekthesis:exposition@2'
+    const: 'ekthesis:exposition@3'
     title: Schema
     description: identifier of the contract that the record follows
-    examples: ['ekthesis:exposition@2']
+    examples: ['ekthesis:exposition@3']
   exposition:
     $ref: '#/$defs/exposition'
     title: Exposition
@@ -110,7 +110,7 @@ $defs:
     x-identifier: id
     oneOf:
       - title: Referenced idea
-        description: an idea stated by a unit of a source, which the link designates
+        description: an idea stated by a record or a unit of a source, which the logical target designates
         required: [source]
       - title: Authored idea
         description: an idea written by the author, of one kind of the registry of authored kinds
@@ -131,13 +131,12 @@ $defs:
         description: the idea in one sentence, as the exposition presents it
         examples: ['A mixture input is a weighted sum of two component inputs.']
       source:
-        $ref: '#/$defs/link'
-        x-resolves: file
+        $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
         title: Source
         description: >-
-          for a referenced idea, a relative link to the note or the unit that states the idea,
-          with an optional anchor of a block or a heading
-        examples: ['[Mixture input](../../definitions/mixture-input.md#^definition)']
+          for a referenced idea, the logical target of the record or the unit that states the idea:
+          a note by the id of its frontmatter, and a unit of a note by its block anchor
+        examples: [{id: mixture-input, unit: definition}]
       kind:
         $ref: '#/$defs/identifier'
         title: Kind

@@ -12,7 +12,7 @@ from ekthesis.layout import ITEM, Pattern, SchemaLayout
 from ekthesis.resources import RelationKind, packaged_resources
 
 RESOURCES = packaged_resources()
-CONTRACT = "ekthesis:exposition@2"
+CONTRACT = "ekthesis:exposition@3"
 RETAINED = "ekthesis:exposition@1"
 
 
@@ -41,7 +41,14 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
         (f"ideas{ITEM}.kind", "authored-kinds"),
         (f"relations{ITEM}.relation", "relations"),
     }
-    assert [str(pattern) for pattern in layout.source_links] == [f"ideas{ITEM}.source"]
+    # The current contract names a source by a logical target, which Anagraphe resolves; only the
+    # retained version writes a link to a file, which the rule source-links checks.
+    assert layout.source_links == ()
+    retained = SchemaLayout.from_schema(RESOURCES.schemas.schemas[RETAINED])
+    assert [str(pattern) for pattern in retained.source_links] == [
+        f"exposition.exports{ITEM}",
+        f"ideas{ITEM}.source",
+    ]
 
 
 def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
@@ -113,7 +120,9 @@ def test_every_example_of_the_schema_validates_against_its_field(contract: str) 
     nodes = list(_annotated_nodes(schema))
     assert nodes
     for node in nodes:
-        validator = Draft202012Validator({"$defs": schema["$defs"], **node})
+        validator = Draft202012Validator(
+            {"$defs": schema["$defs"], **node}, registry=RESOURCES.schemas.registry()
+        )
         for example in node["examples"]:
             assert not list(validator.iter_errors(example)), (node.get("title"), example)
 

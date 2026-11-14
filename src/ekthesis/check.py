@@ -1,7 +1,7 @@
 """
 Check of records against their schema and the rules of their contract.
 
-A record of the contract `ekthesis:exposition@2`, or of its retained version
+A record of the contract `ekthesis:exposition@3`, or of its retained version
 `ekthesis:exposition@1`, is checked by the rules on the provenance of ideas, and a record of
 `ekthesis:audience@2` by the rules on
 audiences. The audience records of one run are also checked together, since their parents and
