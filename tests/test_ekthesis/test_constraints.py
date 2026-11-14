@@ -22,6 +22,7 @@ SKELETON = Path(__file__).parents[2] / "src" / "ekthesis" / "data" / "skeletons"
 PLANTED = {
     "schema-conformance": "constraints[0]",
     "unique-identifiers": "constraints[1]",
+    "unique-units": "constraints[0]",
     "existing-references": "constraints[1].sources[1]",
 }
 
@@ -60,6 +61,28 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
     assert [(f.rule, f.severity, str(f.field)) for f in findings] == [
         (rule, Severity.ERROR, PLANTED[rule])
     ]
+
+
+@pytest.mark.parametrize(
+    ("collection", "position", "located"),
+    [("sources", 0, "sources[0]"), ("constraints", 2, "constraints[2]")],
+)
+def test_identifier_shared_across_collections_is_reported_once(
+    checker: Checker, tmp_path: Path, collection: str, position: int, located: str
+) -> None:
+    """Groups, sources and constraints share one namespace of units: an item taking the
+    identifier of a group is reported at that item, and a group keeps its identifier."""
+    record = yaml.safe_load(VALID[0].read_text(encoding="utf-8"))
+    record[collection][position]["id"] = record["groups"][0]["id"]
+    if collection == "sources":
+        for item in record["constraints"]:
+            item["sources"] = [
+                record["groups"][0]["id"] if s == "call" else s for s in item["sources"]
+            ]
+    path = tmp_path / "record.yml"
+    path.write_text(yaml.safe_dump(record, allow_unicode=True), encoding="utf-8")
+    findings = [(f.rule, str(f.field)) for f in checker.check_record(path)]
+    assert findings == [("unique-units", located)]
 
 
 def test_group_names_a_declared_group(checker: Checker, tmp_path: Path) -> None:

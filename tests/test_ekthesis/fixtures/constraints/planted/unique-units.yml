@@ -1,0 +1,18 @@
+# Planted: the group and the constraint `format` share an identifier, so a target naming the unit
+# `format` would be ambiguous.
+_schema: ekthesis:constraints@1
+identity:
+  id: constraints_poster_planted-units
+  title: Planted constraints on a poster
+groups:
+  - id: format
+    label: Format
+sources:
+  - id: instructions
+    label: Poster instructions
+constraints:
+  - id: format
+    label: Format
+    group: format
+    requirement: The poster is at most A0.
+    sources: [instructions]

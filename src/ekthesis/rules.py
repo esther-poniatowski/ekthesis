@@ -3,8 +3,9 @@ Rules checked on an argument record and on a constraints record, one function pe
 
 The first rule binds a record to its schema and validates it. The other rules read a record that
 conforms to its schema, through the layout of that schema; each rule yields its findings. A
-constraints record is checked by the two rules that read only the identifiers and the references
-of its layout. The rules on audience records are stated in `ekthesis.audiences`, and the rule on a
+constraints record is checked by the rules that read only the identifiers and the references of
+its layout, and by the rule that keeps the identifiers of its units distinct across its
+collections. The rules on audience records are stated in `ekthesis.audiences`, and the rule on a
 scope table in `ekthesis.scope_table`; this module gathers every rule, and the rules applied to
 each contract.
 
@@ -19,6 +20,8 @@ schema_conformance(path, record, catalog)
     The record names a known contract and validates against its schema.
 unique_identifiers(record)
     The items of each collection have distinct identifiers.
+unique_units(record)
+    No two items of different collections of a record share an identifier.
 existing_references(record)
     Every field that identifies an item names an existing item.
 registry_membership(record)
@@ -47,13 +50,14 @@ CONTRACT_RULES : Mapping of str to tuple of Rule
     The rules applied to a record of each contract once it conforms to its schema.
 RULES : tuple of Rule
     Every rule of `ekthesis`, with its summary and the severity of its findings: the rules on
-    argument records, the rules on audience records, and the rules on a scope table.
+    argument records, the rule on the units of a constraints record, the rules on audience
+    records, and the rules on a scope table.
 RECORD_RULES : tuple of callables
     The rules applied to an argument record that conforms to its schema, in order.
 LAYOUT_RULES : Mapping of str to tuple of callables
     The rules read through the layout of its schema, applied to a conforming record of each
-    contract, in order: `RECORD_RULES` for an argument record, and the rules on identifiers and
-    references for a constraints record.
+    contract, in order: `RECORD_RULES` for an argument record, and the rules on identifiers, units
+    and references for a constraints record.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -84,6 +88,11 @@ SCHEMA_CONFORMANCE = Rule(
 UNIQUE_IDENTIFIERS = Rule(
     "unique-identifiers",
     "The items of each collection have distinct identifiers.",
+    Severity.ERROR,
+)
+UNIQUE_UNITS = Rule(
+    "unique-units",
+    "No two items of different collections of a record share an identifier.",
     Severity.ERROR,
 )
 EXISTING_REFERENCES = Rule(
@@ -238,6 +247,30 @@ def unique_identifiers(record: BoundRecord) -> Iterator[Finding]:
                     first[identifier] = path
 
 
+def unique_units(record: BoundRecord) -> Iterator[Finding]:
+    """
+    Yield a finding for each item whose identifier repeats an item of another collection.
+
+    Each identified item of a record is a unit under ADR 0006 of Anagraphe, and the units of one
+    record share one namespace, so a logical target naming a shared identifier is ambiguous. The
+    first item of an identifier keeps it, in the order of the collections of the layout; a repeat
+    within one collection is left to `unique_identifiers`, so that one defect yields one finding.
+    """
+    first: dict[object, tuple[str, FieldPath]] = {}
+    for name, collection in record.layout.collections.items():
+        for path, item in collection.items.select(record.data):
+            for _, identifier in collection.identifier.select(item):
+                if identifier not in first:
+                    first[identifier] = (name, path)
+                elif first[identifier][0] != name:
+                    yield record.finding(
+                        UNIQUE_UNITS,
+                        path,
+                        f"the identifier {identifier} repeats that of the unit "
+                        f"{first[identifier][1]}, in the one namespace of the units of a record",
+                    )
+
+
 def existing_references(record: BoundRecord) -> Iterator[Finding]:
     """Yield a finding for each field that identifies no existing item of its collection."""
     for pattern, definition in record.layout.references:
@@ -363,7 +396,7 @@ EXPOSITION_RULES: tuple[Rule, ...] = (
     RELATION_REQUIREMENTS,
 )
 
-CONSTRAINTS_RULES: tuple[Rule, ...] = (UNIQUE_IDENTIFIERS, EXISTING_REFERENCES)
+CONSTRAINTS_RULES: tuple[Rule, ...] = (UNIQUE_IDENTIFIERS, UNIQUE_UNITS, EXISTING_REFERENCES)
 
 CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
     **{contract: EXPOSITION_RULES for contract in EXPOSITION_CONTRACTS},
@@ -374,6 +407,7 @@ CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
 RULES: tuple[Rule, ...] = (
     SCHEMA_CONFORMANCE,
     *EXPOSITION_RULES,
+    UNIQUE_UNITS,
     *AUDIENCE_RULES,
     SCOPE_TABLE_CURRENT,
     SCOPE_TABLE_DERIVABLE,
@@ -390,5 +424,8 @@ RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
 
 LAYOUT_RULES: Mapping[str, tuple[Callable[[BoundRecord], Iterator[Finding]], ...]] = {
     **{contract: RECORD_RULES for contract in EXPOSITION_CONTRACTS},
-    **{contract: (unique_identifiers, existing_references) for contract in CONSTRAINTS_CONTRACTS},
+    **{
+        contract: (unique_identifiers, unique_units, existing_references)
+        for contract in CONSTRAINTS_CONTRACTS
+    },
 }
