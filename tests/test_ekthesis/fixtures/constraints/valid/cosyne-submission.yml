@@ -1,0 +1,301 @@
+# Converted from the note of geonexus conferences/2027-03_cosyne/constraints_submission.md: a record
+# whose constraints all belong to declared groups, with requirements on several lines.
+_schema: ekthesis:constraints@1
+
+identity:
+  id: constraints_submission_2027-03_cosyne
+  title: Cosyne 2027 submission constraints
+
+groups:
+  - id: dates
+    label: Dates
+    description: the deadlines and the scheduled events, from the submission to the meeting
+  - id: submission-procedure
+    label: Submission procedure
+    description: the steps on the portal, and the roles of the authors
+  - id: format
+    label: Format
+    description: the measurable properties of the title, the summary and the PDF
+  - id: anonymity
+    label: Anonymity
+    description: the conditions of the double-blind review
+  - id: content
+    label: Content of the argument
+    description: the properties scored by the reviewers
+  - id: outcome-and-publication
+    label: Outcome and publication
+    description: the possible decisions on the abstract, and the rights over an accepted summary
+  - id: travel-grants
+    label: Travel grants
+    description: the funding open to attendees
+
+sources:
+  - id: call
+    label: Call for abstracts
+    location: https://www.cosyne.org/abstracts-submission
+  - id: meeting-page
+    label: Meeting page
+    location: https://www.cosyne.org/
+  - id: announcement
+    label: Announcement of 1 October 2026
+    location: https://lists.cnsorg.org/hyperkitty/list/comp-neuro@lists.cnsorg.org/message/KZCEK3SQLZZQS7XUDSC6PWO6E5F4FTTC/
+  - id: travel-grants-page
+    label: Travel grants
+    location: https://www.cosyne.org/travel-grants
+
+constraints:
+  - id: abstract-deadline
+    label: Abstract deadline
+    group: dates
+    requirement: |-
+      18 October 2026, 11:59pm AoE
+      19 October 2026, 13:59 in Paris
+    sources: [call, meeting-page]
+  - id: notification
+    label: Notification
+    group: dates
+    requirement: >-
+      mid-December 2026, for posters, talks and rejections alike. Any change of date is posted on
+      the call.
+    sources: [call]
+  - id: preliminary-schedule
+    label: Preliminary schedule
+    group: dates
+    requirement: published online in mid-January 2027
+    sources: [call]
+  - id: registration-opening
+    label: Registration opening
+    group: dates
+    requirement: 2 November 2026. Early registration qualifies for discounted rates.
+    sources: [meeting-page, announcement]
+  - id: presenting-author-registration
+    label: Registration of the presenting author
+    group: dates
+    requirement: >-
+      by 31 January 2027, 23:59 EST. Submitting an abstract does not register its presenting
+      author.
+    sources: [call]
+  - id: meeting
+    label: Meeting
+    group: dates
+    requirement: >-
+      main meeting on 11–14 March 2027 at the Fairmont The Queen Elizabeth; workshops on
+      15–16 March 2027 at Le Westin, both in Montréal
+    sources: [meeting-page]
+  - id: portal
+    label: Portal
+    group: submission-procedure
+    requirement: >-
+      [Cosyne submission portal](http://cosyne.confmaster.net/). An account must be created
+      before submitting.
+    sources: [call]
+  - id: authors
+    label: Authors
+    group: submission-procedure
+    requirement: >-
+      every author, each with an e-mail address. Each author must use the same name, e-mail
+      address and affiliation on every abstract.
+    sources: [call]
+  - id: presenting-author
+    label: Presenting author
+    group: submission-procedure
+    requirement: >-
+      The person uploading the abstract certifies being its presenting author, that is, the
+      person who presents the poster or the talk.
+    sources: [call]
+  - id: abstracts-per-presenting-author
+    label: Abstracts per presenting author
+    group: submission-procedure
+    requirement: one. A person may co-author more than one abstract.
+    sources: [call]
+  - id: summary-box
+    label: Summary box
+    group: submission-procedure
+    requirement: >-
+      pasted into a text-only box. The summary alone is printed in the program, and it cannot be
+      revised once submitted.
+    sources: [call]
+  - id: title
+    label: Title
+    group: format
+    requirement: at most 100 characters including spaces, in sentence case
+    sources: [call]
+  - id: summary-length
+    label: Summary length
+    group: format
+    requirement: at most 300 words
+    sources: [call]
+  - id: pdf
+    label: PDF
+    group: format
+    requirement: >-
+      two pages, A4 or US Letter. Pages beyond the second are removed. No template is imposed.
+    sources: [call]
+  - id: pdf-content
+    label: Content of the PDF
+    group: format
+    requirement: the title, the summary, then the additional detail
+    sources: [call]
+  - id: typography
+    label: Typography
+    group: format
+    requirement: >-
+      body text at least 12 pt; captions and references at least 10 pt; margins at least 0.5 inch
+    sources: [call]
+  - id: figures
+    label: Figures
+    group: format
+    requirement: >-
+      highly encouraged, with equations where appropriate. Each figure must be legible and
+      explained in its caption or in the text.
+    sources: [call]
+  - id: acronyms
+    label: Acronyms
+    group: format
+    requirement: each defined at least once
+    sources: [call]
+  - id: compliance
+    label: Compliance
+    group: format
+    requirement: When an abstract breaks these guidelines, it may be rejected before review.
+    sources: [call]
+  - id: review
+    label: Review
+    group: anonymity
+    requirement: double-blind. The authors must anonymize the abstract themselves.
+    sources: [call]
+  - id: identifying-information
+    label: Identifying information
+    group: anonymity
+    requirement: >-
+      no author name, affiliation or acknowledgment in the summary or in the PDF, its figures and
+      its metadata included
+    sources: [call]
+  - id: published-work
+    label: Published work of the authors
+    group: anonymity
+    requirement: 'on related topics, cited and anonymized: "Author et al. [1]"'
+    sources: [call]
+  - id: preprints
+    label: Preprints of the authors
+    group: anonymity
+    requirement: >-
+      either cited and anonymized, or left uncited. Reviewers are instructed not to search for
+      them.
+    sources: [call]
+  - id: criteria
+    label: Criteria
+    group: content
+    requirement: |-
+      - "Significance"
+      - "Originality"
+      - "Clarity"
+      - "Relevance to the Cosyne audience"
+    sources: [call]
+  - id: selection
+    label: Selection
+    group: content
+    requirement: >-
+      Abstracts are selected "based on the clarity with which they convey the substance,
+      significance, and originality".
+    sources: [announcement]
+  - id: summary
+    label: Summary
+    group: content
+    requirement: >-
+      the primary findings, with emphasis on their "significance, generality, novelty, and
+      relevance"
+    sources: [call]
+  - id: additional-detail
+    label: Additional detail
+    group: content
+    requirement: >-
+      expands the question, the approach, the results or the conclusions. Only reviewers and
+      organizers read it.
+    sources: [call]
+  - id: importance
+    label: Importance
+    group: content
+    requirement: >-
+      The abstract must state why the question matters and how its claims advance the field.
+    sources: [call]
+  - id: technical-detail
+    label: Technical detail
+    group: content
+    requirement: enough for reviewers to assess the methods and the results
+    sources: [call]
+  - id: audience
+    label: Audience
+    group: content
+    requirement: >-
+      experimentalists and theorists "interested in the functional properties of neural
+      systems". The abstract must address its significance and its fit for this audience.
+    sources: [call]
+  - id: bridge
+    label: Bridge to the other subgroup
+    group: content
+    requirement: >-
+      When the work leans entirely to computation or entirely to systems neuroscience, one or two
+      sentences must state how the results might interest the other subgroup.
+    sources: [call]
+  - id: topics-not-accepted
+    label: Topics not typically accepted
+    group: content
+    requirement: |-
+      - "pure machine learning studies without ties to the brain"
+      - "studies of single neuron properties without clear implications for neural systems"
+    sources: [call]
+  - id: outcome
+    label: Outcome
+    group: outcome-and-publication
+    requirement: >-
+      poster, talk or rejection. The main meeting is single-track. The rule that selects talks is
+      not stated.
+    sources: [call, announcement]
+  - id: publication
+    label: Publication
+    group: outcome-and-publication
+    requirement: >-
+      The summary of an accepted abstract is published online, with the consent of the authors
+      given when submitting. The published summary is citable as "COSYNE Abstracts 2027" and
+      does not prevent publishing the work later. The copyright stays with the authors.
+    sources: [call]
+  - id: presenters-travel-grant
+    label: Presenters travel grant
+    group: travel-grants
+    requirement: >-
+      open to Ph.D. students, postdoctoral fellows and new faculty who present a submitted
+      abstract and declare a need for funds. Awards are selected mainly on the scores of the
+      reviewers, and some on the interests of donors. First authors, authors of a talk, authors
+      of several presentations and first-time recipients are more likely to receive an award.
+      Each award covers the registration fee of the main meeting, and some also cover a hotel
+      room.
+    sources: [travel-grants-page]
+  - id: new-attendees-travel-grant
+    label: New attendees travel grant
+    group: travel-grants
+    requirement: >-
+      open to first-time attendees who declare a need for funds, whether or not they submit an
+      abstract
+    sources: [travel-grants-page]
+  - id: grant-applications
+    label: Grant applications
+    group: travel-grants
+    requirement: >-
+      open from mid-October 2026, with no deadline posted. An applicant may apply to more than
+      one program and receives at most one award. Applying before the outcome of the abstract is
+      allowed. Outcomes are announced in early January 2027. A recipient cannot serve as a
+      student volunteer.
+    sources: [travel-grants-page]
+
+notes: |-
+  Every abstract submitted to Cosyne 2027 must satisfy these constraints, independently of the
+  project it presents.
+
+  AoE is UTC−12, and Paris stays on summer time (UTC+2) until 25 October 2026.
+
+  **Provenance**: The pages of cosyne.org and the announcement were read on 14-10-2026, and
+  checked again on 17-10-2026. Two items remain unstated in these sources:
+
+  - the rule that selects talks;
+  - the route to apply for each travel grant other than the undergraduate one.

@@ -1,10 +1,12 @@
 """
-Rules checked on an argument record, one function per rule.
+Rules checked on an argument record and on a constraints record, one function per rule.
 
 The first rule binds a record to its schema and validates it. The other rules read a record that
-conforms to its schema, through the layout of that schema; each rule yields its findings. The rules
-on audience records are stated in `ekthesis.audiences`, and the rule on a scope table in
-`ekthesis.scope_table`; this module gathers every rule, and the rules applied to each contract.
+conforms to its schema, through the layout of that schema; each rule yields its findings. A
+constraints record is checked by the two rules that read only the identifiers and the references
+of its layout. The rules on audience records are stated in `ekthesis.audiences`, and the rule on a
+scope table in `ekthesis.scope_table`; this module gathers every rule, and the rules applied to
+each contract.
 
 Classes
 -------
@@ -35,6 +37,12 @@ EXPOSITION_CONTRACT : str
 EXPOSITION_CONTRACTS : tuple of str
     The contracts of an argument record that the check reads: the current one, and each earlier
     version retained until every record has migrated.
+CONSTRAINTS_CONTRACT : str
+    The contract that a constraints record follows.
+CONSTRAINTS_CONTRACTS : tuple of str
+    The contracts of a constraints record that the check reads, the current one alone.
+CONSTRAINTS_RULES : tuple of Rule
+    The rules applied to a constraints record that conforms to its schema.
 CONTRACT_RULES : Mapping of str to tuple of Rule
     The rules applied to a record of each contract once it conforms to its schema.
 RULES : tuple of Rule
@@ -42,6 +50,10 @@ RULES : tuple of Rule
     argument records, the rules on audience records, and the rules on a scope table.
 RECORD_RULES : tuple of callables
     The rules applied to an argument record that conforms to its schema, in order.
+LAYOUT_RULES : Mapping of str to tuple of callables
+    The rules read through the layout of its schema, applied to a conforming record of each
+    contract, in order: `RECORD_RULES` for an argument record, and the rules on identifiers and
+    references for a constraints record.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -61,6 +73,8 @@ from .scope_table import SCOPE_TABLE_CURRENT, SCOPE_TABLE_DERIVABLE
 
 EXPOSITION_CONTRACT = "ekthesis:exposition@3"
 EXPOSITION_CONTRACTS: tuple[str, ...] = (EXPOSITION_CONTRACT, "ekthesis:exposition@1")
+CONSTRAINTS_CONTRACT = "ekthesis:constraints@1"
+CONSTRAINTS_CONTRACTS: tuple[str, ...] = (CONSTRAINTS_CONTRACT,)
 
 SCHEMA_CONFORMANCE = Rule(
     "schema-conformance",
@@ -349,9 +363,12 @@ EXPOSITION_RULES: tuple[Rule, ...] = (
     RELATION_REQUIREMENTS,
 )
 
+CONSTRAINTS_RULES: tuple[Rule, ...] = (UNIQUE_IDENTIFIERS, EXISTING_REFERENCES)
+
 CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
     **{contract: EXPOSITION_RULES for contract in EXPOSITION_CONTRACTS},
     **{contract: AUDIENCE_RULES for contract in AUDIENCE_CONTRACTS},
+    **{contract: CONSTRAINTS_RULES for contract in CONSTRAINTS_CONTRACTS},
 }
 
 RULES: tuple[Rule, ...] = (
@@ -370,3 +387,8 @@ RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
     authored_relations,
     relation_requirements,
 )
+
+LAYOUT_RULES: Mapping[str, tuple[Callable[[BoundRecord], Iterator[Finding]], ...]] = {
+    **{contract: RECORD_RULES for contract in EXPOSITION_CONTRACTS},
+    **{contract: (unique_identifiers, existing_references) for contract in CONSTRAINTS_CONTRACTS},
+}

@@ -1,0 +1,12 @@
+# Planted: the constraint `poster-size` cites no source, which its schema requires.
+_schema: ekthesis:constraints@1
+identity:
+  id: constraints_poster_planted-schema
+  title: Planted constraints on a poster
+sources:
+  - id: instructions
+    label: Poster instructions
+constraints:
+  - id: poster-size
+    label: Poster size
+    requirement: The poster is at most A0.

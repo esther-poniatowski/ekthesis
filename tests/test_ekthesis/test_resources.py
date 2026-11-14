@@ -113,7 +113,7 @@ def _annotated_nodes(node: object):
             yield from _annotated_nodes(value)
 
 
-@pytest.mark.parametrize("contract", [CONTRACT, RETAINED])
+@pytest.mark.parametrize("contract", [CONTRACT, RETAINED, "ekthesis:constraints@1"])
 def test_every_example_of_the_schema_validates_against_its_field(contract: str) -> None:
     """An example that its own field rejects would mislead the author of a record."""
     schema = RESOURCES.schemas.schemas[contract]

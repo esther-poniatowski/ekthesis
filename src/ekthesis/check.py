@@ -2,10 +2,10 @@
 Check of records against their schema and the rules of their contract.
 
 A record of the contract `ekthesis:exposition@3`, or of its retained version
-`ekthesis:exposition@1`, is checked by the rules on the provenance of ideas, and a record of
-`ekthesis:audience@2` by the rules on
-audiences. The audience records of one run are also checked together, since their parents and
-their confused communities name each other.
+`ekthesis:exposition@1`, is checked by the rules on the provenance of ideas, a record of
+`ekthesis:audience@2` by the rules on audiences, and a record of `ekthesis:constraints@1` by the
+rules on the identifiers and the references of its items. The audience records of one run are also
+checked together, since their parents and their confused communities name each other.
 
 Classes
 -------
@@ -36,8 +36,7 @@ from .positions import parse, position
 from .resources import BINDING_FIELD, Resources
 from .rules import (
     CONTRACT_RULES,
-    EXPOSITION_CONTRACTS,
-    RECORD_RULES,
+    LAYOUT_RULES,
     SCHEMA_CONFORMANCE,
     BoundRecord,
     schema_conformance,
@@ -175,8 +174,8 @@ class Checker:
             if contract in AUDIENCE_CONTRACTS:
                 audience = read_audience(path, data)
                 findings.extend(record_findings(audience))
-            elif contract in EXPOSITION_CONTRACTS:
-                findings.extend(self._exposition_findings(path, data, contract))
+            elif contract is not None and contract in LAYOUT_RULES:
+                findings.extend(self._layout_findings(path, data, contract))
         report = RecordReport(
             path,
             self._identifier(data),
@@ -186,10 +185,11 @@ class Checker:
         )
         return _Reading(report, node, audience)
 
-    def _exposition_findings(self, path: Path, data: object, contract: str) -> list[Finding]:
-        """Return the findings of the rules on argument records, for a conforming record."""
+    def _layout_findings(self, path: Path, data: object, contract: str) -> list[Finding]:
+        """Return the findings of the rules that read a conforming record of `contract` through
+        the layout of its schema."""
         record = BoundRecord(path, data, self._layout(contract), self.resources.registries)
-        return [finding for rule in RECORD_RULES for finding in rule(record)]
+        return [finding for rule in LAYOUT_RULES[contract] for finding in rule(record)]
 
     def _skipped(self, contract: str | None, findings: list[Finding]) -> tuple[str, ...]:
         """Return the rules skipped on a record of `contract` with the findings `findings`."""

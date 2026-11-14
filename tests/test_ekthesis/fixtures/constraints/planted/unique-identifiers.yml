@@ -1,0 +1,17 @@
+# Planted: two constraints declare the identifier `poster-size`.
+_schema: ekthesis:constraints@1
+identity:
+  id: constraints_poster_planted-identifiers
+  title: Planted constraints on a poster
+sources:
+  - id: instructions
+    label: Poster instructions
+constraints:
+  - id: poster-size
+    label: Poster size
+    requirement: The poster is at most A0.
+    sources: [instructions]
+  - id: poster-size
+    label: Orientation
+    requirement: The poster is printed in portrait orientation.
+    sources: [instructions]

@@ -1,0 +1,29 @@
+# binding rules of one venue on one kind of exposition; checked by `ekthesis check`
+_schema: ekthesis:constraints@1
+# placeholders stay quoted; an optional key left unfilled is deleted
+
+metadata: {}                                            # optional; fields reserved to the consumer, which ekthesis does not check
+
+identity:
+  id: '{{RECORD ID}}'                                   # lower case, segments joined by - or _; the record of an exposition names the record by it
+  title: '{{VENUE}} constraints on {{KIND OF EXPOSITION}}'  # one line; no final period
+
+groups:                                                 # optional; one item per kind of constraint, in reading order
+  - id: '{{GROUP ID}}'                                  # kebab-case; unique among the groups
+    label: '{{GROUP NAME}}'                             # one line; no final period
+    description: '{{KIND OF THE CONSTRAINTS OF THE GROUP}}'  # optional; one sentence; no final period
+
+sources:                                                # each document or person that states a constraint, declared once
+  - id: '{{SOURCE ID}}'                                 # kebab-case; unique among the sources
+    label: '{{SOURCE NAME}}'                            # one line; no final period
+    location: '{{URL}}'                                 # optional; or {id: '{{RECORD ID}}'}, the logical target of the record that transcribes the source
+
+constraints:                                            # the binding rules, in reading order
+  - id: '{{CONSTRAINT ID}}'                             # kebab-case; unique among the constraints
+    label: '{{CONSTRAINT NAME}}'                        # one line; no final period
+    group: '{{GROUP ID}}'                               # optional; a group declared above
+    requirement: '{{REQUIREMENT AS STATED BY THE VENUE}}'  # Markdown; several lines admitted
+    sources: ['{{SOURCE ID}}']                          # one or more sources declared above
+    source_note: '{{SECTION OF A SOURCE, OR PART OF THE REQUIREMENT THAT EACH SOURCE STATES}}'  # optional; one line
+
+notes: '{{PROVENANCE, AND CONTENT THAT BINDS NO EXPOSITION}}'  # optional; Markdown

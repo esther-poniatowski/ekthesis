@@ -1,0 +1,214 @@
+# Constraints record of one venue on one kind of exposition, checked by `ekthesis check`.
+# The decision on constraints states the meaning of each field. The record of an exposition names a
+# constraints record by a logical target typed by this contract.
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: constraints.schema.yaml
+title: Constraints
+description: >-
+  A constraints record states the binding rules that a venue imposes on one kind of exposition,
+  such as a submitted abstract or a printed poster, each rule with its requirement and its sources.
+type: object
+additionalProperties: false
+required: [_schema, identity, sources, constraints]
+x-identifier: identity.id
+properties:
+  _schema:
+    const: 'ekthesis:constraints@1'
+    title: Schema
+    description: identifier of the contract that the record follows
+    examples: ['ekthesis:constraints@1']
+  metadata:
+    type: object
+    title: Metadata
+    description: >-
+      fields reserved to the consumer, such as those of the index entry of the file; the consumer
+      fixes them, and `ekthesis` does not check them
+  identity:
+    $ref: '#/$defs/identity'
+    title: Identity
+    description: the identifier of the record, and the venue and the kind of exposition that it constrains
+  groups:
+    type: array
+    x-kind: table
+    items: {$ref: '#/$defs/group'}
+    title: Groups
+    description: the groups that gather the constraints of one kind, in reading order
+  sources:
+    type: array
+    x-kind: table
+    minItems: 1
+    items: {$ref: '#/$defs/source'}
+    title: Sources
+    description: every document or person that states a constraint of the record, declared once
+  constraints:
+    type: array
+    x-kind: records
+    minItems: 1
+    items: {$ref: '#/$defs/constraint'}
+    title: Constraints
+    description: the binding rules of the venue, in reading order
+  notes:
+    type: string
+    minLength: 1
+    x-kind: markdown
+    title: Notes
+    description: >-
+      the provenance of the record and the content that binds no exposition, such as the
+      suggestions of the venue or the identification of the event
+    examples: ['The pages of the venue were read on 06-10-2026.']
+
+$defs:
+  identifier:
+    type: string
+    pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+    x-kind: label
+    description: an identifier in lower kebab-case
+
+  record-identifier:
+    type: string
+    pattern: '^[a-z0-9]+([-_][a-z0-9]+)*$'
+    x-kind: label
+    description: an identifier in lower case, whose segments are joined by hyphens or underscores
+
+  label:
+    type: string
+    pattern: '^\S(?:[^\n]*[^.\s])?$'
+    x-kind: markdown-line
+    description: a plain-text name on one line, without surrounding spaces and without a final period
+
+  gloss:
+    type: string
+    pattern: '^(?![^\n]*(?:(?<!\be\.g)(?<!\bi\.e)(?<!\bcf)(?<!\bvs)(?<!\betc)(?<!\bal)\.|[!?])\s+[A-Z])[^\n]*(?:[^.\s]|\betc\.|\bal\.)$'
+    x-kind: markdown-line
+    description: >-
+      a single sentence on one line, closing without a period, as a dictionary gloss does; a
+      period, an exclamation or a question mark followed by a capital marks a second sentence,
+      except after the abbreviations e.g., i.e., cf., vs., etc. and et al.
+
+  text:
+    type: string
+    minLength: 1
+    x-kind: markdown-line
+    description: a non-empty text on one line
+
+  identity:
+    type: object
+    additionalProperties: false
+    required: [id, title]
+    properties:
+      id:
+        $ref: '#/$defs/record-identifier'
+        title: Identifier
+        description: identifier of the record, by which the record of an exposition names it
+        examples: [constraints_submission_2026-11_pints]
+      title:
+        $ref: '#/$defs/label'
+        title: Title
+        description: the venue and the kind of exposition that the record constrains
+        examples: [PINTS 2026 submission constraints]
+
+  group:
+    type: object
+    additionalProperties: false
+    required: [id, label]
+    x-identifier: id
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: identifier of the group, unique among the groups of the record
+        examples: [anonymity]
+      label:
+        $ref: '#/$defs/label'
+        title: Label
+        description: the name of the group
+        examples: [Anonymity]
+      description:
+        $ref: '#/$defs/gloss'
+        title: Description
+        description: the kind of the constraints that the group gathers, in one sentence
+        examples: [the conditions of the double-blind review]
+
+  source:
+    type: object
+    additionalProperties: false
+    required: [id, label]
+    x-identifier: id
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: identifier of the source, unique among the sources of the record
+        examples: [call]
+      label:
+        $ref: '#/$defs/label'
+        title: Label
+        description: the name of the source, such as the title of a page or the person who relayed a rule
+        examples: [call for abstracts, relayed by the author]
+      location:
+        title: Location
+        description: where the source can be read, when it can be read
+        oneOf:
+          - title: Page
+            description: the address of a page or a file published by the venue
+            type: string
+            pattern: '^https?://\S+$'
+            x-kind: markdown-line
+          - title: Record
+            description: >-
+              the logical target of the record that transcribes the source, such as a note of
+              instructions, by the id of its frontmatter
+            $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+            required: [id]
+        examples: ['https://pints.fr/submit.html', {id: instructions_poster_2026-08_ccn}]
+
+  constraint:
+    type: object
+    additionalProperties: false
+    required: [id, label, requirement, sources]
+    x-identifier: id
+    properties:
+      id:
+        $ref: '#/$defs/identifier'
+        title: Identifier
+        description: >-
+          identifier of the constraint, unique among the constraints of the record, by which the
+          specification of an exposition names the constraint that a decision meets
+        examples: [poster-size]
+      label:
+        $ref: '#/$defs/label'
+        title: Label
+        description: the name of the constraint
+        examples: [Poster size]
+      group:
+        $ref: '#/$defs/identifier'
+        x-refers: group
+        title: Group
+        description: identifier of the group of the constraint, when the record declares groups
+        examples: [anonymity]
+      requirement:
+        type: string
+        minLength: 1
+        x-kind: markdown
+        title: Requirement
+        description: the requirement, as the venue states it
+        examples: ['The poster is at most A0 (84.1 × 118.9 cm), in portrait orientation.']
+      sources:
+        type: array
+        x-kind: list
+        minItems: 1
+        uniqueItems: true
+        items:
+          $ref: '#/$defs/identifier'
+          x-refers: source
+          description: identifier of a source that states the requirement
+        title: Sources
+        description: the sources that state the requirement
+        examples: [[submission-rules, submission-form]]
+      source_note:
+        $ref: '#/$defs/text'
+        title: Source note
+        description: >-
+          the section of a source that states the requirement, or the part of the requirement that
+          each source states, when the sources alone leave it unclear
+        examples: [the 600-character limit is relayed by the author and absent from the form text]

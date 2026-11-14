@@ -1,0 +1,95 @@
+# Converted from the note of geonexus conferences/2026-11_pints/constraints_submission.md: a record
+# without groups, whose rows cite several sources and sources without a location.
+_schema: ekthesis:constraints@1
+
+metadata:
+  role: constraints
+  status: draft
+  purpose: fixes the conference rules that each submitted item must meet
+
+identity:
+  id: constraints_submission_2026-11_pints
+  title: PINTS 2026 submission constraints
+
+sources:
+  - id: submission-rules
+    label: Submission rules
+    location: https://pints.fr/submit.html
+  - id: submission-form
+    label: Submission form
+  - id: author
+    label: Relayed by the author
+  - id: first-figure-source
+    label: First figure source of the abstract
+  - id: conference-targets
+    label: Conference targets
+    location: {repository: thesis-neural-representations, id: conference-targets}
+  - id: meeting-page
+    label: PINTS meeting page
+    location: https://pints.fr/
+
+constraints:
+  - id: abstracts-per-person
+    label: Abstracts per person
+    requirement: One abstract per person.
+    sources: [submission-rules]
+  - id: presentation-format
+    label: Presentation format
+    requirement: Every abstract is presented as a poster.
+    sources: [submission-rules]
+  - id: poster-size
+    label: Poster size
+    requirement: >-
+      The poster is at most A0 (84.1 × 118.9 cm), in portrait orientation. Poster boards and
+      fixings are provided.
+    sources: [author]
+  - id: talk-selection
+    label: Talk selection
+    requirement: >-
+      Every poster is considered for a talk unless the author opts out. The submission form asks
+      for the talk through a checkbox.
+    sources: [submission-rules, submission-form]
+  - id: figure
+    label: Figure
+    requirement: >-
+      A figure is required for the abstract to be considered for a talk. The file must be PNG,
+      JPEG or WebP, of at most 5 MB; large images are shrunk automatically before upload.
+    sources: [submission-form]
+  - id: caption
+    label: Caption
+    requirement: >-
+      A caption is required for the abstract to be considered for a talk. The caption is
+      unformatted plain text of at most 600 characters.
+    sources: [submission-form, author]
+    source_note: the 600-character limit is relayed by the author and absent from the form text
+  - id: figure-display
+    label: Figure display
+    requirement: >-
+      The submission interface accepts any aspect ratio and first displays the image at about
+      320 px wide.
+    sources: [first-figure-source]
+    source_note: origin unverified
+  - id: abstract
+    label: Abstract
+    requirement: >-
+      The abstract is plain text of at most 2500 characters. Only *italic* and **bold** markers
+      are allowed.
+    sources: [submission-form]
+  - id: submission-deadline
+    label: Submission deadline
+    requirement: The deadline falls in 10-2026; the day is not posted.
+    sources: [conference-targets]
+  - id: meeting
+    label: Meeting
+    requirement: >-
+      The meeting takes place on 06-11-2026 in the Daniel Cohen Amphitheater, ENS, 48 bd Jourdan,
+      Paris.
+    sources: [meeting-page]
+
+notes: |-
+  **Provenance**: The pints.fr pages were read on 06-10-2026, and the rules of the submission form
+  and of the poster were relayed by the author on the same day. The day of the submission deadline
+  is stated by neither source.
+
+  The decisions that meet these constraints are stated in the submission specification of the
+  abstract.

@@ -6,9 +6,9 @@ Defines commands available via `python -m ekthesis` or `ekthesis` if installed a
 Commands
 --------
 info : Display diagnostic information.
-check : Check argument records and audience records against their schema and the rules of their
-    contract, and report the findings as text lines or as a SARIF log (`--format sarif`), written to
-    the standard output or to a file (`-o`, `--output`).
+check : Check argument, audience and constraints records against their schema and the rules of
+    their contract, and report the findings as text lines or as a SARIF log (`--format sarif`),
+    written to the standard output or to a file (`-o`, `--output`).
 scope-table : Derive the scope table of audience records and write it (`-t`, `--table`), or, with
     `--check`, report a written table that differs from the derived one, in the formats of `check`.
 
@@ -99,7 +99,7 @@ def cli_check(
     output: Path | None = OUTPUT_OPTION,
     root: Path | None = ROOT_OPTION,
 ) -> None:
-    """Check argument and audience records, and exit with status 1 on a blocking finding."""
+    """Check argument, audience and constraints records, and exit with status 1 on an error."""
     paths = expand_paths(paths)
     base = _base(root, paths if output_format is OutputFormat.SARIF else [])
     reports = Checker(packaged_resources()).reports(paths)

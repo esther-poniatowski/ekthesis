@@ -6,6 +6,7 @@ paths:
 
 exports:
   - ekthesis:audience@2
+  - ekthesis:constraints@1
   - ekthesis:exposition@1
   - ekthesis:exposition@3
 

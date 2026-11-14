@@ -98,10 +98,23 @@ $defs:
         description: link to the glossary that fixes the terms of the exposition
         examples: ['[Glossary of the project](../../glossary.yml)']
       venue-constraints:
-        $ref: '#/$defs/link'
         title: Venue constraints
-        description: link to the constraints that the venue imposes on the exposition
-        examples: ['[Submission constraints](https://example.org/conferences/constraints_submission.md)']
+        description: >-
+          the constraints that the venue imposes on the exposition: the logical target of a
+          constraints record, or a link to a note of constraints written before that contract
+        oneOf:
+          - title: Constraints record
+            description: the logical target of a record of the contract `ekthesis:constraints`, naming no unit
+            $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+            x-target-contract: ['ekthesis:constraints']
+            required: [id]
+            not: {required: [unit]}
+          - title: Link
+            description: a link to a note of constraints, which a constraints record replaces
+            $ref: '#/$defs/link'
+        examples:
+          - {id: constraints_submission_2026-11_pints}
+          - '[Submission constraints](https://example.org/conferences/constraints_submission.md)'
 
   idea:
     type: object

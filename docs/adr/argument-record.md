@@ -3,7 +3,7 @@ tags:
   - decision
 status: accepted
 created: 2026-10-31
-revised: 2026-11-11
+revised: 2026-11-14
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Argument record and its check
@@ -26,7 +26,7 @@ The decision on the provenance of ideas fixes three contents that an exposition 
 - its relations;
 - its parts, in reading order.
 
-Each part lists its ideas in order, and one idea may appear in several parts. The audience, the glossary and the venue constraints are named by links, since the schema takes no `$ref` into another repository. ^record
+Each part lists its ideas in order, and one idea may appear in several parts. The audience and the glossary are named by links, since the schema takes no `$ref` into another repository. The venue constraints are named by a logical target of a constraints record, or by the link to a note of constraints that the field held before, as the [decision on venue constraints](constraints.md#^constraints-names) states. ^record
 
 **Referenced idea.** A referenced idea names the record or the unit that states it by a logical target of Anagraphe, under its [ADR 0006](https://github.com/esther-poniatowski/anagraphe/blob/main/docs/adr/0006-logical-targets.md): a mapping `{repository, id, unit}`, whose repository is omitted inside the repository of the record. A note is named by the `id` of its frontmatter, and a unit of a note by its block anchor without the caret; a heading is not a unit. `ekthesis` validates the form of the target, and Anagraphe resolves it, so the existence of the record and of its unit is checked by `anagraphe targets check`, under the decision of `geonexus` on [cross-repository resolution](https://github.com/esther-poniatowski/geonexus/blob/95f893d9719604ae7a0fcca2b4c899944b47991b/docs/_decisions/cross-repository-record-resolution.md#canonical-reference). The retained version 1 names its unit by a relative Markdown link, which the check resolves from the directory of the record. No rule reads a unit through an export. ^referenced-idea
 

@@ -1,0 +1,88 @@
+# Converted from the note of geonexus projects/thesis-neural-representations/artifacts/
+# neural-representations_thesis/project-description/constraints_doctoral-school.md: a record whose
+# group gathers some constraints only, so that a specification names that group as a unit.
+_schema: ekthesis:constraints@1
+
+metadata:
+  role: constraints
+  status: wip
+  purpose: fixes the requirements of the doctoral school ED 474 (FIRE) on the project description
+
+identity:
+  id: constraints_doctoral-school_project-description
+  title: Doctoral school constraints on the thesis project description
+
+groups:
+  - id: admission-criteria
+    label: Admission criteria
+    description: the criteria of the admission call that bind the project itself
+
+sources:
+  - id: calendar
+    label: Calendar of Université Paris Cité
+    location: https://u-pariscite.fr/doctorat/doctorat-calendrier-2026-27/
+  - id: ecandidat-notice
+    label: Notice of the eCandidat platform
+  - id: registration-procedure
+    label: Registration procedure of Université Paris Cité
+    location: https://u-paris.fr/doctorat/premiere-inscription/
+  - id: admission-call
+    label: Admission call of ED 474
+    location: https://phd.learningplanetinstitute.org/en/join-us
+  - id: usage
+    label: Usage, with no written rule
+
+constraints:
+  - id: deadline
+    label: Deadline
+    requirement: The eCandidat file opened on 18 June 2026 and closes on **15 December 2026**.
+    sources: [calendar, ecandidat-notice]
+  - id: submission-route
+    label: Submission route
+    requirement: >-
+      The proposal is submitted via an online application form through **eCandidat** at
+      Université Paris Cité.
+    sources: [registration-procedure]
+  - id: length
+    label: Length
+    requirement: 5 pages maximum.
+    sources: [admission-call]
+  - id: language
+    label: Language
+    requirement: English, by usage rather than by rule.
+    sources: [usage]
+  - id: required-sections
+    label: Required sections
+    requirement: None. The admission criteria apply instead.
+    sources: [admission-call]
+  - id: unconventional-interdisciplinary
+    label: Unconventional and interdisciplinary
+    group: admission-criteria
+    requirement: The questions or the approaches must be novel for the laboratory that hosts the project.
+    sources: [admission-call]
+  - id: local-co-supervision
+    label: Local co-supervision
+    group: admission-criteria
+    requirement: At least one hosting laboratory in the Paris region must co-supervise.
+    sources: [admission-call]
+  - id: sustainable-development
+    label: Sustainable development
+    group: admission-criteria
+    requirement: The project must contribute to implementing the sustainable development goals.
+    sources: [admission-call]
+
+notes: |-
+  The application procedure requires a **project proposal** that describes the thesis. The format
+  of the proposal is governed by Doctoral School ED 474, Frontières de l'Innovation en Recherche et
+  Éducation (FIRE). The school is accredited by Université Paris Cité and co-accredited by PSL.
+
+  The admission call prescribes five criteria in place of sections. Only three criteria bind the
+  project itself, gathered in the group Admission criteria. The two remaining criteria bind the
+  candidate:
+
+  - **Education background**. A master's degree or an equivalent covering five years of higher
+    education.
+  - **Expertise**. A strong background in at least one discipline the project draws on.
+
+  The [answers to the admission criteria](_decisions/admission-criteria.md) state the questions
+  raised by each binding criterion, and how the proposal meets them.
