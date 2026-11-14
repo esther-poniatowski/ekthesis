@@ -3,7 +3,7 @@ tags:
   - decision
 status: accepted
 created: 2026-10-31
-revised: 2026-11-11
+revised: 2026-11-14
 index: "[Architecture decisions](docs/adr/_index.md)"
 aliases:
   - Audiences
@@ -61,9 +61,9 @@ The present decision takes the third option for knowledge, with parents for shar
 
 ## Consequences
 
-- The schema `ekthesis:audience@1` replaces the audience schema of `geonexus`, in the order of extraction set by the decision on tool roles. Its knowledge items no longer resolve through the imports of a glossary.
+- The schema `ekthesis:audience@2` replaces the audience schema of `geonexus`, in the order of extraction set by the decision on tool roles; its first version is retired. Its knowledge items no longer resolve through the imports of a glossary.
 - The audience records stay in the content of the consumer, such as the folder `audiences/` of `geonexus`. `ekthesis` provides their schema, their template and their checks.
-- The check validates each audience record against its schema, resolves its parents and the communities of its confusions among the audience records of the run, reports a repeated id and a cycle among parents, and reports each undeclared concept as a warning. The form of a logical target is checked once Anagraphe publishes it.
+- The check validates each audience record against its schema, resolves its parents and the communities of its confusions among the audience records of the run, reports a repeated id and a cycle among parents, and reports each undeclared concept as a warning. The schema checks the form of each logical target, defined by Anagraphe, and `anagraphe targets check` resolves the target.
 - The membership of a representative in the audience, which reads the communities of a contact profile, is checked by the consumer that holds the contact profiles.
 - The consumer points the key `texts.scope_table` of its configuration of Onomasia to the generated table, and runs `ekthesis scope-table --check` in its gate.
 - No check reads the knowledge of an audience yet: the knowledge serves the author until a check or a view uses it.
