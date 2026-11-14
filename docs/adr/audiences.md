@@ -18,7 +18,7 @@ The decision of `geonexus` on [designation and typography](https://github.com/es
 
 ## Decision
 
-**Content.** An audience record describes one readership, independently of any project. It follows the contract `ekthesis:audience@2`; the retained version `ekthesis:audience@1` stays until every record has migrated. The record holds:
+**Content.** An audience record describes one readership, independently of any project. It follows the contract `ekthesis:audience@2`, and holds:
 
 - its identity, under `identity`: an id, a label and a gloss, and optionally its parents under `narrows`, its representatives, and the communities with which it is confused;
 - its knowledge, under `knowledge`, as a list of items;
@@ -32,7 +32,7 @@ The record declares no register. A form that some readers do not share is a lexi
 
 **Scope table.** `ekthesis` derives the scope table from the parents declared by a set of audience records, in the contract `onomasia:scope-table@1`. The ancestors of an audience are the transitive closure of its parents, and its descendants are the transitive closure of the inverse relation. The command `ekthesis scope-table` takes the audience records and the path of the table, and writes the table. With the option `--check`, the command writes nothing, and reports a table that differs from the one derived from the records. The consumer runs that check in its gate, so a change of parents cannot leave the table stale. ^scope-table
 
-**Names of an audience.** The record of an exposition and the binding of a text name their audiences by id. A record of another field, such as a contact profile naming the readerships of a researcher, names an audience by a logical target typed by the audience contract. A representative of an audience names the contact profile of a researcher by a logical target typed by the contact contracts `geonexus:contact` and `homilia:contact`, and naming no unit. Since `ekthesis:audience@2`, a target takes the form that Anagraphe publishes in [its ADR 0006](https://github.com/esther-poniatowski/anagraphe/blob/main/docs/adr/0006-logical-targets.md): a mapping `{repository, id, unit}`, whose repository is omitted inside the repository of the record, such as `{id: sergent_claire}`. The schema of `ekthesis` validates the form of a target, and Anagraphe resolves it. The retained version `ekthesis:audience@1` holds the earlier form, a non-empty text in the form of the consumer. ^audience-names
+**Names of an audience.** The record of an exposition and the binding of a text name their audiences by id. A record of another field, such as a contact profile naming the readerships of a researcher, names an audience by a logical target typed by the audience contract. A representative of an audience names the contact profile of a researcher by a logical target typed by the contact contracts `geonexus:contact` and `homilia:contact`, and naming no unit. Since `ekthesis:audience@2`, a target takes the form that Anagraphe publishes in [its ADR 0006](https://github.com/esther-poniatowski/anagraphe/blob/main/docs/adr/0006-logical-targets.md): a mapping `{repository, id, unit}`, whose repository is omitted inside the repository of the record, such as `{id: sergent_claire}`. The schema of `ekthesis` validates the form of a target, and Anagraphe resolves it. ^audience-names
 
 ## Constraints that decide the form
 

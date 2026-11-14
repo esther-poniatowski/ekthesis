@@ -358,7 +358,7 @@ def test_misspelt_contract_is_a_schema_error(tmp_path: Path) -> None:
     record.write_text(
         (FIXTURES / "valid" / "neuroscientists.yml")
         .read_text()
-        .replace("ekthesis:audience@1", "ekthesis:audiense@1")
+        .replace("ekthesis:audience@2", "ekthesis:audiense@2")
     )
     code, output = run(str(record), "-t", str(tmp_path / "scope-table.yml"))
     assert code == 1, output

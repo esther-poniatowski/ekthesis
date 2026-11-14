@@ -1,6 +1,5 @@
 """
-Audience records, read against the contract `ekthesis:audience@2` or its retained version
-`ekthesis:audience@1`, and their checks.
+Audience records, read against the contract `ekthesis:audience@2`, and their checks.
 
 An audience record describes one readership, as the decision on audiences states. A record is
 checked alone for its undeclared concepts. The audience
@@ -37,7 +36,7 @@ AUDIENCE_CONTRACT : str
     The current contract of an audience record.
 AUDIENCE_CONTRACTS : tuple of str
     The contracts of an audience record that the check reads: the current one, and each earlier
-    version retained until every record has migrated.
+    version that a migration retains, none since `ekthesis:audience@1` was retired.
 AUDIENCE_RULES : tuple of Rule
     The rules on audience records, beside `schema-conformance`.
 """
@@ -53,7 +52,7 @@ from .layout import FieldPath
 
 AUDIENCE_CONTRACT = "ekthesis:audience@2"
 
-AUDIENCE_CONTRACTS: tuple[str, ...] = (AUDIENCE_CONTRACT, "ekthesis:audience@1")
+AUDIENCE_CONTRACTS: tuple[str, ...] = (AUDIENCE_CONTRACT,)
 
 UNIQUE_AUDIENCES = Rule(
     "unique-audiences",

@@ -1,4 +1,4 @@
-_schema: ekthesis:audience@1
+_schema: ekthesis:audience@2
 
 metadata:
   role: spec
@@ -17,7 +17,7 @@ identity:
       non_target_readers: diagnose and treat disorders of the nervous system
 
 knowledge:
-  - {concept: 'gnomon:concept.population-coding', depth: graduate, skill: applies}
+  - {concept: {repository: research-project, id: concept.population-coding}, depth: graduate, skill: applies}
 
 evaluation:
   accepts: [a claim supported by recordings of neuronal activity]

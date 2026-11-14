@@ -1,4 +1,4 @@
-_schema: ekthesis:audience@1
+_schema: ekthesis:audience@2
 
 identity:
   id: readers-with-register

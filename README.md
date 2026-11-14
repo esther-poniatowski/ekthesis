@@ -27,7 +27,7 @@ Research records, such as those of [`gnomon`](https://github.com/esther-poniatow
 
 ### Status
 
-Pre-alpha. The package provides the contract `ekthesis:exposition@2` of an argument record, with its earlier version `ekthesis:exposition@1` retained until every record has migrated, the contract `ekthesis:audience@1` of an audience record with its skeleton, the closed registries of authored kinds and of rhetorical relations, and a command that checks records against them:
+Pre-alpha. The package provides the contract `ekthesis:exposition@2` of an argument record, with its earlier version `ekthesis:exposition@1` retained until every record has migrated, the contract `ekthesis:audience@2` of an audience record with its skeleton, the closed registries of authored kinds and of rhetorical relations, and a command that checks records against them:
 
 ```sh
 ekthesis check path/to/argument.yml

@@ -147,26 +147,6 @@ def _with_target(path: Path, contract: str, field: str, value: object) -> str:
 @pytest.mark.parametrize(
     ("field", "value", "valid"),
     [
-        ("profile", "kriegeskorte_nikolaus", True),
-        ("profile", "", False),
-        ("concept", "gnomon:concept.population-coding", True),
-        ("concept", "population coding", True),
-        ("concept", "", False),
-    ],
-)
-def test_retained_version_takes_targets_as_non_empty_text(
-    checker: Checker, tmp_path: Path, field: str, value: str, valid: bool
-) -> None:
-    """Under `ekthesis:audience@1`, a profile and a concept admit any non-empty text."""
-    path = write(tmp_path, "readers", "readers", [])
-    located = _with_target(path, "ekthesis:audience@1", field, value)
-    findings = [(f.rule, str(f.field)) for f in checker.check([path])]
-    assert findings == ([] if valid else [("schema-conformance", located)])
-
-
-@pytest.mark.parametrize(
-    ("field", "value", "valid"),
-    [
         ("profile", {"id": "kriegeskorte_nikolaus"}, True),
         ("profile", {"repository": "geonexus", "id": "kriegeskorte_nikolaus"}, True),
         ("profile", "kriegeskorte_nikolaus", False),

@@ -1,4 +1,4 @@
-_schema: ekthesis:audience@1
+_schema: ekthesis:audience@2
 
 identity:
   id: systems-neuroscientists
@@ -6,14 +6,14 @@ identity:
   gloss: neuroscientists who study circuits and populations of neurons
   narrows: [neuroscientists]
   representatives:
-    - {name: Claire Sergent, profile: sergent_claire}
+    - {name: Claire Sergent, profile: {id: sergent_claire}}
   confusions:
     - community: neuroscientists
       target_readers: study circuits and populations of neurons
       non_target_readers: study nervous systems at every scale
 
 knowledge:
-  - concept: 'gnomon:ans.mixture.gain-shift'
+  - concept: {repository: research-project, id: ans.mixture.gain-shift}
     depth: research
     skill: masters
     example_skills: [fit a model of population activity]
