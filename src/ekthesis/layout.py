@@ -316,7 +316,8 @@ class _Walker:
             return
         self._annotate(node, at, branches)
         reference = node.get("$ref")
-        if isinstance(reference, str):
+        # A schema of another tool, reached by an absolute `$ref`, holds no annotation of ekthesis.
+        if isinstance(reference, str) and not _absolute(reference):
             name = self._definition_name(reference)
             if name not in expanding:
                 self.walk(self._definition(name), at, expanding | {name}, branches)
@@ -360,7 +361,7 @@ class _Walker:
     def _register_collection(self, items: Mapping[str, object], at: Pattern) -> None:
         """Register `at` as a collection when its items refer to an identified definition."""
         reference = items.get("$ref")
-        if not isinstance(reference, str):
+        if not isinstance(reference, str) or _absolute(reference):
             return
         name = self._definition_name(reference)
         identifier = self._definition(name).get("x-identifier")
@@ -384,3 +385,17 @@ class _Walker:
         if not isinstance(definition, Mapping):
             raise ResourceError(f"the schema defines no {name}")
         return definition
+
+
+def _absolute(reference: str) -> bool:
+    """
+    Whether `reference` designates a schema of another tool by an absolute URI.
+
+    Examples
+    --------
+    >>> _absolute("https://example.org/schemas/addressing.v1.schema.yml#/$defs/target")
+    True
+    >>> _absolute("#/$defs/identity")
+    False
+    """
+    return "://" in reference.split("#", 1)[0]

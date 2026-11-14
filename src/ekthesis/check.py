@@ -3,8 +3,9 @@ Check of records against their schema and the rules of their contract.
 
 A record of the contract `ekthesis:exposition@2`, or of its retained version
 `ekthesis:exposition@1`, is checked by the rules on the provenance of ideas, and a record of
-`ekthesis:audience@1` by the rules on audiences. The audience records of one run are also checked
-together, since their parents and their confused communities name each other.
+`ekthesis:audience@2`, or of its retained version `ekthesis:audience@1`, by the rules on
+audiences. The audience records of one run are also checked together, since their parents and
+their confused communities name each other.
 
 Classes
 -------
@@ -22,7 +23,7 @@ from pathlib import Path
 import yaml
 
 from .audiences import (
-    AUDIENCE_CONTRACT,
+    AUDIENCE_CONTRACTS,
     Audience,
     RunEntry,
     read_audience,
@@ -140,7 +141,7 @@ class Checker:
         entries: list[RunEntry] = []
         for index, reading in enumerate(readings):
             report = reading.report
-            if report.contract == AUDIENCE_CONTRACT and report.identifier is not None:
+            if report.contract in AUDIENCE_CONTRACTS and report.identifier is not None:
                 owners.append(index)
                 entries.append(RunEntry(report.path, report.identifier, reading.audience))
         added = {owners[position]: found for position, found in run_findings(entries).items()}
@@ -171,7 +172,7 @@ class Checker:
         findings = list(schema_conformance(path, data, self.resources.schemas))
         audience = None
         if not findings:
-            if contract == AUDIENCE_CONTRACT:
+            if contract in AUDIENCE_CONTRACTS:
                 audience = read_audience(path, data)
                 findings.extend(record_findings(audience))
             elif contract in EXPOSITION_CONTRACTS:

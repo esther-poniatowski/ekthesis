@@ -30,7 +30,7 @@ from pathlib import Path
 import typer
 
 from . import info, __version__
-from .audiences import AUDIENCE_CONTRACT, load_audience
+from .audiences import AUDIENCE_CONTRACT, AUDIENCE_CONTRACTS, load_audience
 from .check import Checker, RecordReport
 from .provenance import git_sources
 from .resources import packaged_resources
@@ -206,7 +206,11 @@ def _failing_records(paths: list[Path]) -> int:
     reports = Checker(resources).reports(paths)
     for report in reports:
         contract = report.contract
-        if contract not in (None, AUDIENCE_CONTRACT) and resources.schemas.get(contract):
+        if (
+            contract is not None
+            and contract not in AUDIENCE_CONTRACTS
+            and resources.schemas.get(contract)
+        ):
             raise typer.BadParameter(
                 f"{report.path} names the contract {contract}, not {AUDIENCE_CONTRACT}",
                 param_hint="PATHS",

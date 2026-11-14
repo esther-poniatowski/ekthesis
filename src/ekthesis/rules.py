@@ -49,8 +49,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
+from referencing import Registry, Resource
+from referencing.jsonschema import DRAFT202012
 
-from .audiences import AUDIENCE_CONTRACT, AUDIENCE_RULES
+from .audiences import AUDIENCE_CONTRACTS, AUDIENCE_RULES
 from .errors import ResourceError
 from .exposition import RELATION_SOURCE, Exposition, Idea
 from .findings import Finding, Rule, Severity
@@ -138,6 +140,14 @@ class BoundRecord:
         return Exposition.read(self.data, self.layout, self.idea_definition())
 
 
+def _registry(catalog: SchemaCatalog) -> Registry:
+    """Return the registry through which a contract resolves an absolute `$ref` to another tool."""
+    return Registry().with_resources(
+        (identifier, Resource.from_contents(schema, default_specification=DRAFT202012))
+        for identifier, schema in catalog.references.items()
+    )
+
+
 def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> Iterator[Finding]:
     """
     Yield a finding when `record` names no known contract, or breaks the schema of its contract.
@@ -172,7 +182,7 @@ def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> It
             f"no schema of ekthesis binds the contract {contract}",
         )
         return
-    validator = Draft202012Validator(schema)
+    validator = Draft202012Validator(schema, registry=_registry(catalog))
     for error in sorted(validator.iter_errors(record), key=lambda error: list(error.path)):
         yield Finding(
             rule.identifier,
@@ -351,7 +361,7 @@ EXPOSITION_RULES: tuple[Rule, ...] = (
 
 CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
     **{contract: EXPOSITION_RULES for contract in EXPOSITION_CONTRACTS},
-    AUDIENCE_CONTRACT: AUDIENCE_RULES,
+    **{contract: AUDIENCE_RULES for contract in AUDIENCE_CONTRACTS},
 }
 
 RULES: tuple[Rule, ...] = (

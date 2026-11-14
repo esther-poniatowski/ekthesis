@@ -37,6 +37,7 @@ requires-python = ">=3.12"
 
 dependencies = [
     "jsonschema>=4.18",
+    "referencing>=0.30",
     "pyyaml>=6",
     "typer",
 ]
@@ -51,7 +52,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-ekthesis = ["data/schemas/*.schema.yaml", "data/registries/*.yml", "data/skeletons/*.md", "data/skeletons/*.yml"]
+ekthesis = ["data/schemas/*.schema.yaml", "data/resources/*.schema.yml", "data/registries/*.yml", "data/skeletons/*.md", "data/skeletons/*.yml"]
 
 # --- CLI Entry Points -----------------------------------------------------------------------------
 

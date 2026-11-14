@@ -6,5 +6,20 @@ paths:
 
 exports:
   - ekthesis:audience@1
+  - ekthesis:audience@2
   - ekthesis:exposition@1
   - ekthesis:exposition@2
+
+dependencies:
+  # Anagraphe supplies the addressing primitives that a logical target references by its absolute
+  # $id; no contract of Anagraphe is selected. The packaged copy under src/ekthesis/data/resources
+  # holds the same bytes, as a test verifies.
+  - id: anagraphe
+    source:
+      kind: git
+      repository: https://github.com/esther-poniatowski/anagraphe.git
+      commit: b82bcae928570edf71d88ce8c316796a4333f0c5
+      archive_roots:
+        - specs/schema-registry.yml
+        - src/anagraphe/data/schemas
+    registry: specs/schema-registry.yml

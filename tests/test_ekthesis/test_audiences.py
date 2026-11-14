@@ -128,6 +128,22 @@ def test_unknown_confused_community_is_reported(checker: Checker, tmp_path: Path
     )
 
 
+def _with_target(path: Path, contract: str, field: str, value: object) -> str:
+    """Rewrite the record at `path` under `contract`, with `value` at `field`; return its location."""
+    record = yaml.safe_load(path.read_text())
+    record["_schema"] = contract
+    if field == "profile":
+        record["identity"]["representatives"] = [
+            {"name": "Nikolaus Kriegeskorte", "profile": value}
+        ]
+        located = "identity.representatives[0].profile"
+    else:
+        record["knowledge"] = [{"concept": value}]
+        located = "knowledge[0].concept"
+    path.write_text(yaml.safe_dump(record))
+    return located
+
+
 @pytest.mark.parametrize(
     ("field", "value", "valid"),
     [
@@ -138,23 +154,47 @@ def test_unknown_confused_community_is_reported(checker: Checker, tmp_path: Path
         ("concept", "", False),
     ],
 )
-def test_logical_targets_are_non_empty_text(
+def test_retained_version_takes_targets_as_non_empty_text(
     checker: Checker, tmp_path: Path, field: str, value: str, valid: bool
 ) -> None:
-    """A profile and a concept admit any non-empty text, such as a contact id of Geonexus."""
+    """Under `ekthesis:audience@1`, a profile and a concept admit any non-empty text."""
     path = write(tmp_path, "readers", "readers", [])
-    record = yaml.safe_load(path.read_text())
-    if field == "profile":
-        record["identity"]["representatives"] = [
-            {"name": "Nikolaus Kriegeskorte", "profile": value}
-        ]
-        located = "identity.representatives[0].profile"
-    else:
-        record["knowledge"] = [{"concept": value}]
-        located = "knowledge[0].concept"
-    path.write_text(yaml.safe_dump(record))
+    located = _with_target(path, "ekthesis:audience@1", field, value)
     findings = [(f.rule, str(f.field)) for f in checker.check([path])]
     assert findings == ([] if valid else [("schema-conformance", located)])
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "valid"),
+    [
+        ("profile", {"id": "kriegeskorte_nikolaus"}, True),
+        ("profile", {"repository": "geonexus", "id": "kriegeskorte_nikolaus"}, True),
+        ("profile", "kriegeskorte_nikolaus", False),
+        ("profile", {"id": "kriegeskorte_nikolaus", "unit": "career"}, False),
+        (
+            "concept",
+            {"repository": "neural-coding-course", "id": "concept.coding.population"},
+            True,
+        ),
+        ("concept", {"id": "concept.coding.population", "unit": "definition"}, True),
+        ("concept", "population coding", False),
+        ("concept", {}, False),
+        ("concept", {"id": "concept.coding.population", "page": 3}, False),
+    ],
+)
+def test_current_version_takes_targets_in_the_form_of_anagraphe(
+    checker: Checker, tmp_path: Path, field: str, value: object, valid: bool
+) -> None:
+    """
+    Under `ekthesis:audience@2`, a profile and a concept are logical targets of Anagraphe.
+
+    A profile names a contact record, never a unit inside it; a concept names a record or a unit
+    of any field.
+    """
+    path = write(tmp_path, "readers", "readers", [])
+    located = _with_target(path, AUDIENCE_CONTRACT, field, value)
+    findings = {(f.rule, str(f.field)) for f in checker.check([path])}
+    assert findings == (set() if valid else {("schema-conformance", located)})
 
 
 def test_finding_carries_the_position_of_its_field(checker: Checker) -> None:
