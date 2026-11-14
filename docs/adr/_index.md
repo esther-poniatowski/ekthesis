@@ -23,3 +23,7 @@ Records the decisions that later work on `ekthesis` must respect, so that a read
 - [Glossaries](glossaries.md): decides how a glossary refers to its concepts, binds a text and is checked
 - [Audiences](audiences.md): decides what an audience record holds, and how other records name it
 - [Renaming of a symbol for a venue](symbol-renaming.md): decides how an artifact prints a symbol of its source in the convention of its venue
+
+## Venues
+
+- [Venue constraints](constraints.md): decides what a constraints record holds, how the record of an exposition names it, and which tool checks it
