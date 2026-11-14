@@ -2,13 +2,13 @@
 Audience records, read against the contract `ekthesis:audience@2`, and their checks.
 
 An audience record describes one readership, as the decision on audiences states. A record is
-checked alone for its undeclared concepts. The audience
-records of one run are checked together: their identifiers are distinct, the parents and the
-confused communities that they name are audience records of the run, and no chain of parents
-returns to the audience from which it starts. Ekthesis does not check the membership of a
-representative, which reads the contact profiles of the consumer. Until Anagraphe publishes the
-form of a logical target, the schema requires only that a target is non-empty text, as Onomasia
-does for `denotes`, and no rule checks its form.
+checked alone for its undeclared concepts. The audience records of one run are checked together:
+their identifiers are distinct, the parents and the confused communities that they name are
+audience records of the run, and no chain of parents returns to the audience from which it
+starts. Ekthesis does not check the membership of a representative, which reads the contact
+profiles of the consumer. A concept and the contact profile of a representative are logical
+targets in the form that Anagraphe publishes: the schema validates that form, and Anagraphe
+resolves the record of each target and checks its contract.
 
 Classes
 -------
