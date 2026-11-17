@@ -18,6 +18,8 @@ Functions
 ---------
 schema_conformance(path, record, catalog)
     The record names a known contract and validates against its schema.
+distinct_keys(path, node)
+    No mapping of the record repeats a key, read from its node tree.
 unique_identifiers(record)
     The items of each collection have distinct identifiers.
 unique_units(record)
@@ -65,12 +67,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, ValidationError  # type: ignore[import-untyped]  # no stubs in the environment
+import yaml
 
 from .audiences import AUDIENCE_CONTRACTS, AUDIENCE_RULES
 from .errors import ResourceError
 from .exposition import RELATION_SOURCE, Exposition, Idea
-from .findings import Finding, Rule, Severity
+from .findings import Finding, Position, Rule, Severity
 from .layout import FieldPath, SchemaLayout
+from .positions import repeated_keys
 from .links import resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
 from .scope_table import SCOPE_TABLE_CURRENT, SCOPE_TABLE_DERIVABLE
@@ -83,6 +87,11 @@ CONSTRAINTS_CONTRACTS: tuple[str, ...] = (CONSTRAINTS_CONTRACT,)
 SCHEMA_CONFORMANCE = Rule(
     "schema-conformance",
     "The record names a known contract and validates against its schema.",
+    Severity.ERROR,
+)
+DISTINCT_KEYS = Rule(
+    "distinct-keys",
+    "No mapping of the record repeats a key, whose earlier value the YAML parser drops.",
     Severity.ERROR,
 )
 UNIQUE_IDENTIFIERS = Rule(
@@ -159,6 +168,26 @@ class BoundRecord:
     def exposition(self) -> Exposition:
         """Read the ideas and the relations of the record."""
         return Exposition.read(self.data, self.layout, self.idea_definition())
+
+
+def distinct_keys(path: Path, node: yaml.Node | None) -> Iterator[Finding]:
+    """
+    Report each key that a mapping of the record repeats, at the repeated key.
+
+    The rule reads the node tree of the record, since the parsed value keeps the last of two
+    equal keys alone. It applies to every record, whatever its contract.
+    """
+    for at, earlier, later in repeated_keys(node):
+        yield Finding(
+            DISTINCT_KEYS.identifier,
+            path,
+            at,
+            DISTINCT_KEYS.severity,
+            f"the key {at.segments[-1]} repeats the key of line {earlier.start_mark.line + 1}; "
+            "the YAML parser keeps this value and drops the earlier one",
+            discriminator=str(later.start_mark.line + 1),
+            position=Position(later.start_mark.line + 1, later.start_mark.column + 1),
+        )
 
 
 def schema_conformance(path: Path, record: object, catalog: SchemaCatalog) -> Iterator[Finding]:
@@ -406,6 +435,7 @@ CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
 
 RULES: tuple[Rule, ...] = (
     SCHEMA_CONFORMANCE,
+    DISTINCT_KEYS,
     *EXPOSITION_RULES,
     UNIQUE_UNITS,
     *AUDIENCE_RULES,

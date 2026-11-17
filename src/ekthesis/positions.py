@@ -7,7 +7,11 @@ parse(path) -> tuple
     Parse the document at `path`, and return its value and its node tree.
 position(node, at) -> Position or None
     Where the node at a field path starts, or else its closest existing ancestor.
+repeated_keys(node) -> Iterator
+    Each key that a mapping of the tree repeats, with its field path and its two key nodes.
 """
+
+from collections.abc import Iterator
 
 from pathlib import Path
 
@@ -60,3 +64,40 @@ def _child(node: yaml.Node, segment: str | int) -> yaml.Node | None:
         ]
         return values[-1] if values else None
     return None
+
+
+def repeated_keys(node: yaml.Node | None) -> Iterator[tuple[FieldPath, yaml.Node, yaml.Node]]:
+    r"""
+    Yield each key that a mapping of the tree `node` repeats, in the order of the document.
+
+    A YAML parser keeps the value of the last of two equal keys and drops the earlier one, so a
+    repeated key loses a value without an error. Each item holds the field path of the key, the
+    node of its earlier occurrence, and the node of the repeated occurrence.
+
+    Examples
+    --------
+    >>> tree = yaml.compose("a: 1\nb: {c: 2, c: 3}\na: 4\n")
+    >>> [(str(at), later.start_mark.line + 1) for at, _, later in repeated_keys(tree)]
+    [('b.c', 2), ('a', 3)]
+    """
+    yield from _repeated(node, FieldPath())
+
+
+def _repeated(
+    node: yaml.Node | None, at: FieldPath
+) -> Iterator[tuple[FieldPath, yaml.Node, yaml.Node]]:
+    """Yield the repeated keys of `node` and of its descendants, `at` being the path of `node`."""
+    if isinstance(node, yaml.SequenceNode):
+        for index, item in enumerate(node.value):
+            yield from _repeated(item, at.child(index))
+    elif isinstance(node, yaml.MappingNode):
+        seen: dict[str, yaml.Node] = {}
+        for key, value in node.value:
+            if isinstance(key, yaml.ScalarNode):
+                yield from _repeated(value, at.child(key.value))
+                if key.value in seen:
+                    yield at.child(key.value), seen[key.value], key
+                else:
+                    seen[key.value] = key
+            else:
+                yield from _repeated(value, at)

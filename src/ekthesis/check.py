@@ -39,6 +39,7 @@ from .rules import (
     LAYOUT_RULES,
     SCHEMA_CONFORMANCE,
     BoundRecord,
+    distinct_keys,
     schema_conformance,
 )
 
@@ -179,7 +180,10 @@ class Checker:
         report = RecordReport(
             path,
             self._identifier(data),
-            tuple(_located(finding, node) for finding in findings),
+            (
+                *distinct_keys(path, node),
+                *(_located(finding, node) for finding in findings),
+            ),
             self._skipped(contract, findings),
             contract,
         )

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- The rule `distinct-keys` of `ekthesis check` reports a key that a mapping of a record repeats, at the repeated key, whatever the contract of the record. The YAML parser keeps the last of two equal keys and drops the earlier value, so the rule reads the node tree of the record.
 - `ekthesis check` and `ekthesis scope-table` take a folder in place of files: a folder stands for the YAML files that it holds directly, in name order.
 - The contract of an audience record, with its schema, its skeleton `data/skeletons/audience.yml`, and its export in `specs/schema-resources.yml`. Its first version, `ekthesis:audience@1`, wrote its logical targets as text; it is retired, since every record has migrated to `ekthesis:audience@2`.
 - The contract `ekthesis:constraints@1` of the constraints that a venue imposes on one kind of exposition, with its schema, its skeleton `data/skeletons/constraints.yml`, and its export in `specs/schema-resources.yml`. A record declares its sources once, and each constraint states its requirement and the sources that state it, with an optional group.

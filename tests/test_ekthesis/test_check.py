@@ -17,6 +17,7 @@ from .other_contract import OTHER_CONTRACT, contract_without_rules
 FIXTURES = Path(__file__).parent / "fixtures"
 PLANTED = {
     "schema-conformance": Severity.ERROR,
+    "distinct-keys": Severity.ERROR,
     "unique-identifiers": Severity.ERROR,
     "existing-references": Severity.ERROR,
     "registry-membership": Severity.ERROR,
@@ -49,6 +50,7 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
 @pytest.mark.parametrize(
     ("rule", "field"),
     [
+        ("distinct-keys", "exposition.title"),
         ("unique-identifiers", "parts[1]"),
         ("existing-references", "parts[1].ideas[1]"),
         ("registry-membership", "ideas[3].kind"),
@@ -203,3 +205,31 @@ def test_command_exits_non_zero_on_a_blocking_finding(name: str, code: int) -> N
     """The command fails on an error, and passes on a warning alone."""
     result = CliRunner().invoke(app, ["check", str(FIXTURES / name)])
     assert result.exit_code == code, result.output
+
+
+def test_a_repeated_key_is_located_at_its_second_occurrence(checker: Checker) -> None:
+    """The finding of a repeated key names the line and the column of the key that replaces the
+    earlier value."""
+    (finding,) = checker.check_record(FIXTURES / "planted" / "distinct-keys.yml")
+    assert finding.position is not None
+    assert (finding.position.line, finding.position.column) == (7, 3)
+    assert "line 5" in finding.message
+
+
+def test_an_audience_record_repeating_a_key_is_reported(checker: Checker, tmp_path: Path) -> None:
+    """An audience record whose identity repeats its label yields one finding of distinct-keys,
+    which the parsed value alone could not show. The record narrows no other audience, so it is
+    checked alone."""
+    source = FIXTURES / "audiences" / "valid" / "neuroscientists.yml"
+    record = tmp_path / source.name
+    record.write_text(
+        source.read_text(encoding="utf-8").replace(
+            "  label: neuroscientists\n",
+            "  label: neuroscientists\n  label: brain researchers\n",
+        ),
+        encoding="utf-8",
+    )
+    findings = checker.check_record(record)
+    assert [(finding.rule, str(finding.field)) for finding in findings] == [
+        ("distinct-keys", "identity.label")
+    ]
