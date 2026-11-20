@@ -113,19 +113,20 @@ def test_reference_to_an_identifier_field_names_no_item() -> None:
     assert other.references == ()
 
 
-@pytest.mark.parametrize("units", [[], "items", ["refs"], ["items["]])
-def test_units_naming_no_collection_are_rejected(units: object) -> None:
-    """The check cannot read a field whose `x-units` is no non-empty list of field paths, each
-    naming a sequence of identified items."""
-    with pytest.raises(ResourceError):
-        SchemaLayout.from_schema(_schema_with({"type": "string", "x-units": units}))
+@pytest.mark.parametrize("units", [[], "items", ["refs"], ["items["], ["items", "refs"]])
+def test_units_naming_no_collection_are_skipped(units: object) -> None:
+    """A declaration of `x-units` that is no non-empty list of field paths, each naming a sequence
+    of identified items, locates no collection; the check skips it, and leaves its report to
+    Anagraphe."""
+    layout = SchemaLayout.from_schema(_schema_with({"type": "string", "x-units": units}))
+    assert layout.references == ()
 
 
-def test_reference_in_a_branch_is_rejected() -> None:
-    """A reference applies to every node of its field, so it may not lie in a branch."""
+def test_units_in_a_branch_are_skipped() -> None:
+    """A declaration of `x-units` inside a branch applies to some nodes of its field only, so the
+    check skips it, and leaves its reading to Anagraphe."""
     schema = _schema_with({"oneOf": [{"x-units": ["items"]}, {"type": "integer"}]})
-    with pytest.raises(ResourceError):
-        SchemaLayout.from_schema(schema)
+    assert SchemaLayout.from_schema(schema).references == ()
 
 
 def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:

@@ -268,9 +268,11 @@ def unique_units(record: BoundRecord) -> Iterator[Finding]:
     Yield a finding for each item whose identifier repeats an item of another collection.
 
     Each identified item of a record is a unit under ADR 0006 of Anagraphe, and the units of one
-    record share one namespace, so a logical target naming a shared identifier is ambiguous. The
-    first item of an identifier keeps it, in the order of the collections of the layout; a repeat
-    within one collection is left to `unique_identifiers`, so that one defect yields one finding.
+    record share one namespace, so a logical target naming a shared identifier is ambiguous.
+    Anagraphe reports such a unit only through a target that names it, as `ambiguous-unit`, so the
+    rule reports it where the record declares it. The first item of an identifier keeps it, in the
+    order of the collections of the layout; a repeat within one collection is left to
+    `unique_identifiers`, so that one defect yields one finding.
     """
     first: dict[object, tuple[str, FieldPath]] = {}
     for name, collection in record.layout.collections.items():
