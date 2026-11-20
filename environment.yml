@@ -29,7 +29,7 @@ dependencies:
   - typer                  # command line interface
   - rich                   # terminal output formatting
   # Sibling tools, pinned by commit; pip installs a Git reference, which a conda dependency cannot
-  # name.
+  # name. The commit of Anagraphe equals the one that config/tools/kleisis.yml pins.
   - pip
   - pip:
       - anagraphe-read @ git+https://github.com/esther-poniatowski/anagraphe.git@f4b9142b6cbc0f3bf1c831a05872854a7b6cf177#subdirectory=packages/read-python

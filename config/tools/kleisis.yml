@@ -1,0 +1,58 @@
+# Configuration of Kleisis for the schemas of Ekthesis: the contracts that it exports, the keywords
+# to which it gives a meaning, and the owners of the other keywords and schemas that it uses.
+_schema: kleisis:configuration@1
+
+paths:
+  owned_schemas: src/ekthesis/data/schemas
+  registry: specs/schema-registry.yml
+
+exports:
+  - ekthesis:audience@2
+  - ekthesis:constraints@1
+  - ekthesis:exposition@1
+  - ekthesis:exposition@3
+
+# The keywords that the check of Ekthesis reads; the decision on the argument record states their
+# meaning.
+keywords:
+  x-registry: the registry of Ekthesis that holds the values of a field, read within the branch that declares it
+  x-role: the role of a field in the rules of Ekthesis on sources, such as the source or the target of a relation
+
+dependencies:
+  # Anagraphe supplies the addressing schema that the logical targets reference by its absolute
+  # $id, and declares the keywords x-identifier and x-target-contract. Its commit equals the commit
+  # of anagraphe-read that environment.yml pins, from which the check reads the same schema.
+  - id: anagraphe
+    source:
+      kind: git
+      repository: https://github.com/esther-poniatowski/anagraphe.git
+      commit: f4b9142b6cbc0f3bf1c831a05872854a7b6cf177
+      archive_roots:
+        - packages/read-python/src/anagraphe_read/data/schemas
+        - specs/schema-registry.yml
+    registry: specs/schema-registry.yml
+  # Ekphrasis declares the keyword x-kind, by which the schemas name the control of each field in a
+  # form. No schema of Ekthesis references a schema of Ekphrasis.
+  - id: ekphrasis
+    source:
+      kind: git
+      repository: https://github.com/esther-poniatowski/ekphrasis.git
+      commit: 34845f1e49c8cfd50c3af44e678296975b5ca94d
+      archive_roots:
+        - specs/schema-registry.yml
+        - specs/schemas
+    registry: specs/schema-registry.yml
+  # Onomasia owns the contract of the scope table that `ekthesis scope-table` writes. The tests
+  # validate a written table against that contract, and run the cases of its field `sources`, at
+  # this commit.
+  - id: onomasia
+    source:
+      kind: git
+      repository: https://github.com/esther-poniatowski/onomasia.git
+      commit: eb2958c114eb7b19848f2aeb8829e4309c46a5d9
+      archive_roots:
+        - specs/schema-registry.yml
+        - src/onomasia/data/schemas
+    registry: specs/schema-registry.yml
+    contracts:
+      - onomasia:scope-table@1

@@ -165,6 +165,12 @@ tool-specific settings that are decoupled from the main project file:
 | `pylintrc_tests.ini`  | Pylint                 | Linting rules (test code)         |
 | `pyrightconfig.json`  | Pyright                | Static type analysis overrides    |
 | `releaserc.toml`      | Python Semantic Release| Versioning and release assets      |
+| `kleisis.yml`         | Kleisis                | Exported contracts, keywords and pinned schema sources |
+
+Kleisis finds `kleisis.yml` in `config/tools/` through the declaration `hodegos.yml` at the root of
+the repository. After a change of a schema or of `kleisis.yml`, `kleisis materialize --root .`
+generates the registry `specs/schema-registry.yml`, and `kleisis check --root .` confirms that the
+registry is current.
 
 ### `config/dictionaries/` — Spell Checking
 

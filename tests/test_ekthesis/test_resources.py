@@ -206,3 +206,25 @@ def test_schemas_of_other_tools_come_from_their_owner() -> None:
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
         identifier = document.get("$id") if isinstance(document, dict) else None
         assert not (isinstance(identifier, str) and "://" in identifier), path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _kleisis_pin(dependency: str) -> str:
+    """Return the commit at which the configuration of Kleisis pins `dependency`."""
+    configuration = yaml.safe_load((ROOT / "config/tools/kleisis.yml").read_text(encoding="utf-8"))
+    [entry] = [item for item in configuration["dependencies"] if item["id"] == dependency]
+    commit: str = entry["source"]["commit"]
+    return commit
+
+
+def test_anagraphe_read_is_pinned_at_the_commit_that_kleisis_materializes() -> None:
+    """The check reads the addressing schema from `anagraphe-read`, and Kleisis materializes the
+    same resource for the consumers; both pin one commit of Anagraphe, so one `$id` maps to one
+    content."""
+    environment = yaml.safe_load((ROOT / "environment.yml").read_text(encoding="utf-8"))
+    [pip] = [item["pip"] for item in environment["dependencies"] if isinstance(item, dict)]
+    [requirement] = [item for item in pip if item.startswith("anagraphe-read @ ")]
+    commit = requirement.split("@")[-1].split("#")[0]
+    assert commit == _kleisis_pin("anagraphe")
