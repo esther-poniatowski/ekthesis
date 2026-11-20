@@ -40,12 +40,23 @@ SchemaLayout
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field, replace
 
+from anagraphe_read import (
+    ANY_ITEM,
+    FieldPathError,
+    PatternSegment,
+    PointerError,
+    match_nodes,
+    parse_field_path,
+    pointer_tokens,
+    print_field_path,
+    to_pointer,
+)
 from jsonschema import Draft202012Validator  # type: ignore[import-untyped]  # no stubs in the environment
 
 from .errors import ResourceError
 
-ITEM = "[*]"
-"""Segment of a pattern standing for every item of a sequence."""
+ITEM = ANY_ITEM
+"""Segment of a pattern standing for every item of a sequence, written `[*]`."""
 
 Segment = str | int
 
@@ -62,10 +73,8 @@ class FieldPath:
 
     def pointer(self) -> str:
         """
-        Return the JSON Pointer (RFC 6901) of this node, the empty string for the root.
-
-        Each key is escaped by writing `~` as `~0`, then `/` as `~1`; a position is written in
-        decimal.
+        Return the JSON Pointer (RFC 6901) of this node, the empty string for the root, converted
+        by Anagraphe.
 
         Examples
         --------
@@ -74,29 +83,31 @@ class FieldPath:
         >>> FieldPath(("a/b", "c~1d")).pointer()
         '/a~1b/c~01d'
         """
-        return "".join(
-            "/" + str(segment).replace("~", "~0").replace("/", "~1") for segment in self.segments
-        )
+        return str(to_pointer(self.segments))
 
     def __str__(self) -> str:
-        text = ""
-        for segment in self.segments:
-            if isinstance(segment, int):
-                text += f"[{segment}]"
-            elif "." in segment or "[" in segment:
-                text += f'["{segment}"]'
-            else:
-                text += f".{segment}" if text else segment
-        return text
+        """
+        Return the field path as the field-path specification of Anagraphe prints it.
+
+        A key that a bare key cannot hold is written in brackets as a JSON string.
+
+        Examples
+        --------
+        >>> str(FieldPath(("relations", 2, "target")))
+        'relations[2].target'
+        >>> str(FieldPath(("labels", "a.b", "two words")))
+        'labels["a.b"]["two words"]'
+        """
+        return str(print_field_path(self.segments))
 
 
 @dataclass(frozen=True)
 class Pattern:
     """Field path of a schema node, whose segment `[*]` stands for every item of a sequence."""
 
-    segments: tuple[str, ...] = ()
+    segments: tuple[PatternSegment, ...] = ()
 
-    def child(self, segment: str) -> "Pattern":
+    def child(self, segment: PatternSegment) -> "Pattern":
         """Return the pattern of the child `segment` of this node."""
         return Pattern((*self.segments, segment))
 
@@ -125,19 +136,12 @@ class Pattern:
         tuple of FieldPath and object
             Path and value of each designated node that the record holds.
         """
-        if not self.segments:
-            yield at, value
-            return
-        head, rest = self.segments[0], Pattern(self.segments[1:])
-        if head == ITEM:
-            if isinstance(value, list):
-                for position, item in enumerate(value):
-                    yield from rest.select(item, at.child(position))
-        elif isinstance(value, Mapping) and head in value:
-            yield from rest.select(value[head], at.child(head))
+        for path, node in match_nodes(self.segments, value):
+            yield FieldPath((*at.segments, *path)), node
 
     def __str__(self) -> str:
-        return ".".join(self.segments).replace(f".{ITEM}", ITEM)
+        """Return the pattern as the field-path specification of Anagraphe prints it."""
+        return str(print_field_path(self.segments))
 
 
 @dataclass(frozen=True)
@@ -278,7 +282,7 @@ class SchemaLayout:
             )
         return cls(
             record_identifier=(
-                Pattern(tuple(root_identifier.split(".")))
+                Pattern(_property_path(root_identifier))
                 if isinstance(root_identifier, str)
                 else None
             ),
@@ -368,7 +372,7 @@ class _Walker:
     ) -> None:
         """Register `at` as a reference when `keys` name the identifier field of `name`."""
         identifier = self._definition(name).get("x-identifier")
-        if not isinstance(identifier, str) or tuple(identifier.split(".")) != keys:
+        if not isinstance(identifier, str) or _property_path(identifier) != keys:
             return
         if branches:
             raise ResourceError(f"the reference at {at} to an item of {name} lies in a branch")
@@ -386,7 +390,7 @@ class _Walker:
         if isinstance(identifier, str):
             if name in self.collections:
                 raise ResourceError(f"two sequences hold the items of {name}")
-            self.collections[name] = Collection(name, at, Pattern(tuple(identifier.split("."))))
+            self.collections[name] = Collection(name, at, Pattern(_property_path(identifier)))
 
     def _subschema(self, name: str, keys: tuple[str, ...], reference: str) -> Mapping[str, object]:
         """Return the subschema of the property `keys` of the definition `name`, the definition
@@ -422,16 +426,36 @@ def _local_target(reference: str) -> tuple[str, tuple[str, ...]]:
     >>> _local_target("#/$defs/idea/properties/id")
     ('idea', ('id',))
     """
-    prefix = "#/$defs/"
-    if not reference.startswith(prefix):
+    try:
+        tokens = pointer_tokens(reference[1:]) if reference.startswith("#") else ()
+    except PointerError as error:
+        raise ResourceError(f"the reference {reference} holds no JSON Pointer: {error}") from None
+    if len(tokens) < 2 or tokens[0] != "$defs":
         raise ResourceError(f"the reference {reference} leaves the schema")
-    tokens = [
-        token.replace("~1", "/").replace("~0", "~") for token in reference[len(prefix) :].split("/")
-    ]
-    name, rest = tokens[0], tokens[1:]
+    name, rest = tokens[1], list(tokens[2:])
     if len(rest) % 2 or any(keyword != "properties" for keyword in rest[::2]):
         raise ResourceError(f"the reference {reference} names no definition and no property of one")
     return name, tuple(rest[1::2])
+
+
+def _property_path(text: str) -> tuple[str, ...]:
+    """
+    Return the keys of the value of `x-identifier`, a field path of property names parsed by
+    Anagraphe.
+
+    Examples
+    --------
+    >>> _property_path("identity.id")
+    ('identity', 'id')
+    """
+    try:
+        segments = parse_field_path(text)
+    except FieldPathError as error:
+        raise ResourceError(f"x-identifier {text!r} is no field path: {error}") from None
+    keys = tuple(segment for segment in segments if isinstance(segment, str))
+    if len(keys) != len(segments):
+        raise ResourceError(f"x-identifier {text!r} names a position, not a property")
+    return keys
 
 
 def _absolute(reference: str) -> bool:

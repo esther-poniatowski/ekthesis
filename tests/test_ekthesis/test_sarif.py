@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 import yaml
+from anagraphe_read import parse_field_path
 from typer.testing import CliRunner
 
 from ekthesis.check import Checker
@@ -117,6 +118,26 @@ def test_field_path_converts_to_pointer(segments: tuple[str | int, ...], pointer
     path = FieldPath(segments)
     assert path.pointer() == pointer
     assert decode_pointer(path.pointer()) == [str(segment) for segment in segments]
+
+
+@pytest.mark.parametrize(
+    ("segments", "text"),
+    [
+        ((), ""),
+        (("relations", 2, "target"), "relations[2].target"),
+        (("labels", "a.b"), 'labels["a.b"]'),
+        (("labels", "two words"), 'labels["two words"]'),
+        (("labels", 'say "hi"'), 'labels["say \\"hi\\""]'),
+        (("",), '[""]'),
+    ],
+)
+def test_field_path_prints_as_anagraphe_prints_it(
+    segments: tuple[str | int, ...], text: str
+) -> None:
+    """A field path prints as the field-path specification of Anagraphe prints it, which parses
+    the text back into the same segments."""
+    assert str(FieldPath(segments)) == text
+    assert parse_field_path(text) == segments
 
 
 # --- Conformance to the profile --------------------------------------------------------------------

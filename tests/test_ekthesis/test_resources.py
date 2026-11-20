@@ -29,17 +29,17 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
     layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas[CONTRACT])
     assert layout.record_identifier == Pattern(("exposition", "id"))
     assert {name: str(collection.items) for name, collection in layout.collections.items()} == {
-        "idea": f"ideas{ITEM}",
-        "part": f"parts{ITEM}",
+        "idea": f"ideas{ITEM.value}",
+        "part": f"parts{ITEM.value}",
     }
     assert {str(pattern) for pattern, _ in layout.references} == {
-        f"relations{ITEM}.source",
-        f"relations{ITEM}.target",
-        f"parts{ITEM}.ideas{ITEM}",
+        f"relations{ITEM.value}.source",
+        f"relations{ITEM.value}.target",
+        f"parts{ITEM.value}.ideas{ITEM.value}",
     }
     assert {(str(field.pattern), field.registry) for field in layout.registries} == {
-        (f"ideas{ITEM}.kind", "authored-kinds"),
-        (f"relations{ITEM}.relation", "relations"),
+        (f"ideas{ITEM.value}.kind", "authored-kinds"),
+        (f"relations{ITEM.value}.relation", "relations"),
     }
 
 
@@ -47,8 +47,8 @@ def test_layout_reads_the_references_of_a_constraints_record() -> None:
     """A field whose `$ref` names the identifier field of a definition names an item of it."""
     layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas["ekthesis:constraints@1"])
     assert {(str(pattern), definition) for pattern, definition in layout.references} == {
-        (f"constraints{ITEM}.group", "group"),
-        (f"constraints{ITEM}.sources{ITEM}", "source"),
+        (f"constraints{ITEM.value}.group", "group"),
+        (f"constraints{ITEM.value}.sources{ITEM.value}", "source"),
     }
 
 
@@ -72,7 +72,9 @@ def test_reference_to_another_property_of_a_definition_names_no_item() -> None:
     """Only the identifier field makes a reference: a `$ref` to another property reuses its
     schema, and names no item."""
     named = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/id"}))
-    assert [(str(pattern), name) for pattern, name in named.references] == [(f"refs{ITEM}", "item")]
+    assert [(str(pattern), name) for pattern, name in named.references] == [
+        (f"refs{ITEM.value}", "item")
+    ]
     other = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/label"}))
     assert other.references == ()
 
@@ -89,7 +91,7 @@ def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
     of an authored idea, not the kind that a referenced idea states."""
     layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas[CONTRACT])
     [kinds] = [field for field in layout.registries if field.registry == "authored-kinds"]
-    assert [str(branch.anchor) for branch in kinds.branches] == [f"ideas{ITEM}"]
+    assert [str(branch.anchor) for branch in kinds.branches] == [f"ideas{ITEM.value}"]
     record = {
         "ideas": [
             {"id": "a", "statement": "A.", "source": "[a](a.md)", "kind": "claim"},

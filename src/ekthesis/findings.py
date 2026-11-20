@@ -80,7 +80,8 @@ class Finding:  # pylint: disable=too-many-instance-attributes  # one per field 
     record : Path
         Path of the record holding the violation.
     field : FieldPath
-        Field path of the node at fault, printed in the syntax of Ekphrasis (`relations[2].target`),
+        Field path of the node at fault, printed as the field-path specification of Anagraphe
+        prints it (`relations[2].target`),
         or the root path for the whole record.
     severity : Severity
         Severity of the finding.
