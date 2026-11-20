@@ -19,7 +19,6 @@ PLANTED = {
     "schema-conformance": Severity.ERROR,
     "distinct-keys": Severity.ERROR,
     "unique-identifiers": Severity.ERROR,
-    "existing-references": Severity.ERROR,
     "registry-membership": Severity.ERROR,
     "authored-relations": Severity.ERROR,
     "relation-requirements": Severity.WARNING,
@@ -51,7 +50,6 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
     [
         ("distinct-keys", "exposition.title"),
         ("unique-identifiers", "parts[1]"),
-        ("existing-references", "parts[1].ideas[1]"),
         ("registry-membership", "ideas[3].kind"),
         ("authored-relations", "relations[0]"),
         ("relation-requirements", "relations[2]"),

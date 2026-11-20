@@ -20,8 +20,9 @@ keywords:
 
 dependencies:
   # Anagraphe supplies the addressing schema that the logical targets reference by its absolute
-  # $id, and declares the keywords x-identifier and x-target-contract. Its commit equals the commit
-  # of anagraphe-read that environment.yml pins, from which the check reads the same schema.
+  # $id, and declares the keywords x-identifier, x-target-contract and x-units. Its commit equals
+  # the commit of anagraphe-read that environment.yml pins, from which the check reads the same
+  # schema.
   - id: anagraphe
     source:
       kind: git

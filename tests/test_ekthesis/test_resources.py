@@ -35,10 +35,10 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
         "idea": f"ideas{ITEM.value}",
         "part": f"parts{ITEM.value}",
     }
-    assert {str(pattern) for pattern, _ in layout.references} == {
-        f"relations{ITEM.value}.source",
-        f"relations{ITEM.value}.target",
-        f"parts{ITEM.value}.ideas{ITEM.value}",
+    assert {(str(pattern), names) for pattern, names in layout.references} == {
+        (f"relations{ITEM.value}.source", ("idea",)),
+        (f"relations{ITEM.value}.target", ("idea",)),
+        (f"parts{ITEM.value}.ideas", ("idea",)),
     }
     assert {(str(field.pattern), field.registry) for field in layout.registries} == {
         (f"ideas{ITEM.value}.kind", "authored-kinds"),
@@ -47,12 +47,43 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
 
 
 def test_layout_reads_the_references_of_a_constraints_record() -> None:
-    """A field whose `$ref` names the identifier field of a definition names an item of it."""
+    """A field declaring `x-units` names an item of each collection that it lists."""
     layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas["ekthesis:constraints@1"])
-    assert {(str(pattern), definition) for pattern, definition in layout.references} == {
-        (f"constraints{ITEM.value}.group", "group"),
-        (f"constraints{ITEM.value}.sources{ITEM.value}", "source"),
+    assert {(str(pattern), names) for pattern, names in layout.references} == {
+        (f"constraints{ITEM.value}.group", ("group",)),
+        (f"constraints{ITEM.value}.sources", ("source",)),
     }
+
+
+def _nodes(node: object) -> list[dict[str, object]]:
+    """Return every mapping of a schema, depth first."""
+    if isinstance(node, dict):
+        return [node, *(found for value in node.values() for found in _nodes(value))]
+    if isinstance(node, list):
+        return [found for value in node for found in _nodes(value)]
+    return []
+
+
+@pytest.mark.parametrize("contract", sorted(RESOURCES.schemas.schemas))
+def test_reference_to_an_item_is_declared_by_x_units_only(contract: str) -> None:
+    """
+    A field naming an item of its own record lists the arrays of the record under `x-units`, the
+    keyword of Anagraphe, whose items declare `x-identifier`; no `$ref` names the identifier field
+    of a definition, the form that `x-units` replaced.
+    """
+    schema = RESOURCES.schemas.schemas[contract]
+    definitions = schema.get("$defs", {})
+    identifier_fields = {
+        f"#/$defs/{name}/properties/{definition['x-identifier']}"
+        for name, definition in definitions.items()
+        if isinstance(definition.get("x-identifier"), str)
+    }
+    nodes = _nodes(schema)
+    assert not {node.get("$ref") for node in nodes} & identifier_fields
+    for node in nodes:
+        for entry in node.get("x-units", []):
+            items = schema["properties"][entry]["items"]["$ref"]
+            assert "x-identifier" in definitions[items.removeprefix("#/$defs/")], entry
 
 
 def _schema_with(field: dict[str, object]) -> dict[str, object]:
@@ -71,20 +102,28 @@ def _schema_with(field: dict[str, object]) -> dict[str, object]:
     }
 
 
-def test_reference_to_another_property_of_a_definition_names_no_item() -> None:
-    """Only the identifier field makes a reference: a `$ref` to another property reuses its
-    schema, and names no item."""
-    named = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/id"}))
-    assert [(str(pattern), name) for pattern, name in named.references] == [
-        (f"refs{ITEM.value}", "item")
+def test_reference_to_an_identifier_field_names_no_item() -> None:
+    """Only `x-units` makes a reference: a `$ref` to the identifier field of a definition reuses
+    its schema, and names no item."""
+    named = SchemaLayout.from_schema(_schema_with({"type": "string", "x-units": ["items"]}))
+    assert [(str(pattern), names) for pattern, names in named.references] == [
+        (f"refs{ITEM.value}", ("item",))
     ]
-    other = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/label"}))
+    other = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/id"}))
     assert other.references == ()
+
+
+@pytest.mark.parametrize("units", [[], "items", ["refs"], ["items["]])
+def test_units_naming_no_collection_are_rejected(units: object) -> None:
+    """The check cannot read a field whose `x-units` is no non-empty list of field paths, each
+    naming a sequence of identified items."""
+    with pytest.raises(ResourceError):
+        SchemaLayout.from_schema(_schema_with({"type": "string", "x-units": units}))
 
 
 def test_reference_in_a_branch_is_rejected() -> None:
     """A reference applies to every node of its field, so it may not lie in a branch."""
-    schema = _schema_with({"oneOf": [{"$ref": "#/$defs/item/properties/id"}, {"type": "integer"}]})
+    schema = _schema_with({"oneOf": [{"x-units": ["items"]}, {"type": "integer"}]})
     with pytest.raises(ResourceError):
         SchemaLayout.from_schema(schema)
 

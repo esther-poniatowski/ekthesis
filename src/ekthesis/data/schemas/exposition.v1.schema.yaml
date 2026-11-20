@@ -2,8 +2,9 @@
 # migrated to `ekthesis:exposition@3`, as the decision on the argument record states. The fields
 # `exports` and `unit` serve the retired contract of a research export, and no rule reads them.
 # The keywords `x-registry` and `x-role` belong to ekthesis, whose decision on the argument record
-# states their meaning; `x-identifier` belongs to Anagraphe, and `x-kind` to Ekphrasis. A field
-# naming an item of the record references the identifier field of that item.
+# states their meaning; `x-identifier` and `x-units` belong to Anagraphe, and `x-kind` to Ekphrasis.
+# A field naming an item of the record lists under `x-units` the arrays of the record whose items it
+# may name.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: exposition.v1.schema.yaml
 title: Exposition
@@ -178,7 +179,8 @@ $defs:
     required: [source, relation, target]
     properties:
       source:
-        $ref: '#/$defs/idea/properties/id'
+        $ref: '#/$defs/identifier'
+        x-units: [ideas]
         x-role: relation-source
         title: Source
         description: >-
@@ -192,7 +194,8 @@ $defs:
         description: the relation in the registry of rhetorical relations
         examples: [elaboration]
       target:
-        $ref: '#/$defs/idea/properties/id'
+        $ref: '#/$defs/identifier'
+        x-units: [ideas]
         x-role: relation-target
         title: Target
         description: >-
@@ -221,9 +224,10 @@ $defs:
       ideas:
         type: array
         x-kind: list
+        x-units: [ideas]
         minItems: 1
         items:
-          $ref: '#/$defs/idea/properties/id'
+          $ref: '#/$defs/identifier'
           description: identifier of an idea that the part presents
         title: Ideas
         description: the ideas that the part presents, in reading order

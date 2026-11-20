@@ -3,11 +3,12 @@ Rules checked on an argument record and on a constraints record, one function pe
 
 The first rule binds a record to its schema and validates it. The other rules read a record that
 conforms to its schema, through the layout of that schema; each rule yields its findings. A
-constraints record is checked by the rules that read only the identifiers and the references of
-its layout, and by the rule that keeps the identifiers of its units distinct across its
-collections. The rules on audience records are stated in `ekthesis.audiences`, and the rule on a
-scope table in `ekthesis.scope_table`; this module gathers every rule, and the rules applied to
-each contract.
+constraints record is checked by the rule on the identifiers of each of its collections, and by the
+rule that keeps the identifiers of its units distinct across its collections. Anagraphe checks that
+each value of a field declaring `x-units` names an item of the collections that the field admits,
+so no rule of ekthesis checks those values. The rules on audience records are stated in
+`ekthesis.audiences`, and the rule on a scope table in `ekthesis.scope_table`; this module gathers
+every rule, and the rules applied to each contract.
 
 Classes
 -------
@@ -24,8 +25,6 @@ unique_identifiers(record)
     The items of each collection have distinct identifiers.
 unique_units(record)
     No two items of different collections of a record share an identifier.
-existing_references(record)
-    Every field that identifies an item names an existing item.
 registry_membership(record)
     Every value of a registry field belongs to its registry.
 authored_relations(record)
@@ -56,8 +55,8 @@ RECORD_RULES : tuple of callables
     The rules applied to an argument record that conforms to its schema, in order.
 LAYOUT_RULES : Mapping of str to tuple of callables
     The rules read through the layout of its schema, applied to a conforming record of each
-    contract, in order: `RECORD_RULES` for an argument record, and the rules on identifiers, units
-    and references for a constraints record.
+    contract, in order: `RECORD_RULES` for an argument record, and the rules on identifiers and
+    units for a constraints record.
 """
 
 from collections.abc import Callable, Iterator, Mapping
@@ -99,11 +98,6 @@ UNIQUE_IDENTIFIERS = Rule(
 UNIQUE_UNITS = Rule(
     "unique-units",
     "No two items of different collections of a record share an identifier.",
-    Severity.ERROR,
-)
-EXISTING_REFERENCES = Rule(
-    "existing-references",
-    "Every field that identifies an item names an existing item.",
     Severity.ERROR,
 )
 REGISTRY_MEMBERSHIP = Rule(
@@ -150,12 +144,13 @@ class BoundRecord:
         return Finding(rule.identifier, self.path, field, rule.severity, message)
 
     def idea_definition(self) -> str:
-        """Name of the definition of the ideas: the definition that a relation source identifies."""
+        """Name of the definition of the ideas: the one collection that the `x-units` of the
+        source of a relation admits."""
         source = self.layout.role(RELATION_SOURCE)
-        for pattern, definition in self.layout.references:
-            if pattern == source:
-                return definition
-        raise ResourceError("the source of a relation identifies no collection")
+        for pattern, definitions in self.layout.references:
+            if pattern == source and len(definitions) == 1:
+                return definitions[0]
+        raise ResourceError("the source of a relation names the items of no single collection")
 
     def exposition(self) -> Exposition:
         """Read the ideas and the relations of the record."""
@@ -292,24 +287,6 @@ def unique_units(record: BoundRecord) -> Iterator[Finding]:
                     )
 
 
-def existing_references(record: BoundRecord) -> Iterator[Finding]:
-    """Yield a finding for each field that identifies no existing item of its collection."""
-    for pattern, definition in record.layout.references:
-        collection = record.layout.collections[definition]
-        existing = {
-            identifier
-            for _, item in collection.items.select(record.data)
-            for _, identifier in collection.identifier.select(item)
-        }
-        for path, value in pattern.select(record.data):
-            if value not in existing:
-                yield record.finding(
-                    EXISTING_REFERENCES,
-                    path,
-                    f"no item of {collection.items} has the identifier {value}",
-                )
-
-
 def registry_membership(record: BoundRecord) -> Iterator[Finding]:
     """Yield a finding for each value of a registry field that its registry does not hold."""
     for registry_field in record.layout.registries:
@@ -401,13 +378,12 @@ def _describe(idea: Idea) -> str:
 
 EXPOSITION_RULES: tuple[Rule, ...] = (
     UNIQUE_IDENTIFIERS,
-    EXISTING_REFERENCES,
     REGISTRY_MEMBERSHIP,
     AUTHORED_RELATIONS,
     RELATION_REQUIREMENTS,
 )
 
-CONSTRAINTS_RULES: tuple[Rule, ...] = (UNIQUE_IDENTIFIERS, UNIQUE_UNITS, EXISTING_REFERENCES)
+CONSTRAINTS_RULES: tuple[Rule, ...] = (UNIQUE_IDENTIFIERS, UNIQUE_UNITS)
 
 CONTRACT_RULES: Mapping[str, tuple[Rule, ...]] = {
     **{contract: EXPOSITION_RULES for contract in EXPOSITION_CONTRACTS},
@@ -427,7 +403,6 @@ RULES: tuple[Rule, ...] = (
 
 RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
     unique_identifiers,
-    existing_references,
     registry_membership,
     authored_relations,
     relation_requirements,
@@ -435,8 +410,5 @@ RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
 
 LAYOUT_RULES: Mapping[str, tuple[Callable[[BoundRecord], Iterator[Finding]], ...]] = {
     **{contract: RECORD_RULES for contract in EXPOSITION_CONTRACTS},
-    **{
-        contract: (unique_identifiers, unique_units, existing_references)
-        for contract in CONSTRAINTS_CONTRACTS
-    },
+    **{contract: (unique_identifiers, unique_units) for contract in CONSTRAINTS_CONTRACTS},
 }

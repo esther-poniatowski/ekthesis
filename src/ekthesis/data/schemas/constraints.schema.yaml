@@ -181,7 +181,8 @@ $defs:
         description: the name of the constraint
         examples: [Poster size]
       group:
-        $ref: '#/$defs/group/properties/id'
+        $ref: '#/$defs/identifier'
+        x-units: [groups]
         title: Group
         description: identifier of the group of the constraint, when the record declares groups
         examples: [anonymity]
@@ -195,10 +196,11 @@ $defs:
       sources:
         type: array
         x-kind: list
+        x-units: [sources]
         minItems: 1
         uniqueItems: true
         items:
-          $ref: '#/$defs/source/properties/id'
+          $ref: '#/$defs/identifier'
           description: identifier of a source that states the requirement
         title: Sources
         description: the sources that state the requirement

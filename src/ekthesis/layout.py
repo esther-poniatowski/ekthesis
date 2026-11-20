@@ -7,19 +7,20 @@ declares the roles by the annotations below:
 - `x-identifier` at the root names the field path of the identifier of the record, as in Ekphrasis;
 - `x-identifier` on a definition reached as the items of a sequence names the field holding the
   identifier of each item, so that the sequence is a collection of identified items;
+- `x-units` on a field lists the field paths, from the root of the record, of the sequences whose
+  items the field names, so that the field names an item of those collections;
 - `x-registry` on a field names the registry to which its value belongs;
 - `x-role` on a field names its role in the rules on sources: `source-bound`,
   `relation-source` or `relation-target`.
 
-The keyword `x-identifier` belongs to Anagraphe, which reads it with the same meaning; the keywords
-`x-registry` and `x-role` belong to ekthesis. A field that identifies an item of its own record
-carries no keyword: its `$ref` names the field of the identifier of the definition of that item,
-such as `#/$defs/idea/properties/id`, so the schema validates the field as that identifier, and the
-check reads from the reference the collection whose item the field names.
+The keywords `x-identifier` and `x-units` belong to Anagraphe, which reads them with the same
+meaning and checks that each value of a field declaring `x-units` names an item of its collections;
+the keywords `x-registry` and `x-role` belong to ekthesis. The check reads `x-units` only to find
+the collection whose items a field names, such as the ideas that the source of a relation names.
 
 An `x-registry` declared inside a branch of a `oneOf` or an `anyOf` applies only to a node that
 satisfies that branch, so that one field may follow a registry in one form of an item and not in
-another. Every other annotation, and every reference to an item, lies outside such branches.
+another. Every other annotation lies outside such branches.
 
 Classes
 -------
@@ -57,6 +58,9 @@ from .errors import ResourceError
 
 ITEM = ANY_ITEM
 """Segment of a pattern standing for every item of a sequence, written `[*]`."""
+
+UNITS = "x-units"
+"""Keyword of Anagraphe listing the sequences whose items the values of a field name."""
 
 Segment = str | int
 
@@ -254,8 +258,9 @@ class SchemaLayout:
         Pattern of the identifier of the record, from the keyword `x-identifier` at the root.
     collections : Mapping[str, Collection]
         Collections of identified items, by the name of their definition.
-    references : tuple of (Pattern, str)
-        Each field that identifies an item, with the definition of that item.
+    references : tuple of (Pattern, tuple of str)
+        Each field declaring `x-units`, with the definitions of the items of the collections that
+        it admits.
     registries : tuple of RegistryField
         Each field whose value belongs to a registry, with the name of the registry.
     roles : Mapping[str, Pattern]
@@ -264,7 +269,7 @@ class SchemaLayout:
 
     record_identifier: Pattern | None
     collections: Mapping[str, Collection]
-    references: tuple[tuple[Pattern, str], ...]
+    references: tuple[tuple[Pattern, tuple[str, ...]], ...]
     registries: tuple[RegistryField, ...]
     roles: Mapping[str, Pattern]
 
@@ -274,12 +279,17 @@ class SchemaLayout:
         walker = _Walker(schema)
         walker.walk(schema, Pattern(), frozenset())
         root_identifier = schema.get("x-identifier")
-        unknown = {target for _, target in walker.references} - walker.collections.keys()
-        if unknown:
-            raise ResourceError(
-                "a field names the identifier of a definition whose items no sequence holds: "
-                f"{sorted(unknown)}"
-            )
+        by_items = {collection.items: name for name, collection in walker.collections.items()}
+        references = []
+        for at, sequences in walker.units:
+            unknown = [
+                str(sequence) for sequence in sequences if sequence.child(ITEM) not in by_items
+            ]
+            if unknown:
+                raise ResourceError(
+                    f"{UNITS} at {at} names sequences whose items declare no identifier: {unknown}"
+                )
+            references.append((at, tuple(by_items[sequence.child(ITEM)] for sequence in sequences)))
         return cls(
             record_identifier=(
                 Pattern(_property_path(root_identifier))
@@ -287,7 +297,7 @@ class SchemaLayout:
                 else None
             ),
             collections=walker.collections,
-            references=tuple(walker.references),
+            references=tuple(references),
             registries=tuple(walker.registries),
             roles=walker.roles,
         )
@@ -306,7 +316,7 @@ class _Walker:
 
     schema: Mapping[str, object]
     collections: dict[str, Collection] = field(default_factory=dict)
-    references: list[tuple[Pattern, str]] = field(default_factory=list)
+    units: list[tuple[Pattern, tuple[Pattern, ...]]] = field(default_factory=list)
     registries: list[RegistryField] = field(default_factory=list)
     roles: dict[str, Pattern] = field(default_factory=dict)
 
@@ -348,8 +358,10 @@ class _Walker:
         registry = node.get("x-registry")
         if isinstance(registry, str):
             self.registries.append(RegistryField(at, registry, branches))
-        if branches and "x-role" in node:
+        if branches and ("x-role" in node or UNITS in node):
             raise ResourceError(f"an annotation at {at} other than x-registry lies in a branch")
+        if UNITS in node:
+            self.units.append((at, _sequences(node[UNITS], at)))
         role = node.get("x-role")
         if isinstance(role, str):
             if role in self.roles and self.roles[role] != at:
@@ -359,24 +371,11 @@ class _Walker:
     def _follow(
         self, reference: str, at: Pattern, expanding: frozenset[str], branches: tuple[Branch, ...]
     ) -> None:
-        """Register the local `reference` at `at` when it names an item, then walk its target."""
+        """Walk the target of the local `reference` at `at`."""
         name, keys = _local_target(reference)
-        if keys:
-            self._register_reference(name, keys, at, branches)
         if reference not in expanding:
             target = self._subschema(name, keys, reference)
             self.walk(target, at, expanding | {reference}, branches)
-
-    def _register_reference(
-        self, name: str, keys: tuple[str, ...], at: Pattern, branches: tuple[Branch, ...]
-    ) -> None:
-        """Register `at` as a reference when `keys` name the identifier field of `name`."""
-        identifier = self._definition(name).get("x-identifier")
-        if not isinstance(identifier, str) or _property_path(identifier) != keys:
-            return
-        if branches:
-            raise ResourceError(f"the reference at {at} to an item of {name} lies in a branch")
-        self.references.append((at, name))
 
     def _register_collection(self, items: Mapping[str, object], at: Pattern) -> None:
         """Register `at` as a collection when its items refer to an identified definition."""
@@ -436,6 +435,32 @@ def _local_target(reference: str) -> tuple[str, tuple[str, ...]]:
     if len(rest) % 2 or any(keyword != "properties" for keyword in rest[::2]):
         raise ResourceError(f"the reference {reference} names no definition and no property of one")
     return name, tuple(rest[1::2])
+
+
+def _sequences(value: object, at: Pattern) -> tuple[Pattern, ...]:
+    """
+    Return the patterns of the sequences that a value of `x-units` names, each field path parsed by
+    Anagraphe, in which a position steps into the items of a sequence.
+
+    Examples
+    --------
+    >>> [str(pattern) for pattern in _sequences(["ideas", "parts[0].ideas"], Pattern())]
+    ['ideas', 'parts[*].ideas']
+    """
+    if not isinstance(value, list) or not value or not all(isinstance(e, str) for e in value):
+        raise ResourceError(f"{UNITS} at {at} is no non-empty list of field paths")
+    patterns = []
+    for entry in value:
+        try:
+            segments = parse_field_path(entry)
+        except FieldPathError as error:
+            raise ResourceError(
+                f"{UNITS} entry {entry!r} at {at} is no field path: {error}"
+            ) from None
+        patterns.append(
+            Pattern(tuple(ITEM if isinstance(segment, int) else segment for segment in segments))
+        )
+    return tuple(patterns)
 
 
 def _property_path(text: str) -> tuple[str, ...]:

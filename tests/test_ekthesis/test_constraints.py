@@ -22,7 +22,6 @@ PLANTED = {
     "schema-conformance": "constraints[0]",
     "unique-identifiers": "constraints[1]",
     "unique-units": "constraints[0]",
-    "existing-references": "constraints[1].sources[1]",
 }
 
 
@@ -84,19 +83,17 @@ def test_identifier_shared_across_collections_is_reported_once(
     assert findings == [("unique-units", located)]
 
 
-def test_group_names_a_declared_group(checker: Checker, tmp_path: Path) -> None:
-    """A constraint whose group the record does not declare is reported, as an unknown source is."""
-    record = yaml.safe_load(VALID[0].read_text(encoding="utf-8"))
-    grouped = next(item for item in record["constraints"] if "group" in item)
-    grouped["group"] = "undeclared-group"
-    path = tmp_path / "record.yml"
-    path.write_text(yaml.safe_dump(record, allow_unicode=True), encoding="utf-8")
-    position = record["constraints"].index(grouped)
-    [finding] = checker.check_record(path)
-    assert (finding.rule, str(finding.field)) == (
-        "existing-references",
-        f"constraints[{position}].group",
-    )
+def test_constraint_names_its_group_and_sources_for_anagraphe() -> None:
+    """
+    The group and the sources of a constraint declare by `x-units` the arrays of the record whose
+    units they name.
+
+    Ekthesis checks no such value: `anagraphe targets check` reports a group or a source that the
+    record does not declare as `unknown-unit-reference`, by this declaration.
+    """
+    constraint = _schema(CONSTRAINTS_CONTRACT)["$defs"]["constraint"]["properties"]
+    assert constraint["group"]["x-units"] == ["groups"]
+    assert constraint["sources"]["x-units"] == ["sources"]
 
 
 def test_record_breaking_its_schema_skips_the_rules_on_constraints(checker: Checker) -> None:
@@ -199,7 +196,7 @@ def test_command_checks_constraints_records() -> None:
     assert passed.exit_code == 0, passed.output
     assert passed.output.splitlines()[-1] == f"{len(VALID)} records checked: 0 errors, 0 warnings"
     failed = runner.invoke(
-        app, ["check", str(FIXTURES / "constraints" / "planted" / "existing-references.yml")]
+        app, ["check", str(FIXTURES / "constraints" / "planted" / "unique-units.yml")]
     )
     assert failed.exit_code == 1, failed.output
 
@@ -219,4 +216,4 @@ def test_sarif_log_of_a_constraints_run_conforms_to_the_profile(
     names = {
         found["locations"][0]["logicalLocations"][0]["name"] for found in log["runs"][0]["results"]
     }
-    assert "id:constraints_poster_planted-references#/constraints/1/sources/1" in names
+    assert "id:constraints_poster_planted-units#/constraints/0" in names
