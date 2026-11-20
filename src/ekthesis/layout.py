@@ -17,9 +17,14 @@ The keywords `x-identifier` and `x-units` belong to Anagraphe, which reads them 
 meaning, checks each declaration of `x-units`, and checks that each value of a field declaring it
 names an item of its collections; the keywords `x-registry` and `x-role` belong to ekthesis. The
 check reads `x-units` only to find the collection whose items a field names, such as the ideas
-that the source of a relation names. It skips a declaration that it cannot use for that purpose:
-one that is no non-empty list of field paths, one naming a sequence whose items declare no
-identifier, and one inside a branch of a `oneOf` or an `anyOf`.
+that the source of a relation names. The check reads both keywords as a consumer, and skips a
+declaration that it cannot use, whose report belongs to Anagraphe:
+
+- an `x-identifier` that is no field path of property names: at the root, the record declares no
+  identifier for the check, which names it by its path; on a definition, its sequence is no
+  collection, so the rules on identifiers skip it and no `x-units` locates it;
+- an `x-units` that is no non-empty list of field paths, one naming a sequence that is no
+  collection, and one inside a branch of a `oneOf` or an `anyOf`: the field names no collection.
 
 An `x-registry` declared inside a branch of a `oneOf` or an `anyOf` applies only to a node that
 satisfies that branch, so that one field may follow a registry in one form of an item and not in
@@ -281,7 +286,7 @@ class SchemaLayout:
         """Read the layout of `schema`, whose references stay inside the schema."""
         walker = _Walker(schema)
         walker.walk(schema, Pattern(), frozenset())
-        root_identifier = schema.get("x-identifier")
+        root_identifier = _property_path(schema.get("x-identifier"))
         by_items = {collection.items: name for name, collection in walker.collections.items()}
         references = [
             (at, tuple(by_items[sequence.child(ITEM)] for sequence in sequences))
@@ -289,11 +294,7 @@ class SchemaLayout:
             if all(sequence.child(ITEM) in by_items for sequence in sequences)
         ]
         return cls(
-            record_identifier=(
-                Pattern(_property_path(root_identifier))
-                if isinstance(root_identifier, str)
-                else None
-            ),
+            record_identifier=None if root_identifier is None else Pattern(root_identifier),
             collections=walker.collections,
             references=tuple(references),
             registries=tuple(walker.registries),
@@ -384,11 +385,11 @@ class _Walker:
         name, keys = _local_target(reference)
         if keys:
             return
-        identifier = self._definition(name).get("x-identifier")
-        if isinstance(identifier, str):
+        identifier = _property_path(self._definition(name).get("x-identifier"))
+        if identifier is not None:
             if name in self.collections:
                 raise ResourceError(f"two sequences hold the items of {name}")
-            self.collections[name] = Collection(name, at, Pattern(_property_path(identifier)))
+            self.collections[name] = Collection(name, at, Pattern(identifier))
 
     def _subschema(self, name: str, keys: tuple[str, ...], reference: str) -> Mapping[str, object]:
         """Return the subschema of the property `keys` of the definition `name`, the definition
@@ -463,24 +464,26 @@ def _sequences(value: object) -> tuple[Pattern, ...]:
     return tuple(patterns)
 
 
-def _property_path(text: str) -> tuple[str, ...]:
+def _property_path(value: object) -> tuple[str, ...] | None:
     """
-    Return the keys of the value of `x-identifier`, a field path of property names parsed by
-    Anagraphe.
+    Return the keys of a value of `x-identifier`, a field path of property names parsed by
+    Anagraphe, or `None` for a value that is no such path, which Anagraphe reports.
 
     Examples
     --------
     >>> _property_path("identity.id")
     ('identity', 'id')
+    >>> _property_path("items[0].id"), _property_path("a..b"), _property_path(None)
+    (None, None, None)
     """
+    if not isinstance(value, str):
+        return None
     try:
-        segments = parse_field_path(text)
-    except FieldPathError as error:
-        raise ResourceError(f"x-identifier {text!r} is no field path: {error}") from None
+        segments = parse_field_path(value)
+    except FieldPathError:
+        return None
     keys = tuple(segment for segment in segments if isinstance(segment, str))
-    if len(keys) != len(segments):
-        raise ResourceError(f"x-identifier {text!r} names a position, not a property")
-    return keys
+    return keys if len(keys) == len(segments) else None
 
 
 def _absolute(reference: str) -> bool:

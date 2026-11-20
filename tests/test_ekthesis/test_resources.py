@@ -129,6 +129,24 @@ def test_units_in_a_branch_are_skipped() -> None:
     assert SchemaLayout.from_schema(schema).references == ()
 
 
+@pytest.mark.parametrize("identifier", ["items[0].id", "a..b", 3])
+def test_identifier_that_is_no_property_path_is_skipped(identifier: object) -> None:
+    """
+    An `x-identifier` that is no field path of property names declares nothing for the check,
+    which leaves its report to Anagraphe.
+
+    At the root, the record declares no identifier; on a definition, its sequence is no collection,
+    so no `x-units` locates it.
+    """
+    schema = _schema_with({"type": "string", "x-units": ["items"]})
+    schema["x-identifier"] = identifier
+    schema["$defs"]["item"]["x-identifier"] = identifier  # type: ignore[index]
+    layout = SchemaLayout.from_schema(schema)
+    assert layout.record_identifier is None
+    assert not layout.collections
+    assert layout.references == ()
+
+
 def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
     """The registry of authored kinds lies in the branch of an authored idea, and selects the kind
     of an authored idea, not the kind that a referenced idea states."""
