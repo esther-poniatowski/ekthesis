@@ -109,7 +109,6 @@ $defs:
         x-kind: list
         items:
           $ref: '#/$defs/link'
-          x-resolves: file
           x-role: export-link
         title: Exports
         description: >-
@@ -150,7 +149,6 @@ $defs:
         examples: ['A mixture input is a weighted sum of two component inputs.']
       source:
         $ref: '#/$defs/link'
-        x-resolves: file
         title: Source
         description: >-
           for a referenced idea, a relative link to the note or the unit that states the idea,

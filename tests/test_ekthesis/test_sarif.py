@@ -290,7 +290,7 @@ def test_missing_field_of_the_root_has_no_region(
 
 def test_record_breaking_its_schema_makes_the_run_incomplete(in_fixtures: Path) -> None:
     """A record that skips rules yields one failed invocation, with an error naming the record."""
-    log = sarif("valid.yml", "planted/schema-conformance.yml", "planted/source-links.yml")
+    log = sarif("valid.yml", "planted/schema-conformance.yml", "planted/registry-membership.yml")
     assert profile_violations(log) == []
     invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
     [invocation] = invocations

@@ -25,7 +25,7 @@ def test_schema_binds_its_contract(contract: str) -> None:
 
 
 def test_layout_reads_every_role_from_the_annotations() -> None:
-    """The layout locates the identifiers, references, registries, links and roles."""
+    """The layout locates the identifiers, references, registries and roles."""
     layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas[CONTRACT])
     assert layout.record_identifier == Pattern(("exposition", "id"))
     assert {name: str(collection.items) for name, collection in layout.collections.items()} == {
@@ -41,14 +41,6 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
         (f"ideas{ITEM}.kind", "authored-kinds"),
         (f"relations{ITEM}.relation", "relations"),
     }
-    # The current contract names a source by a logical target, which Anagraphe resolves; only the
-    # retained version writes a link to a file, which the rule source-links checks.
-    assert layout.source_links == ()
-    retained = SchemaLayout.from_schema(RESOURCES.schemas.schemas[RETAINED])
-    assert [str(pattern) for pattern in retained.source_links] == [
-        f"exposition.exports{ITEM}",
-        f"ideas{ITEM}.source",
-    ]
 
 
 def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
@@ -70,7 +62,7 @@ def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
 
 def test_annotation_other_than_a_registry_in_a_branch_is_rejected() -> None:
     """Only a registry is scoped to a branch; another annotation there would apply everywhere."""
-    schema = {"oneOf": [{"properties": {"link": {"x-resolves": "file"}}}]}
+    schema = {"oneOf": [{"properties": {"source": {"x-role": "relation-source"}}}]}
     with pytest.raises(ResourceError):
         SchemaLayout.from_schema(schema)
 

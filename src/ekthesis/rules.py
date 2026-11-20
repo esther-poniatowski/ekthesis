@@ -28,8 +28,6 @@ existing_references(record)
     Every field that identifies an item names an existing item.
 registry_membership(record)
     Every value of a registry field belongs to its registry.
-source_links(record)
-    Every link to a source resolves to a file, and its anchor exists in that file.
 authored_relations(record)
     In an exposition bound to its sources, every relation with an authored idea is admitted.
 relation_requirements(record)
@@ -75,7 +73,6 @@ from .exposition import RELATION_SOURCE, Exposition, Idea
 from .findings import Finding, Position, Rule, Severity
 from .layout import FieldPath, SchemaLayout
 from .positions import repeated_keys
-from .links import resolve_link
 from .resources import BINDING_FIELD, RelationKind, Registries, RhetoricalRelation, SchemaCatalog
 from .scope_table import SCOPE_TABLE_CURRENT, SCOPE_TABLE_DERIVABLE
 
@@ -112,11 +109,6 @@ EXISTING_REFERENCES = Rule(
 REGISTRY_MEMBERSHIP = Rule(
     "registry-membership",
     "Every value of a registry field belongs to its registry.",
-    Severity.ERROR,
-)
-SOURCE_LINKS = Rule(
-    "source-links",
-    "Every link to a source resolves to a file, and its anchor exists in that file.",
     Severity.ERROR,
 )
 AUTHORED_RELATIONS = Rule(
@@ -334,15 +326,6 @@ def registry_membership(record: BoundRecord) -> Iterator[Finding]:
                 )
 
 
-def source_links(record: BoundRecord) -> Iterator[Finding]:
-    """Yield a finding for each link to a source that names no file, or an absent anchor."""
-    for pattern in record.layout.source_links:
-        for path, value in pattern.select(record.data):
-            reason = resolve_link(str(value), record.path.parent)
-            if reason is not None:
-                yield record.finding(SOURCE_LINKS, path, reason)
-
-
 def authored_relations(record: BoundRecord) -> Iterator[Finding]:
     """
     Yield a finding for each relation with an authored idea outside the two admitted forms.
@@ -420,7 +403,6 @@ EXPOSITION_RULES: tuple[Rule, ...] = (
     UNIQUE_IDENTIFIERS,
     EXISTING_REFERENCES,
     REGISTRY_MEMBERSHIP,
-    SOURCE_LINKS,
     AUTHORED_RELATIONS,
     RELATION_REQUIREMENTS,
 )
@@ -447,7 +429,6 @@ RECORD_RULES: tuple[Callable[[BoundRecord], Iterator[Finding]], ...] = (
     unique_identifiers,
     existing_references,
     registry_membership,
-    source_links,
     authored_relations,
     relation_requirements,
 )

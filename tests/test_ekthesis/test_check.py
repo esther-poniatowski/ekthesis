@@ -21,7 +21,6 @@ PLANTED = {
     "unique-identifiers": Severity.ERROR,
     "existing-references": Severity.ERROR,
     "registry-membership": Severity.ERROR,
-    "source-links": Severity.ERROR,
     "authored-relations": Severity.ERROR,
     "relation-requirements": Severity.WARNING,
 }
@@ -54,7 +53,6 @@ def test_planted_record_fails_its_rule_alone(checker: Checker, rule: str) -> Non
         ("unique-identifiers", "parts[1]"),
         ("existing-references", "parts[1].ideas[1]"),
         ("registry-membership", "ideas[3].kind"),
-        ("source-links", "ideas[0].source"),
         ("authored-relations", "relations[0]"),
         ("relation-requirements", "relations[2]"),
     ],
@@ -72,11 +70,9 @@ def _planted(name: str) -> dict[str, Any]:
 
 
 def _check(checker: Checker, record: dict[str, Any], tmp_path: Path) -> list[Finding]:
-    """Check `record`, written into the folder of the planted records so that its links resolve."""
+    """Check `record`, written into a folder of its own."""
     path = tmp_path / "planted" / "record.yml"
     path.parent.mkdir(exist_ok=True)
-    (tmp_path / "sources").mkdir(exist_ok=True)
-    (tmp_path / "sources" / "note.md").write_text((FIXTURES / "sources" / "note.md").read_text())
     path.write_text(yaml.safe_dump(record, sort_keys=False))
     return checker.check_record(path)
 
@@ -141,7 +137,9 @@ def test_record_names_no_export(checker: Checker, tmp_path: Path) -> None:
 
 def test_retained_version_is_checked_by_the_rules_of_an_argument_record(checker: Checker) -> None:
     """A record of ekthesis:exposition@1 is checked until it migrates: an idea naming a unit, and a
-    referenced idea stating no kind, are referenced, and a relation between them is unverified."""
+    referenced idea stating no kind, are referenced, and a relation between them is unverified. Its
+    links name a file that does not exist, and no rule resolves them, since Anagraphe checks the
+    destination of each link."""
     findings = checker.check_record(FIXTURES / "retained" / "exposition-v1.yml")
     assert [(finding.rule, str(finding.field)) for finding in findings] == [
         ("relation-requirements", "relations[2]")
@@ -199,7 +197,11 @@ def test_unreadable_record_is_reported(checker: Checker, tmp_path: Path) -> None
 
 @pytest.mark.parametrize(
     ("name", "code"),
-    [("valid.yml", 0), ("planted/relation-requirements.yml", 0), ("planted/source-links.yml", 1)],
+    [
+        ("valid.yml", 0),
+        ("planted/relation-requirements.yml", 0),
+        ("planted/registry-membership.yml", 1),
+    ],
 )
 def test_command_exits_non_zero_on_a_blocking_finding(name: str, code: int) -> None:
     """The command fails on an error, and passes on a warning alone."""

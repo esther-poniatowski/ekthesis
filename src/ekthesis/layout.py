@@ -2,14 +2,13 @@
 Roles of the fields of a record, read from the annotations of its schema.
 
 The check names no field of a record: it reads from the schema where each role sits. The schema
-declares the roles by six keywords:
+declares the roles by the annotations below:
 
 - `x-identifier` at the root names the field path of the identifier of the record, as in Ekphrasis;
 - `x-identifier` on a definition reached as the items of a sequence names the field holding the
   identifier of each item, so that the sequence is a collection of identified items;
 - `x-refers` on a field names the definition whose items the field identifies;
 - `x-registry` on a field names the registry to which its value belongs;
-- `x-resolves: file` on a field marks a Markdown link to the source of an idea;
 - `x-role` on a field names its role in the rules on sources: `source-bound`,
   `relation-source` or `relation-target`.
 
@@ -250,8 +249,6 @@ class SchemaLayout:
         Each field that identifies an item, with the definition of that item.
     registries : tuple of RegistryField
         Each field whose value belongs to a registry, with the name of the registry.
-    source_links : tuple of Pattern
-        Each field holding a link to the source of an idea.
     roles : Mapping[str, Pattern]
         Field of each role in the rules on sources.
     """
@@ -260,7 +257,6 @@ class SchemaLayout:
     collections: Mapping[str, Collection]
     references: tuple[tuple[Pattern, str], ...]
     registries: tuple[RegistryField, ...]
-    source_links: tuple[Pattern, ...]
     roles: Mapping[str, Pattern]
 
     @classmethod
@@ -281,7 +277,6 @@ class SchemaLayout:
             collections=walker.collections,
             references=tuple(walker.references),
             registries=tuple(walker.registries),
-            source_links=tuple(walker.source_links),
             roles=walker.roles,
         )
 
@@ -301,7 +296,6 @@ class _Walker:
     collections: dict[str, Collection] = field(default_factory=dict)
     references: list[tuple[Pattern, str]] = field(default_factory=list)
     registries: list[RegistryField] = field(default_factory=list)
-    source_links: list[Pattern] = field(default_factory=list)
     roles: dict[str, Pattern] = field(default_factory=dict)
 
     def walk(
@@ -344,14 +338,12 @@ class _Walker:
         registry = node.get("x-registry")
         if isinstance(registry, str):
             self.registries.append(RegistryField(at, registry, branches))
-        scoped = ("x-refers", "x-resolves", "x-role")
+        scoped = ("x-refers", "x-role")
         if branches and any(keyword in node for keyword in scoped):
             raise ResourceError(f"an annotation at {at} other than x-registry lies in a branch")
         refers = node.get("x-refers")
         if isinstance(refers, str):
             self.references.append((at, refers))
-        if node.get("x-resolves") == "file":
-            self.source_links.append(at)
         role = node.get("x-role")
         if isinstance(role, str):
             if role in self.roles and self.roles[role] != at:
