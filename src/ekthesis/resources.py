@@ -1,6 +1,10 @@
 """
 Schemas and registries read by the check, from the data of the package or from a given directory.
 
+The schemas of the package reference the addressing schema of Anagraphe by its absolute `$id`.
+The check resolves that `$id` through `anagraphe-read`, the read package of Anagraphe, pinned at
+the commit from which Kleisis materializes the same resource, so that the package ships no copy.
+
 Classes
 -------
 SchemaCatalog
@@ -27,9 +31,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from importlib.resources import files
 from pathlib import Path
-from typing import cast
-
 import yaml
+from anagraphe_read import ADDRESSING_ID, addressing_schema
 from referencing import Registry, Resource
 from referencing.jsonschema import DRAFT202012
 
@@ -66,18 +69,21 @@ class SchemaCatalog:
         Schema of each contract identifier.
     references : Mapping[str, JsonObject]
         Schemas of other tools that a contract reaches by an absolute `$ref`, such as the
-        addressing primitives of Anagraphe, indexed by their absolute `$id`.
+        addressing primitives of Anagraphe, indexed by their absolute `$id`, each read from the
+        package of its owner.
     """
 
     schemas: Mapping[str, JsonObject]
     references: Mapping[str, JsonObject] = field(default_factory=dict)
 
     @classmethod
-    def from_directory(cls, directory: Path, references: Path | None = None) -> "SchemaCatalog":
+    def from_directory(
+        cls, directory: Path, references: Mapping[str, JsonObject] | None = None
+    ) -> "SchemaCatalog":
         """
         Index every file `*.schema.yaml` of `directory` that binds a contract identifier.
 
-        The schemas of `references`, when given, are indexed by their absolute `$id`.
+        The schemas of other tools `references`, when given, are indexed by their absolute `$id`.
         """
         schemas: dict[str, JsonObject] = {}
         for path in sorted(directory.glob("*.schema.yaml")):
@@ -91,7 +97,7 @@ class SchemaCatalog:
                 if contract in schemas:
                     raise ResourceError(f"two schemas of {directory} bind {contract}")
                 schemas[contract] = schema
-        return cls(schemas, _references(references) if references is not None else {})
+        return cls(schemas, dict(references or {}))
 
     def get(self, contract: str) -> JsonObject | None:
         """Return the schema of `contract`, or `None` when no schema binds it."""
@@ -261,24 +267,11 @@ class Resources:
     registries: Registries
 
 
-def _references(directory: Path) -> dict[str, JsonObject]:
-    """Index every schema file of `directory` by its absolute `$id`."""
-    found: dict[str, JsonObject] = {}
-    for path in sorted([*directory.glob("*.schema.yml"), *directory.glob("*.schema.yaml")]):
-        schema = _read_yaml(path)
-        identifier = schema.get("$id") if isinstance(schema, Mapping) else None
-        if not isinstance(identifier, str) or "://" not in identifier:
-            raise ResourceError(f"{path} declares no absolute $id")
-        if identifier in found:
-            raise ResourceError(f"two schemas of {directory} declare {identifier}")
-        found[identifier] = cast(JsonObject, schema)
-    return found
-
-
 def packaged_resources() -> Resources:
-    """Load the schemas, those of other tools and the registries shipped in `ekthesis/data`."""
+    """Load the schemas and the registries shipped in `ekthesis/data`, with the addressing schema
+    of Anagraphe read from `anagraphe-read`."""
     data = Path(str(files("ekthesis") / "data"))
     return Resources(
-        SchemaCatalog.from_directory(data / "schemas", data / "resources"),
+        SchemaCatalog.from_directory(data / "schemas", {ADDRESSING_ID: addressing_schema()}),
         Registries.from_directory(data / "registries"),
     )

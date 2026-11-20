@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from anagraphe_read import ADDRESSING_ID, addressing_schema
 from jsonschema import Draft202012Validator
 
 from ekthesis.errors import ResourceError
@@ -172,24 +173,36 @@ def test_only_the_elaboration_admits_an_authored_source() -> None:
     assert admitting == {"elaboration": frozenset({"illustration"})}
 
 
-def test_packaged_references_are_the_pinned_resources_of_the_registry() -> None:
-    """
-    Each schema of another tool shipped in `data/resources` is a resource of the registry.
+def _absolute_references(node: object):
+    """Yield the absolute `$ref` of `node` and of its subschemas, without their fragment."""
+    if isinstance(node, dict):
+        reference = node.get("$ref")
+        if isinstance(reference, str) and "://" in reference:
+            yield reference.split("#", 1)[0]
+        for value in node.values():
+            yield from _absolute_references(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _absolute_references(value)
 
-    Once Kleisis has materialized the closure, the packaged copy holds the bytes of the resource
-    at the commit that `specs/schema-resources.yml` pins.
+
+def test_schemas_of_other_tools_come_from_their_owner() -> None:
     """
-    root = Path(__file__).resolve().parents[2]
-    registry = yaml.safe_load((root / "specs/schema-registry.yml").read_text(encoding="utf-8"))
-    references = packaged_resources().schemas.references
-    assert references, "ekthesis ships no schema of another tool"
-    for identifier in references:
-        assert identifier in registry["resources"], identifier
-    materialized = [root / registry["resources"][identifier] for identifier in references]
-    if not all(path.is_file() for path in materialized):
-        pytest.skip(
-            "run `kleisis materialize --root .` to compare the bytes with the pinned resources"
-        )
-    packaged = Path(str(files("ekthesis") / "data" / "resources"))
-    for path in materialized:
-        assert (packaged / path.name).read_bytes() == path.read_bytes(), path.name
+    Each absolute `$ref` of a schema of the package resolves through the package of its owner.
+
+    The addressing schema is read from `anagraphe-read`, and no file of the package declares an
+    absolute `$id`, so the package holds no copy of a schema of another tool.
+    """
+    references = RESOURCES.schemas.references
+    used = {
+        reference
+        for schema in RESOURCES.schemas.schemas.values()
+        for reference in _absolute_references(schema)
+    }
+    assert used and used <= set(references), used - set(references)
+    assert references[ADDRESSING_ID] == addressing_schema()
+    data = Path(str(files("ekthesis") / "data"))
+    for path in sorted(data.rglob("*.y*ml")):
+        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        identifier = document.get("$id") if isinstance(document, dict) else None
+        assert not (isinstance(identifier, str) and "://" in identifier), path
