@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 import yaml
 from anagraphe_read import parse_field_path
+from elenchos.profile import identities, violations
 from typer.testing import CliRunner
 
 from ekthesis.check import Checker
@@ -20,16 +21,12 @@ from ekthesis.rules import RULES
 from ekthesis.sarif import sarif_log
 
 from .other_contract import OTHER_CONTRACT, contract_without_rules
-from .sarif_profile import profile_violations, rejections
 
 FIXTURES = Path(__file__).parent / "fixtures"
 RECORDS = [
     "valid.yml",
     *sorted(f"planted/{path.name}" for path in (FIXTURES / "planted").iterdir()),
 ]
-VECTORS = Path(
-    os.environ.get("ELENCHOS_VECTORS", Path(__file__).parents[3] / "elenchos" / "specs" / "vectors")
-)
 
 LINE = re.compile(r": (?P<severity>error|warning) \[(?P<rule>[^\]]+)\] ")
 """Severity and rule of a line of the text output."""
@@ -147,7 +144,7 @@ def test_field_path_prints_as_anagraphe_prints_it(
 def test_log_of_each_record_conforms_to_the_profile(in_fixtures: Path, record: str) -> None:
     """The log of each fixture conforms, and holds one result per finding of the text output."""
     log = sarif(record)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     runs: list[Any] = log["runs"]  # type: ignore[assignment]
     [run] = runs
     assert run["tool"]["driver"]["name"] == "ekthesis"
@@ -163,10 +160,12 @@ def test_log_of_each_record_conforms_to_the_profile(in_fixtures: Path, record: s
 
 @pytest.mark.parametrize("record", RECORDS)
 def test_results_of_a_log_have_distinct_identities(in_fixtures: Path, record: str) -> None:
-    """No two results share their rule, logical location and discriminator."""
-    found = results(sarif(record))
-    keys = [(result["ruleId"], logical_name(result), discriminator(result)) for result in found]
-    assert len(set(keys)) == len(keys)
+    """No two results share the identity that Elenchos builds from their rule, resource, locus
+    and discriminator, so that no ordinal tells them apart."""
+    log = sarif(record)
+    found = identities(log)
+    assert len(found) == len(results(log))
+    assert len(set(found)) == len(found)
 
 
 @pytest.mark.parametrize("record", RECORDS)
@@ -232,7 +231,7 @@ def test_finding_on_the_whole_record_has_no_region(
     (tmp_path / "record.yml").write_text("ideas: [unclosed\n")
     monkeypatch.chdir(tmp_path)
     log = sarif("record.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     [result] = results(log)
     assert "region" not in result["locations"][0]["physicalLocation"]  # type: ignore[index]
     assert logical_name(result) == "path:record.yml"
@@ -256,7 +255,7 @@ def test_record_without_identifier_uses_its_path(
     (tmp_path / "notes#1" / "record%.yml").write_text(text)
     monkeypatch.chdir(tmp_path)
     log = sarif("notes#1/record%.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     names = {logical_name(result).split("#/")[0] for result in results(log)}
     assert names == {name.split("#/")[0]}
     uris = {
@@ -276,7 +275,7 @@ def test_missing_fields_keep_their_pointers_and_take_the_region_of_their_parent(
     (tmp_path / "record.yml").write_text(text)
     monkeypatch.chdir(tmp_path)
     log = sarif("record.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     found = [result for result in results(log) if "#/ideas/2/" in logical_name(result)]
     assert sorted(logical_name(result) for result in found) == [
         "id:valid-poster#/ideas/2/id",
@@ -301,7 +300,7 @@ def test_missing_field_of_the_root_has_no_region(
     (tmp_path / "record.yml").write_text(yaml.safe_dump(record))
     monkeypatch.chdir(tmp_path)
     log = sarif("record.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     [result] = [result for result in results(log) if logical_name(result) == name]
     assert region(result) is None
 
@@ -312,7 +311,7 @@ def test_missing_field_of_the_root_has_no_region(
 def test_record_breaking_its_schema_makes_the_run_incomplete(in_fixtures: Path) -> None:
     """A record that skips rules yields one failed invocation, with an error naming the record."""
     log = sarif("valid.yml", "planted/schema-conformance.yml", "planted/registry-membership.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
     [invocation] = invocations
     assert invocation["executionSuccessful"] is False
@@ -331,7 +330,7 @@ def test_record_of_any_contract_breaking_its_schema_makes_the_run_incomplete(
     path.write_text(f"_schema: '{OTHER_CONTRACT}'\nvalue: 1\n")
     reports = Checker(contract_without_rules(tmp_path)).reports([path])
     log = sarif_log(reports, tmp_path)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     invocations: list[Any] = single_run(log)["invocations"]  # type: ignore[assignment]
     [invocation] = invocations
     assert invocation["executionSuccessful"] is False
@@ -449,10 +448,6 @@ def _drop_rules(log: JsonObject) -> None:
     del single_run(log)["tool"]["driver"]["rules"]  # type: ignore[index]
 
 
-def _not_comprehensive(log: JsonObject) -> None:
-    single_run(log)["tool"]["driver"]["isComprehensive"] = False  # type: ignore[index]
-
-
 def _gate_driver(log: JsonObject) -> None:
     single_run(log)["tool"]["driver"]["name"] = "elenchos"  # type: ignore[index]
 
@@ -509,7 +504,6 @@ def _two_invocations(log: JsonObject) -> None:
         _unversioned_key,
         _drop_column_kind,
         _drop_rules,
-        _not_comprehensive,
         _gate_driver,
         _drop_results,
         _null_results,
@@ -524,31 +518,9 @@ def _two_invocations(log: JsonObject) -> None:
 def test_validator_rejects_a_planted_violation(
     in_fixtures: Path, plant: Callable[[JsonObject], None]
 ) -> None:
-    """The validator fires on each planted violation of an otherwise conforming log."""
+    """The check of the profile by Elenchos fires on each planted violation of an otherwise
+    conforming log of ekthesis, so that a conforming verdict is not vacuous."""
     log = sarif("planted/registry-membership.yml")
-    assert profile_violations(log) == []
+    assert violations(log) == []
     plant(log)
-    assert profile_violations(log) != []
-
-
-@pytest.mark.skipif(not VECTORS.is_dir(), reason="the test vectors of Elenchos are not checked out")
-def test_validator_rejects_the_rejected_vectors() -> None:
-    """Each rejected vector of the profile breaks the rules of section 5.6."""
-    vectors = json.loads((VECTORS / "rejected.json").read_text(encoding="utf-8"))
-    assert vectors
-    for vector in vectors:
-        assert rejections(vector["log"]) != [], vector["case"]
-
-
-@pytest.mark.skipif(not VECTORS.is_dir(), reason="the test vectors of Elenchos are not checked out")
-def test_validator_accepts_the_identity_vectors() -> None:
-    """
-    No identity vector of the profile breaks the rules of section 5.6.
-
-    The vectors are minimal logs for the identity, and omit objects that a producer writes but the
-    gate does not check, such as the list of rules; the full producer requirements do not apply.
-    """
-    vectors = json.loads((VECTORS / "identity.json").read_text(encoding="utf-8"))
-    assert vectors
-    for vector in vectors:
-        assert rejections(vector["log"]) == [], vector["case"]
+    assert violations(log) != []

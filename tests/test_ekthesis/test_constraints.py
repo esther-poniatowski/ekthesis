@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 import yaml
+from elenchos.profile import violations
 from typer.testing import CliRunner
 
 from ekthesis.check import Checker
@@ -13,8 +14,6 @@ from ekthesis.cli import app
 from ekthesis.findings import Severity
 from ekthesis.resources import packaged_resources
 from ekthesis.rules import CONSTRAINTS_CONTRACT, CONSTRAINTS_RULES, EXPOSITION_CONTRACT
-
-from .sarif_profile import profile_violations
 
 FIXTURES = Path(__file__).parent / "fixtures"
 VALID = sorted((FIXTURES / "constraints" / "valid").glob("*.yml"))
@@ -216,7 +215,7 @@ def test_sarif_log_of_a_constraints_run_conforms_to_the_profile(
     ]
     result = CliRunner().invoke(app, ["check", "--format", "sarif", *paths])
     log = json.loads(result.output)
-    assert not profile_violations(log)
+    assert not violations(log)
     names = {
         found["locations"][0]["logicalLocations"][0]["name"] for found in log["runs"][0]["results"]
     }

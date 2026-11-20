@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 import yaml
 from jsonschema import Draft202012Validator
+from elenchos.profile import violations
 from typer.testing import CliRunner
 
 from ekthesis.audiences import load_audience
@@ -18,7 +19,6 @@ from ekthesis.provenance import public_location
 from ekthesis.scope_table import HEADER, SCOPE_TABLE_CONTRACT, Row, ScopeTable
 
 from .pinned import PinnedFiles
-from .sarif_profile import profile_violations
 
 FIXTURES = Path(__file__).parent / "fixtures" / "audiences"
 VALID = sorted((FIXTURES / "valid").glob("*.yml"))
@@ -202,7 +202,7 @@ def test_stale_table_in_sarif_conforms_to_the_profile(
     code, output = run(*names, "-t", "scope-table.yml", "--check", "--format", "sarif")
     assert code == 1
     log = json.loads(output)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     results = log["runs"][0]["results"]
     assert {result["ruleId"] for result in results} == {"scope-table-current"}
     assert len(results) == len(DERIVED)
@@ -239,7 +239,7 @@ def test_errors_of_the_records_yield_one_sarif_result(
     code, output = run("orphan.yml", "-t", "scope-table.yml", "--format", "sarif")
     assert code == 1
     log = json.loads(output)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     [result] = log["runs"][0]["results"]
     assert result["ruleId"] == "scope-table-derivable"
     assert "1 audience record holds errors" in result["message"]["text"]

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from elenchos.profile import violations
 from typer.testing import CliRunner
 
 from ekthesis.audiences import AUDIENCE_CONTRACT, AUDIENCE_RULES
@@ -13,8 +14,6 @@ from ekthesis.cli import app
 from ekthesis.findings import Severity
 from ekthesis.resources import packaged_resources
 from ekthesis.rules import CONTRACT_RULES
-
-from .sarif_profile import profile_violations
 
 FIXTURES = Path(__file__).parent / "fixtures" / "audiences"
 VALID = sorted((FIXTURES / "valid").glob("*.yml"))
@@ -215,7 +214,7 @@ def test_sarif_log_of_an_audience_run_conforms_to_the_profile(
     ]
     result = CliRunner().invoke(app, ["check", "--format", "sarif", *paths])
     log = json.loads(result.output)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     names = {
         result["locations"][0]["logicalLocations"][0]["name"]
         for result in log["runs"][0]["results"]
@@ -250,7 +249,7 @@ def test_run_finding_joins_its_record_in_a_mixed_run(monkeypatch: pytest.MonkeyP
     paths = ["valid.yml", *(str(path.relative_to(root)) for path in VALID), planted]
     result = CliRunner().invoke(app, ["check", "--format", "sarif", *paths])
     log = json.loads(result.output)
-    assert profile_violations(log) == []
+    assert violations(log) == []
     [found] = log["runs"][0]["results"]
     [location] = found["locations"]
     lines = (root / planted).read_text().splitlines()

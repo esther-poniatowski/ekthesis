@@ -36,4 +36,7 @@ dependencies:
       # The tests read the registry of a dependency through the reader of Kleisis, at the commit
       # that anagraphe-read requires.
       - kleisis @ git+https://github.com/esther-poniatowski/kleisis.git@7afe7b6fd4e397264a17bc1d2c45a3ce833f1c40
+      # The tests check each findings log with the interface elenchos.profile, without the extra
+      # validate.
+      - elenchos @ git+https://github.com/esther-poniatowski/elenchos.git@089a764aafd137d5095a77fe3dbdb9198e6ae85b
 variables:

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
+- The validator of the findings profile written in the tests, `tests/test_ekthesis/sarif_profile.py`, and its reading of the test vectors in the sibling clone of Elenchos. The tests check each log with the interface `elenchos.profile` of Elenchos, pinned by commit in `environment.yml`, which holds no rule requiring `isComprehensive` to be true.
 - The copy of the addressing schema of Anagraphe under `data/resources`, whose bytes differed from those of Anagraphe under the same `$id`. The check reads the schema from `anagraphe-read`, at the commit from which Kleisis materializes the same resource.
 - **Breaking:** the rule `source-links` and the module `ekthesis.links`. `ekthesis check` resolves no link to a source, since Anagraphe checks the destination of each link, and admits no heading anchor that Anagraphe rejects. The schema of `ekthesis:exposition@1` drops the keyword `x-resolves`, and keeps its validation.
 - **Breaking:** the contract `ekthesis:export@1` of a research export, its schema `export.schema.yaml` and the module `ekthesis.exports`, retired by the decision of `geonexus` on independent research and exposition. `specs/schema-resources.yml` no longer exports the contract.
