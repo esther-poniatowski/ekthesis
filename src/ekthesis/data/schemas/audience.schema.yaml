@@ -120,14 +120,15 @@ $defs:
         $ref: '#/$defs/text'
         title: Name
         description: the name of the researcher
-        examples: [Claire Sergent]
+        examples: [Jane Doe]
       profile:
         $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
-        x-target-contract: ['geonexus:contact', 'homilia:contact']
         not: {required: [unit]}
         title: Profile
-        description: the logical target of the contact profile of the researcher, when one exists
-        examples: [{id: sergent_claire}]
+        description: >-
+          the logical target of the contact profile of the researcher, when one exists; the contract
+          of the profile is left open, for the consumer to narrow
+        examples: [{id: doe_jane}]
 
   confusion:
     type: object

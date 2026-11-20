@@ -1,5 +1,5 @@
-# Converted from the note of geonexus conferences/2027-03_cosyne/constraints_submission.md: a record
-# whose constraints all belong to declared groups, with requirements on several lines.
+# Converted from a note of the submission constraints of a conference: a record whose constraints
+# all belong to declared groups, with requirements on several lines.
 _schema: ekthesis:constraints@1
 
 identity:

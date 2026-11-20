@@ -6,7 +6,7 @@ identity:
   gloss: neuroscientists who study circuits and populations of neurons
   narrows: [neuroscientists]
   representatives:
-    - {name: Claire Sergent, profile: {id: sergent_claire}}
+    - {name: Jane Doe, profile: {id: doe_jane}}
   confusions:
     - community: neuroscientists
       target_readers: study circuits and populations of neurons

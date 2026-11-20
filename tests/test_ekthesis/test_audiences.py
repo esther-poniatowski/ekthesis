@@ -133,9 +133,7 @@ def _with_target(path: Path, contract: str, field: str, value: object) -> str:
     record = yaml.safe_load(path.read_text())
     record["_schema"] = contract
     if field == "profile":
-        record["identity"]["representatives"] = [
-            {"name": "Nikolaus Kriegeskorte", "profile": value}
-        ]
+        record["identity"]["representatives"] = [{"name": "Jane Doe", "profile": value}]
         located = "identity.representatives[0].profile"
     else:
         record["knowledge"] = [{"concept": value}]
@@ -147,10 +145,10 @@ def _with_target(path: Path, contract: str, field: str, value: object) -> str:
 @pytest.mark.parametrize(
     ("field", "value", "valid"),
     [
-        ("profile", {"id": "kriegeskorte_nikolaus"}, True),
-        ("profile", {"repository": "geonexus", "id": "kriegeskorte_nikolaus"}, True),
-        ("profile", "kriegeskorte_nikolaus", False),
-        ("profile", {"id": "kriegeskorte_nikolaus", "unit": "career"}, False),
+        ("profile", {"id": "doe_jane"}, True),
+        ("profile", {"repository": "lab", "id": "doe_jane"}, True),
+        ("profile", "doe_jane", False),
+        ("profile", {"id": "doe_jane", "unit": "career"}, False),
         (
             "concept",
             {"repository": "neural-coding-course", "id": "concept.coding.population"},
@@ -175,6 +173,14 @@ def test_current_version_takes_targets_in_the_form_of_anagraphe(
     located = _with_target(path, AUDIENCE_CONTRACT, field, value)
     findings = {(f.rule, str(f.field)) for f in checker.check([path])}
     assert findings == (set() if valid else {("schema-conformance", located)})
+
+
+def test_profile_leaves_the_contract_of_its_target_open() -> None:
+    """The profile of a representative names a contact record of any contract, since the contract
+    of a contact belongs to the consumer, which narrows the field in a root schema of its own."""
+    schema = packaged_resources().schemas.schemas[AUDIENCE_CONTRACT]
+    profile = schema["$defs"]["representative"]["properties"]["profile"]
+    assert "x-target-contract" not in profile
 
 
 def test_finding_carries_the_position_of_its_field(checker: Checker) -> None:

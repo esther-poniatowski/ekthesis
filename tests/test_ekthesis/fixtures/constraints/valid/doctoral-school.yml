@@ -1,6 +1,5 @@
-# Converted from the note of geonexus projects/thesis-neural-representations/artifacts/
-# neural-representations_thesis/project-description/constraints_doctoral-school.md: a record whose
-# group gathers some constraints only, so that a specification names that group as a unit.
+# Converted from a note of the constraints of a doctoral school on a thesis description: a record
+# whose group gathers some constraints only, so that a specification names that group as a unit.
 _schema: ekthesis:constraints@1
 
 metadata:

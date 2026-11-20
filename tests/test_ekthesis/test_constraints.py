@@ -111,9 +111,9 @@ def test_record_breaking_its_schema_skips_the_rules_on_constraints(checker: Chec
     [
         ("https://pints.fr/submit.html", True),
         ({"id": "instructions_poster_2026-08_ccn"}, True),
-        ({"repository": "geonexus", "id": "instructions_poster_2026-08_ccn", "unit": "size"}, True),
+        ({"repository": "lab", "id": "instructions_poster_2026-08_ccn", "unit": "size"}, True),
         ("venue/instructions_poster.md", False),
-        ({"repository": "geonexus"}, False),
+        ({"repository": "lab"}, False),
     ],
 )
 def test_location_is_a_page_or_a_record(
@@ -143,10 +143,10 @@ def _exposition(tmp_path: Path, value: object) -> Path:
     ("value", "valid"),
     [
         ({"id": "constraints_submission_2026-11_pints"}, True),
-        ({"repository": "geonexus", "id": "constraints_submission_2026-11_pints"}, True),
+        ({"repository": "lab", "id": "constraints_submission_2026-11_pints"}, True),
         ("[Submission constraints](https://example.org/constraints_submission.md)", True),
         ({"id": "constraints_submission_2026-11_pints", "unit": "poster-size"}, False),
-        ({"repository": "geonexus"}, False),
+        ({"repository": "lab"}, False),
         ("constraints_submission_2026-11_pints", False),
     ],
 )
