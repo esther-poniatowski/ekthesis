@@ -31,13 +31,12 @@ A constraint holds an id, a label, the requirement as the venue states it, and t
 
 **Names of a constraints record.** The field `venue-constraints` of the record of an exposition names a constraints record by a logical target typed by the contract `ekthesis:constraints`, without a version, and naming no unit. It still accepts the link to a note of constraints that it held before. Under the [versioning rule of `geonexus`](https://github.com/esther-poniatowski/geonexus/blob/6dfa05da353aacdf8c318a687a436a3c8204785b/docs/_decisions/tool-roles.md#shared-conventions), this change makes no valid record invalid and keeps the meaning of the field, so the contract stays `ekthesis:exposition@3`. The entry of `x-target-contract` names no version, because no rule of `ekthesis` reads the fields of a constraints record: ADR 0006 of Anagraphe pins a version only for a field whose tool reads the target record. ^constraints-names
 
-**Check.** `ekthesis check` validates a constraints record against its schema. A conforming record is then checked by the rules that read its identifiers and its references through the annotations of its schema, as for an argument record:
+**Check.** `ekthesis check` validates a constraints record against its schema. A conforming record is then checked by the rules that read its identifiers through the annotations of its schema, as for an argument record:
 
 - `unique-identifiers` reports a group, a source or a constraint whose id repeats an earlier item of its collection;
-- `unique-units` reports a group, a source or a constraint whose id repeats an item of another collection, since a logical target naming that id would be ambiguous; the first item in the order groups, sources, constraints keeps the id;
-- `existing-references` reports a constraint naming a group or a source that the record does not declare.
+- `unique-units` reports a group, a source or a constraint whose id repeats an item of another collection, since a logical target naming that id would be ambiguous; the first item in the order groups, sources, constraints keeps the id.
 
-Anagraphe checks the rest under its ADR 0006. It resolves the target of `venue-constraints`, and reports a record of another contract as `target-contract-mismatch`. It also reports two records of a repository holding one id, and a target naming an absent unit. ^constraints-check
+Anagraphe checks the rest under its ADR 0006. The fields `group` and `sources` of a constraint declare by `x-units` the arrays `groups` and `sources` of the record, so Anagraphe reports a group or a source that the record does not declare as `unknown-unit-reference`. It resolves the target of `venue-constraints`, and reports a record of another contract as `target-contract-mismatch`. It also reports two records of a repository holding one id, and a target naming an absent unit. ^constraints-check
 
 ## Constraints that decide the form
 

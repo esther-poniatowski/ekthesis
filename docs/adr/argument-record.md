@@ -35,7 +35,7 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 **Roles of the fields.** Annotations of the schema state which field holds each identifier, reference, registry value and binding to the sources. Therefore, the check names no field of a record:
 
 - `x-identifier`, a keyword of Anagraphe, names at the root the identifier of the record, as Ekphrasis reads it; on a definition reached as the items of a sequence, it names the identifier of each item;
-- a field that identifies an item of the record carries no keyword: its `$ref` names the identifier field of the definition of that item, such as `#/$defs/idea/properties/id`, so the schema validates the field as that identifier, and the check reads the collection of the item from the reference;
+- `x-units`, a keyword of Anagraphe, lists on a field that names an item of the record the arrays whose items the field may name, such as `[ideas]` on the source of a relation; Anagraphe reports each value that names no item of these arrays, and the check reads the keyword only to find the collection of the ideas;
 - `x-registry` names the registry that holds the values of a field; declared inside a branch of a `oneOf` or an `anyOf`, it applies only to an item that satisfies that branch, so the registry of authored kinds binds the kind of an authored idea only;
 - `x-role` marks the field stating whether the exposition is bound to its sources, and the source and the target of a relation. ^field-roles
 
@@ -69,6 +69,8 @@ A [synthesis](provenance-of-ideas.md#^syntheses) adds no idea. Its part lists ag
 | Option | Benefit | Reason it is not taken |
 | ------ | ------- | ---------------------- |
 | Field names written in the code of the check | Shorter code | A renamed field breaks the check silently, and the schema is no longer the single source of the form of a record |
+| A `$ref` to the identifier field of an item, such as `#/$defs/idea/properties/id`, for a field that names an item | No keyword | The reference states no list of admitted arrays, and Anagraphe owns every form of reference, `x-units` included |
+| A rule of `ekthesis` checking that each value of such a field names an item | `ekthesis check` reports a dangling reference without Anagraphe | The rule repeats the check of `x-units`, which Anagraphe owns |
 | Registries enumerated in the schema | A dropdown in the form of Ekphrasis | Two sources of each value; the schema rule and the registry rule fail together |
 | The two admitted forms written as conditions in the code | No field `admitted-authored-sources` | The forms change with the registry, and a condition naming a relation duplicates its entry |
 | A remote link admitted as a source | A unit of another repository can be cited | No anchor can be checked; a logical target serves that case once Anagraphe publishes its form |
