@@ -34,8 +34,8 @@ Each part lists its ideas in order, and one idea may appear in several parts. Th
 
 **Roles of the fields.** Annotations of the schema state which field holds each identifier, reference, registry value and binding to the sources. Therefore, the check names no field of a record:
 
-- `x-identifier` at the root names the identifier of the record, as Ekphrasis reads it; on a definition reached as the items of a sequence, it names the identifier of each item;
-- `x-refers` names the definition whose items a field identifies;
+- `x-identifier`, a keyword of Anagraphe, names at the root the identifier of the record, as Ekphrasis reads it; on a definition reached as the items of a sequence, it names the identifier of each item;
+- a field that identifies an item of the record carries no keyword: its `$ref` names the identifier field of the definition of that item, such as `#/$defs/idea/properties/id`, so the schema validates the field as that identifier, and the check reads the collection of the item from the reference;
 - `x-registry` names the registry that holds the values of a field; declared inside a branch of a `oneOf` or an `anyOf`, it applies only to an item that satisfies that branch, so the registry of authored kinds binds the kind of an authored idea only;
 - `x-role` marks the field stating whether the exposition is bound to its sources, and the source and the target of a relation. ^field-roles
 

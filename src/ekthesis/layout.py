@@ -7,14 +7,19 @@ declares the roles by the annotations below:
 - `x-identifier` at the root names the field path of the identifier of the record, as in Ekphrasis;
 - `x-identifier` on a definition reached as the items of a sequence names the field holding the
   identifier of each item, so that the sequence is a collection of identified items;
-- `x-refers` on a field names the definition whose items the field identifies;
 - `x-registry` on a field names the registry to which its value belongs;
 - `x-role` on a field names its role in the rules on sources: `source-bound`,
   `relation-source` or `relation-target`.
 
+The keyword `x-identifier` belongs to Anagraphe, which reads it with the same meaning; the keywords
+`x-registry` and `x-role` belong to ekthesis. A field that identifies an item of its own record
+carries no keyword: its `$ref` names the field of the identifier of the definition of that item,
+such as `#/$defs/idea/properties/id`, so the schema validates the field as that identifier, and the
+check reads from the reference the collection whose item the field names.
+
 An `x-registry` declared inside a branch of a `oneOf` or an `anyOf` applies only to a node that
 satisfies that branch, so that one field may follow a registry in one form of an item and not in
-another. Every other annotation lies outside such branches.
+another. Every other annotation, and every reference to an item, lies outside such branches.
 
 Classes
 -------
@@ -267,7 +272,10 @@ class SchemaLayout:
         root_identifier = schema.get("x-identifier")
         unknown = {target for _, target in walker.references} - walker.collections.keys()
         if unknown:
-            raise ResourceError(f"x-refers names no collection: {sorted(unknown)}")
+            raise ResourceError(
+                "a field names the identifier of a definition whose items no sequence holds: "
+                f"{sorted(unknown)}"
+            )
         return cls(
             record_identifier=(
                 Pattern(tuple(root_identifier.split(".")))
@@ -312,9 +320,7 @@ class _Walker:
         reference = node.get("$ref")
         # A schema of another tool, reached by an absolute `$ref`, holds no annotation of ekthesis.
         if isinstance(reference, str) and not _absolute(reference):
-            name = self._definition_name(reference)
-            if name not in expanding:
-                self.walk(self._definition(name), at, expanding | {name}, branches)
+            self._follow(reference, at, expanding, branches)
         for keyword in ("oneOf", "anyOf"):
             for branch in node.get(keyword, []) or []:
                 if isinstance(branch, Mapping):
@@ -338,37 +344,60 @@ class _Walker:
         registry = node.get("x-registry")
         if isinstance(registry, str):
             self.registries.append(RegistryField(at, registry, branches))
-        scoped = ("x-refers", "x-role")
-        if branches and any(keyword in node for keyword in scoped):
+        if branches and "x-role" in node:
             raise ResourceError(f"an annotation at {at} other than x-registry lies in a branch")
-        refers = node.get("x-refers")
-        if isinstance(refers, str):
-            self.references.append((at, refers))
         role = node.get("x-role")
         if isinstance(role, str):
             if role in self.roles and self.roles[role] != at:
                 raise ResourceError(f"two fields hold the role {role}")
             self.roles[role] = at
 
+    def _follow(
+        self, reference: str, at: Pattern, expanding: frozenset[str], branches: tuple[Branch, ...]
+    ) -> None:
+        """Register the local `reference` at `at` when it names an item, then walk its target."""
+        name, keys = _local_target(reference)
+        if keys:
+            self._register_reference(name, keys, at, branches)
+        if reference not in expanding:
+            target = self._subschema(name, keys, reference)
+            self.walk(target, at, expanding | {reference}, branches)
+
+    def _register_reference(
+        self, name: str, keys: tuple[str, ...], at: Pattern, branches: tuple[Branch, ...]
+    ) -> None:
+        """Register `at` as a reference when `keys` name the identifier field of `name`."""
+        identifier = self._definition(name).get("x-identifier")
+        if not isinstance(identifier, str) or tuple(identifier.split(".")) != keys:
+            return
+        if branches:
+            raise ResourceError(f"the reference at {at} to an item of {name} lies in a branch")
+        self.references.append((at, name))
+
     def _register_collection(self, items: Mapping[str, object], at: Pattern) -> None:
         """Register `at` as a collection when its items refer to an identified definition."""
         reference = items.get("$ref")
         if not isinstance(reference, str) or _absolute(reference):
             return
-        name = self._definition_name(reference)
+        name, keys = _local_target(reference)
+        if keys:
+            return
         identifier = self._definition(name).get("x-identifier")
         if isinstance(identifier, str):
             if name in self.collections:
                 raise ResourceError(f"two sequences hold the items of {name}")
             self.collections[name] = Collection(name, at, Pattern(tuple(identifier.split("."))))
 
-    @staticmethod
-    def _definition_name(reference: str) -> str:
-        """Name of the definition that a local `$ref` designates."""
-        prefix = "#/$defs/"
-        if not reference.startswith(prefix):
-            raise ResourceError(f"the reference {reference} leaves the schema")
-        return reference[len(prefix) :]
+    def _subschema(self, name: str, keys: tuple[str, ...], reference: str) -> Mapping[str, object]:
+        """Return the subschema of the property `keys` of the definition `name`, the definition
+        itself when `keys` is empty."""
+        node: object = self._definition(name)
+        for key in keys:
+            properties = node.get("properties") if isinstance(node, Mapping) else None
+            node = properties.get(key) if isinstance(properties, Mapping) else None
+        if not isinstance(node, Mapping):
+            raise ResourceError(f"the reference {reference} names no subschema")
+        return node
 
     def _definition(self, name: str) -> Mapping[str, object]:
         """Return the definition `name` of the schema."""
@@ -377,6 +406,32 @@ class _Walker:
         if not isinstance(definition, Mapping):
             raise ResourceError(f"the schema defines no {name}")
         return definition
+
+
+def _local_target(reference: str) -> tuple[str, tuple[str, ...]]:
+    """
+    Return the definition that a local `$ref` designates, with the property path inside it.
+
+    A local reference names a definition, `#/$defs/<name>`, or a property of a definition, through
+    the keyword `properties` at each step. Each token of the JSON Pointer is unescaped (RFC 6901).
+
+    Examples
+    --------
+    >>> _local_target("#/$defs/identity")
+    ('identity', ())
+    >>> _local_target("#/$defs/idea/properties/id")
+    ('idea', ('id',))
+    """
+    prefix = "#/$defs/"
+    if not reference.startswith(prefix):
+        raise ResourceError(f"the reference {reference} leaves the schema")
+    tokens = [
+        token.replace("~1", "/").replace("~0", "~") for token in reference[len(prefix) :].split("/")
+    ]
+    name, rest = tokens[0], tokens[1:]
+    if len(rest) % 2 or any(keyword != "properties" for keyword in rest[::2]):
+        raise ResourceError(f"the reference {reference} names no definition and no property of one")
+    return name, tuple(rest[1::2])
 
 
 def _absolute(reference: str) -> bool:

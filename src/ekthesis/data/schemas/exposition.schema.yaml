@@ -1,6 +1,7 @@
 # Argument record of one exposition, checked by `ekthesis check`.
-# The keywords prefixed by `x-` other than `x-kind` and `x-identifier` at the root are read by
-# ekthesis alone; the decision on the argument record states their meaning.
+# The keywords `x-registry` and `x-role` belong to ekthesis, whose decision on the argument record
+# states their meaning; `x-identifier` and `x-target-contract` belong to Anagraphe, and `x-kind` to
+# Ekphrasis. A field naming an item of the record references the identifier field of that item.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: exposition.schema.yaml
 title: Exposition
@@ -164,8 +165,7 @@ $defs:
     required: [source, relation, target]
     properties:
       source:
-        $ref: '#/$defs/identifier'
-        x-refers: idea
+        $ref: '#/$defs/idea/properties/id'
         x-role: relation-source
         title: Source
         description: >-
@@ -179,8 +179,7 @@ $defs:
         description: the relation in the registry of rhetorical relations
         examples: [elaboration]
       target:
-        $ref: '#/$defs/identifier'
-        x-refers: idea
+        $ref: '#/$defs/idea/properties/id'
         x-role: relation-target
         title: Target
         description: >-
@@ -211,8 +210,7 @@ $defs:
         x-kind: list
         minItems: 1
         items:
-          $ref: '#/$defs/identifier'
-          x-refers: idea
+          $ref: '#/$defs/idea/properties/id'
           description: identifier of an idea that the part presents
         title: Ideas
         description: the ideas that the part presents, in reading order

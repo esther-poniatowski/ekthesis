@@ -43,6 +43,47 @@ def test_layout_reads_every_role_from_the_annotations() -> None:
     }
 
 
+def test_layout_reads_the_references_of_a_constraints_record() -> None:
+    """A field whose `$ref` names the identifier field of a definition names an item of it."""
+    layout = SchemaLayout.from_schema(RESOURCES.schemas.schemas["ekthesis:constraints@1"])
+    assert {(str(pattern), definition) for pattern, definition in layout.references} == {
+        (f"constraints{ITEM}.group", "group"),
+        (f"constraints{ITEM}.sources{ITEM}", "source"),
+    }
+
+
+def _schema_with(field: dict[str, object]) -> dict[str, object]:
+    """Return a schema of identified items, whose sequence `refs` holds `field` as items."""
+    return {
+        "properties": {
+            "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+            "refs": {"type": "array", "items": field},
+        },
+        "$defs": {
+            "item": {
+                "x-identifier": "id",
+                "properties": {"id": {"type": "string"}, "label": {"type": "string"}},
+            }
+        },
+    }
+
+
+def test_reference_to_another_property_of_a_definition_names_no_item() -> None:
+    """Only the identifier field makes a reference: a `$ref` to another property reuses its
+    schema, and names no item."""
+    named = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/id"}))
+    assert [(str(pattern), name) for pattern, name in named.references] == [(f"refs{ITEM}", "item")]
+    other = SchemaLayout.from_schema(_schema_with({"$ref": "#/$defs/item/properties/label"}))
+    assert other.references == ()
+
+
+def test_reference_in_a_branch_is_rejected() -> None:
+    """A reference applies to every node of its field, so it may not lie in a branch."""
+    schema = _schema_with({"oneOf": [{"$ref": "#/$defs/item/properties/id"}, {"type": "integer"}]})
+    with pytest.raises(ResourceError):
+        SchemaLayout.from_schema(schema)
+
+
 def test_registry_of_authored_kinds_binds_the_authored_form_only() -> None:
     """The registry of authored kinds lies in the branch of an authored idea, and selects the kind
     of an authored idea, not the kind that a referenced idea states."""
