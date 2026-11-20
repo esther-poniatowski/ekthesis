@@ -34,7 +34,7 @@ A constraint holds an id, a label, the requirement as the venue states it, and t
 **Check.** `ekthesis check` validates a constraints record against its schema. A conforming record is then checked by the rules that read its identifiers through the annotations of its schema, as for an argument record:
 
 - `unique-identifiers` reports a group, a source or a constraint whose id repeats an earlier item of its collection;
-- `unique-units` reports a group, a source or a constraint whose id repeats an item of another collection, since a logical target naming that id would be ambiguous; the first item in the order groups, sources, constraints keeps the id.
+- `unique-units` reports a group, a source or a constraint whose id repeats an item of another collection, since a logical target naming that id would be ambiguous; the first item in the order groups, sources, constraints keeps the id. Anagraphe reports such a unit only through a target that names it, as `ambiguous-unit`, so the rule reports it where the record declares it.
 
 Anagraphe checks the rest under its ADR 0006. The fields `group` and `sources` of a constraint declare by `x-units` the arrays `groups` and `sources` of the record, so Anagraphe reports a group or a source that the record does not declare as `unknown-unit-reference`. It resolves the target of `venue-constraints`, and reports a record of another contract as `target-contract-mismatch`. It also reports two records of a repository holding one id, and a target naming an absent unit. ^constraints-check
 
