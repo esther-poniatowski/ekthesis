@@ -47,7 +47,7 @@ The present decision takes the third option for the reference, and binds a gloss
 
 ## Consequences
 
-- The schema `ekthesis:glossary@1` replaces the glossary schema of `geonexus`, in the order of extraction set by the decision on tool roles. Until then, the record of an exposition links its glossary in the format of `geonexus`, and `ekthesis` checks no glossary.
+- The schema `ekthesis:glossary@1` replaces the glossary schema of `geonexus`, in the order of extraction set by the decision on tool roles. The record of an exposition names its glossary by a logical target typed by the contract `onomasia:glossary`, which Anagraphe resolves, and `ekthesis` checks no glossary.
 - The contract of an export admits a concept as a presented unit, whose statement is its gloss.
 - The decision of `gnomon` on terminology left open whether a glossary entry is the lexical face of a concept record. The present decision answers it: each entry names the concept unit that it references, in any source.
 - The scan of forbidden forms adds a rule to `ekthesis check`. That rule reads the audiences of an exposition, with their ancestors and descendants, under the [decision on audiences](audiences.md).
