@@ -3,8 +3,12 @@ Files of a dependency at the commit that the configuration of Kleisis pins.
 
 The tests read the schema and the cases of another tool at the commit that the configuration of
 Kleisis pins, so that a test and the closure that Kleisis materializes read one state of that
-tool. The configuration is found through Hodegos, in the places where Kleisis finds it. Git fetches that commit from the repository of the dependency once per test
-session. A commit that cannot be fetched fails the test that needs it, instead of skipping it.
+tool. The configuration is found through Hodegos, in the places of the root where Kleisis finds it:
+the root, `.config/` and `config/`, as the specification of Hodegos lists them
+(https://github.com/esther-poniatowski/hodegos/blob/main/docs/specification.md). The repository
+keeps it in `config/kleisis.yml`. Git fetches that commit from the repository of the dependency
+once per test session. A commit that cannot be fetched fails the test that needs it, instead of
+skipping it.
 
 Functions
 ---------

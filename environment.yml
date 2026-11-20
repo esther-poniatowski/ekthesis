@@ -29,15 +29,16 @@ dependencies:
   - typer                  # command line interface
   - rich                   # terminal output formatting
   # Sibling tools, pinned by commit; pip installs a Git reference, which a conda dependency cannot
-  # name. The commit of Anagraphe equals the one that config/tools/kleisis.yml pins.
+  # name. The commit of Anagraphe equals the one that config/kleisis.yml pins.
   - pip
   - pip:
       - anagraphe-read @ git+https://github.com/esther-poniatowski/anagraphe.git@f4b9142b6cbc0f3bf1c831a05872854a7b6cf177#subdirectory=packages/read-python
-      # The tests find the configuration of Kleisis through Hodegos, and read the registry of a
-      # dependency through the reader of Kleisis, at the commits that anagraphe-read requires.
-      - hodegos @ git+https://github.com/esther-poniatowski/hodegos.git@e61d0d97eaa80cc0cfdd90c3022c1e3916ef1ad9
+      # The tests find the configuration of Kleisis in config/ through Hodegos, and read the
+      # registry of a dependency through the reader of Kleisis. Kleisis stays at the commit that
+      # anagraphe-read requires.
+      - hodegos @ git+https://github.com/esther-poniatowski/hodegos.git@a151a28010058fda08a652aea345422037ff0d3c
       - kleisis @ git+https://github.com/esther-poniatowski/kleisis.git@7afe7b6fd4e397264a17bc1d2c45a3ce833f1c40
       # The tests check each findings log with the interface elenchos.profile, without the extra
       # validate.
-      - elenchos @ git+https://github.com/esther-poniatowski/elenchos.git@089a764aafd137d5095a77fe3dbdb9198e6ae85b
+      - elenchos @ git+https://github.com/esther-poniatowski/elenchos.git@d41d2c00aed8f9668d84efb2ea0464a5eb9867ee
 variables:
