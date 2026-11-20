@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `ekthesis check` takes the root of the paths of a SARIF log from `-r`, `--root`, then from `EKTHESIS_ROOT`, then from the working directory, by the command-line conventions of the workspace.
 - `ekthesis check` accepts the short form `-o` of `--output`, and writes the text lines to that file as well as the SARIF log.
 - `ekthesis check` applies to each record the rules of its contract: the rules on argument records to `ekthesis:exposition@3` and `ekthesis:exposition@1`, the rules on audiences to `ekthesis:audience@2`, and the schema alone to a contract without rules. A record that breaks its schema skips the rules of its contract, and a record that names no known contract skips the rules of every contract.
-- `environment.yml` pins `anagraphe-read` 0.5.0 at Anagraphe `107a80b`, Kleisis `b098f5e` and Elenchos `33160b2`, each of which requires Hodegos `a151a28`, so that the sibling pins install together. `config/kleisis.yml` pins Anagraphe at the same commit, whose addressing schema keeps its bytes, so the registry is unchanged. The interface of `anagraphe_read` that Ekthesis imports, and `elenchos.profile`, are unchanged.
+- `environment.yml` pins `anagraphe-read` 0.7.0 at Anagraphe `646b9d1`, Kleisis `b098f5e` and Elenchos `33160b2`, each of which requires Hodegos `a151a28`, so that the sibling pins install together. `config/kleisis.yml` pins Anagraphe at the same commit, which declares the keyword `x-units`, and whose addressing schema keeps its bytes, so the registry is unchanged. The interface of `anagraphe_read` that Ekthesis imports, and `elenchos.profile`, are unchanged.
 
 ### Removed
 

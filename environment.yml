@@ -32,7 +32,7 @@ dependencies:
   # name. The commit of Anagraphe equals the one that config/kleisis.yml pins.
   - pip
   - pip:
-      - anagraphe-read @ git+https://github.com/esther-poniatowski/anagraphe.git@107a80bbae354fa00cd4981369a7ea747857aec2#subdirectory=packages/read-python
+      - anagraphe-read @ git+https://github.com/esther-poniatowski/anagraphe.git@646b9d1cf995c06bd4b8a6bcaf910a8558f3671e#subdirectory=packages/read-python
       # The tests find the configuration of Kleisis in config/ through Hodegos, and read the
       # registry of a dependency through the reader of Kleisis. Kleisis stays at the commit that
       # anagraphe-read requires.
