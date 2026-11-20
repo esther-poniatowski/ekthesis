@@ -6,6 +6,9 @@ exposition:
   title: A poster of the first version
   source-bound: true
   audience: {id: readers}
+  glossary: {id: project-glossary}
+  venue-constraints: {id: constraints_submission_2026-11_pints}
+  exports: [{id: project-export}]
 ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.

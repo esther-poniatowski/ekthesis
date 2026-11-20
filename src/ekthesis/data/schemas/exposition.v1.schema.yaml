@@ -4,7 +4,8 @@
 # The keywords `x-registry` and `x-role` belong to ekthesis, whose decision on the argument record
 # states their meaning; `x-identifier`, `x-target-contract` and `x-units` belong to Anagraphe,
 # and `x-kind` to Ekphrasis. A field naming an item of the record lists under `x-units` the arrays
-# of the record whose items it may name, and the audience is named by a logical target.
+# of the record whose items it may name. The audience, the glossary, a constraints record and each
+# export are named by logical targets; a source and a note of constraints keep their links.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: exposition.v1.schema.yaml
 title: Exposition
@@ -104,26 +105,49 @@ $defs:
           - {id: biological-networks-researchers}
           - {repository: lab, id: biological-networks-researchers}
       glossary:
-        $ref: '#/$defs/link'
+        $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+        x-target-contract: ['onomasia:glossary']
+        required: [id]
+        not: {required: [unit]}
         title: Glossary
-        description: link to the glossary that fixes the terms of the exposition
-        examples: ['[Glossary of the project](../../glossary.yml)']
+        description: >-
+          the logical target of the glossary record that fixes the terms of the exposition, naming
+          no unit
+        examples:
+          - {id: project-glossary}
+          - {repository: lab, id: shared-glossary}
       venue-constraints:
-        $ref: '#/$defs/link'
         title: Venue constraints
-        description: link to the constraints that the venue imposes on the exposition
-        examples: ['[Submission constraints](https://example.org/conferences/constraints_submission.md)']
+        description: >-
+          the constraints that the venue imposes on the exposition: the logical target of a
+          constraints record, or a link to a note of constraints written before that contract
+        oneOf:
+          - title: Constraints record
+            description: the logical target of a record of the contract `ekthesis:constraints`, naming no unit
+            $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+            x-target-contract: ['ekthesis:constraints']
+            required: [id]
+            not: {required: [unit]}
+          - title: Link
+            description: a link to a note of constraints, which a constraints record replaces
+            $ref: '#/$defs/link'
+        examples:
+          - {id: constraints_submission_2026-11_pints}
+          - '[Submission constraints](https://example.org/conferences/constraints_submission.md)'
       exports:
         type: array
         x-kind: list
         items:
-          $ref: '#/$defs/link'
+          $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+          x-target-contract: ['ekthesis:export']
+          required: [id]
+          not: {required: [unit]}
           x-role: export-link
         title: Exports
         description: >-
-          relative links to the exports of the sources whose units the ideas name, each following
-          the contract ekthesis:export@1
-        examples: [['[Export of the project](../../export.yml)']]
+          the logical targets of the exports of the sources whose units the ideas name, each a
+          record of the retired contract `ekthesis:export@1`, naming no unit
+        examples: [[{id: project-export}]]
 
   idea:
     type: object

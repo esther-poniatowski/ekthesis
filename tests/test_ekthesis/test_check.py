@@ -177,6 +177,65 @@ def test_audience_is_a_logical_target_of_an_audience_record(
         assert field["x-target-contract"] == ["ekthesis:audience"]
 
 
+RETAINED = "retained/exposition-v1.yml"
+LINK = "[Notes](https://example.org/notes.md)"
+
+
+@pytest.mark.parametrize(
+    ("fixture", "field", "value", "valid"),
+    [
+        ("valid.yml", "glossary", {"id": "project-glossary"}, True),
+        ("valid.yml", "glossary", {"repository": "lab", "id": "shared-glossary"}, True),
+        ("valid.yml", "glossary", "[Glossary](../../glossary.yml)", False),
+        ("valid.yml", "glossary", {"id": "project-glossary", "unit": "term"}, False),
+        (RETAINED, "glossary", {"id": "project-glossary"}, True),
+        (RETAINED, "glossary", "[Glossary](../../glossary.yml)", False),
+        (RETAINED, "venue-constraints", {"id": "constraints_submission_2026-11_pints"}, True),
+        (RETAINED, "venue-constraints", LINK, True),
+        (RETAINED, "venue-constraints", {"id": "constraints", "unit": "size"}, False),
+        (RETAINED, "exports", [{"id": "project-export"}], True),
+        (RETAINED, "exports", ["[Export](../../export.yml)"], False),
+        (RETAINED, "exports", [{"id": "project-export", "unit": "gain"}], False),
+    ],
+)
+def test_reference_to_another_record_is_a_logical_target(
+    checker: Checker, tmp_path: Path, fixture: str, field: str, value: object, valid: bool
+) -> None:
+    """
+    The glossary, a constraints record and each export are named by logical targets naming no
+    unit; a note of constraints keeps its link, since it is no record.
+
+    Ekthesis resolves no target: `anagraphe targets check` reports a target naming no record, or a
+    record of another contract than the one that the field declares.
+    """
+    record: dict[str, Any] = yaml.safe_load((FIXTURES / fixture).read_text())
+    record["exposition"][field] = value
+    findings = {(f.rule, str(f.field)) for f in _check(checker, record, tmp_path)}
+    located = f"exposition.{field}" + ("[0]" if field == "exports" else "")
+    conformance = {f for f in findings if f[0] == "schema-conformance"}
+    assert conformance == (set() if valid else {("schema-conformance", located)})
+
+
+@pytest.mark.parametrize(
+    ("contract", "field", "contracts"),
+    [
+        ("ekthesis:exposition@3", ("glossary",), ["onomasia:glossary"]),
+        ("ekthesis:exposition@1", ("glossary",), ["onomasia:glossary"]),
+        ("ekthesis:exposition@1", ("venue-constraints", "oneOf", 0), ["ekthesis:constraints"]),
+        ("ekthesis:exposition@1", ("exports", "items"), ["ekthesis:export"]),
+    ],
+)
+def test_target_declares_the_contract_of_its_record(
+    contract: str, field: tuple[str | int, ...], contracts: list[str]
+) -> None:
+    """Each target names the contract of its record without a version, since no rule of Ekthesis
+    reads the record through the field."""
+    node: Any = packaged_resources().schemas.schemas[contract]["$defs"]["exposition"]["properties"]
+    for key in field:
+        node = node[key]
+    assert node["x-target-contract"] == contracts
+
+
 def _valid() -> dict[str, Any]:
     """Return the valid record, with its links rewritten from the folder of the planted records."""
     text = (FIXTURES / "valid.yml").read_text().replace("(sources/", "(../sources/")

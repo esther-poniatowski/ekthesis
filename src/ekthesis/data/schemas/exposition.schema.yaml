@@ -102,10 +102,17 @@ $defs:
           - {id: biological-networks-researchers}
           - {repository: lab, id: biological-networks-researchers}
       glossary:
-        $ref: '#/$defs/link'
+        $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+        x-target-contract: ['onomasia:glossary']
+        required: [id]
+        not: {required: [unit]}
         title: Glossary
-        description: link to the glossary that fixes the terms of the exposition
-        examples: ['[Glossary of the project](../../glossary.yml)']
+        description: >-
+          the logical target of the glossary record that fixes the terms of the exposition, naming
+          no unit
+        examples:
+          - {id: project-glossary}
+          - {repository: lab, id: shared-glossary}
       venue-constraints:
         title: Venue constraints
         description: >-

@@ -4,6 +4,7 @@ exposition:
   title: A valid poster
   source-bound: true
   audience: {id: readers}
+  glossary: {id: project-glossary}
 ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.
