@@ -1,7 +1,6 @@
 """Tests of the scope table derived from audience records, and of the command `scope-table`."""
 
 import json
-import os
 import shutil
 import subprocess
 from collections.abc import Callable
@@ -11,8 +10,6 @@ from typing import Any
 import pytest
 import yaml
 from jsonschema import Draft202012Validator
-from referencing import Registry, Resource
-from referencing.jsonschema import DRAFT202012
 from typer.testing import CliRunner
 
 from ekthesis.audiences import load_audience
@@ -20,16 +17,11 @@ from ekthesis.cli import app
 from ekthesis.provenance import public_location
 from ekthesis.scope_table import HEADER, SCOPE_TABLE_CONTRACT, Row, ScopeTable
 
+from .pinned import PinnedFiles
 from .sarif_profile import profile_violations
 
 FIXTURES = Path(__file__).parent / "fixtures" / "audiences"
 VALID = sorted((FIXTURES / "valid").glob("*.yml"))
-ONOMASIA_SCHEMAS = Path(
-    os.environ.get(
-        "ONOMASIA_SCHEMAS",
-        Path(__file__).parents[3] / "onomasia" / "src" / "onomasia" / "data" / "schemas",
-    )
-)
 
 DERIVED = {
     "auditory-neuroscientists": Row(("neuroscientists", "systems-neuroscientists"), ()),
@@ -80,31 +72,64 @@ def test_written_table_names_no_source_outside_a_repository(tmp_path: Path) -> N
     code, output = generate(table)
     assert code == 0, output
     data = yaml.safe_load(table.read_text())
-    assert data["contract"] == SCOPE_TABLE_CONTRACT
+    assert data["_schema"] == SCOPE_TABLE_CONTRACT
     assert data["sources"] == []
     assert data["audiences"] == {name: row.to_data() for name, row in DERIVED.items()}
 
 
-def test_written_table_validates_against_the_schema_of_onomasia(tmp_path: Path) -> None:
-    """The table satisfies `onomasia:scope-table@1`, read from the schemas of Onomasia."""
-    schema_path = ONOMASIA_SCHEMAS / "scope-table.schema.yml"
-    common_path = ONOMASIA_SCHEMAS / "common.schema.yml"
-    if not (schema_path.is_file() and common_path.is_file()):
-        pytest.skip(f"the schemas of Onomasia are absent from {ONOMASIA_SCHEMAS}")
+@pytest.fixture(name="contract", scope="module")
+def fixture_contract(pinned: PinnedFiles) -> Draft202012Validator:
+    """Validator of `onomasia:scope-table@1`, at the commit of Onomasia that Kleisis pins."""
+    return pinned.validator("onomasia", SCOPE_TABLE_CONTRACT)
+
+
+def test_written_table_validates_against_the_schema_of_onomasia(
+    tmp_path: Path, contract: Draft202012Validator
+) -> None:
+    """A table written outside a repository, read unmodified, satisfies the pinned contract."""
+    table = tmp_path / "scope-table.yml"
+    assert generate(table)[0] == 0
+    assert list(contract.iter_errors(yaml.safe_load(table.read_text()))) == []
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="the command git is absent")
+def test_table_written_in_a_repository_validates_against_the_schema_of_onomasia(
+    tmp_path: Path, contract: Draft202012Validator
+) -> None:
+    """A table naming its repository, read unmodified, satisfies the pinned contract, and the
+    contract rejects a planted defect of its sources."""
+    git(tmp_path, "init", "--quiet")
+    git(tmp_path, "remote", "add", "origin", "https://user:token@example.org/lab/records.git")
+    records = tmp_path / "audiences"
+    records.mkdir()
+    for path in VALID:
+        shutil.copy(path, records / path.name)
+    git(tmp_path, "add", "audiences")
+    git(tmp_path, "commit", "--quiet", "-m", "records")
+    table = tmp_path / "scope-table.yml"
+    code, output = run(str(records), "-t", str(table), "-r", str(tmp_path))
+    assert code == 0, output
+    data = yaml.safe_load(table.read_text())
+    assert [source["repository"] for source in data["sources"]] == [
+        "https://example.org/lab/records.git"
+    ]
+    assert list(contract.iter_errors(data)) == []
+    data["sources"][0]["commit"] = data["sources"][0]["commit"][:7]
+    assert list(contract.iter_errors(data)), "the contract rejects an abbreviated commit"
+
+
+def test_check_leaves_the_structure_of_the_sources_to_the_contract(
+    tmp_path: Path, contract: Draft202012Validator
+) -> None:
+    """The option `--check` compares the binding, the fields and the rows with the derived table,
+    and leaves the structure of `sources` to the contract of Onomasia, which rejects it."""
     table = tmp_path / "scope-table.yml"
     generate(table)
-    common = yaml.safe_load(common_path.read_text(encoding="utf-8"))
-    registry: Registry = Registry().with_resource(
-        "common.schema.yml", Resource.from_contents(common, default_specification=DRAFT202012)
-    )
-    validator = Draft202012Validator(
-        yaml.safe_load(schema_path.read_text(encoding="utf-8")), registry=registry
-    )
     data = yaml.safe_load(table.read_text())
-    data["sources"] = [{"repository": "/a/root", "commit": "0" * 40, "dirty": True}]
-    assert list(validator.iter_errors(data)) == []
-    data["audiences"]["neuroscientists"]["ancestors"] = ["Not An Id"]
-    assert list(validator.iter_errors(data)), "the schema rejects a planted defect"
+    data["sources"] = [{"repository": "r", "commit": "abc", "dirty": "no"}]
+    table.write_text(yaml.safe_dump(data, sort_keys=False))
+    assert generate(table, "--check")[0] == 0
+    assert list(contract.iter_errors(data))
 
 
 def test_check_passes_on_a_fresh_table_and_writes_nothing(tmp_path: Path) -> None:
@@ -170,7 +195,7 @@ def test_stale_table_in_sarif_conforms_to_the_profile(
     for path in VALID:
         (tmp_path / path.name).write_text(path.read_text())
     (tmp_path / "scope-table.yml").write_text(
-        f"contract: {SCOPE_TABLE_CONTRACT}\nsources: []\naudiences: {{}}\n"
+        f"_schema: {SCOPE_TABLE_CONTRACT}\nsources: []\naudiences: {{}}\n"
     )
     monkeypatch.chdir(tmp_path)
     names = [path.name for path in VALID]
@@ -263,44 +288,21 @@ def check_edited(tmp_path: Path, edit: Callable[[dict[str, Any]], None]) -> tupl
             ":extra: error [scope-table-current] the scope table holds the field extra",
         ),
         (
-            lambda data: data.update(contract="onomasia:scope-table@2"),
-            ":contract: error [scope-table-current] the scope table names the contract onomasia:scope-table@2",
+            lambda data: data.update(_schema="onomasia:scope-table@2"),
+            ":_schema: error [scope-table-current] the scope table names the contract onomasia:scope-table@2",
         ),
         (
-            lambda data: data.update(sources={}),
-            ":sources: error [scope-table-current] the sources of the scope table form no list",
-        ),
-        (
-            lambda data: data.update(
-                sources=[{"repository": "r", "commit": "abc", "dirty": False}]
-            ),
-            ":sources[0].commit: error [scope-table-current] the commit of the source 0 is no full commit",
-        ),
-        (
-            lambda data: data.update(
-                sources=[{"repository": "r", "commit": "0" * 40, "dirty": "no"}]
-            ),
-            ":sources[0].dirty: error [scope-table-current] the dirty of the source 0 is no boolean",
-        ),
-        (
-            lambda data: data.update(sources=[{"repository": "r", "commit": "0" * 40}]),
-            ":sources[0]: error [scope-table-current] the source 0 lacks the field dirty",
+            lambda data: data.pop("_schema"),
+            ": error [scope-table-current] the scope table lacks the field _schema",
         ),
     ],
-    ids=[
-        "missing-sources",
-        "extra-key",
-        "wrong-contract",
-        "sources-no-list",
-        "short-commit",
-        "dirty-no-boolean",
-        "source-without-dirty",
-    ],
+    ids=["missing-sources", "extra-key", "wrong-contract", "missing-binding"],
 )
 def test_check_reports_a_malformed_table(
     tmp_path: Path, edit: Callable[[dict[str, Any]], None], line: str
 ) -> None:
-    """A table that breaks the structure of its contract is stale, with a precise finding."""
+    """A table whose binding or fields differ from the derived table is stale, with a precise
+    finding."""
     code, output = check_edited(tmp_path, edit)
     assert code == 1, output
     [finding, _] = output.splitlines()

@@ -33,4 +33,7 @@ dependencies:
   - pip
   - pip:
       - anagraphe-read @ git+https://github.com/esther-poniatowski/anagraphe.git@f4b9142b6cbc0f3bf1c831a05872854a7b6cf177#subdirectory=packages/read-python
+      # The tests read the registry of a dependency through the reader of Kleisis, at the commit
+      # that anagraphe-read requires.
+      - kleisis @ git+https://github.com/esther-poniatowski/kleisis.git@7afe7b6fd4e397264a17bc1d2c45a3ce833f1c40
 variables:
