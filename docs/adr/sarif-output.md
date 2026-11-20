@@ -21,7 +21,7 @@ The [findings profile](https://github.com/esther-poniatowski/elenchos/blob/main/
 **Resource.** The resource is `id:<identifier>` when three conditions hold:
 
 - the record names a known contract;
-- the schema of that contract declares `x-identifier` at its root;
+- the schema of that contract declares at its root an `x-identifier` that is a field path of property names;
 - the record holds a non-empty text in the declared field.
 
 Otherwise the resource is `path:<path>`. The identifier is read even when the record breaks its schema elsewhere. Therefore, an error in another field leaves the resource of the record unchanged. ^resource
