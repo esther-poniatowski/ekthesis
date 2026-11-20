@@ -5,10 +5,14 @@ schemas:
   "ekthesis:constraints@1": "src/ekthesis/data/schemas/constraints.schema.yaml"
   "ekthesis:exposition@1": "src/ekthesis/data/schemas/exposition.v1.schema.yaml"
   "ekthesis:exposition@3": "src/ekthesis/data/schemas/exposition.schema.yaml"
+  "onomasia:scope-table@1": ".kleisis/resources/onomasia/src/onomasia/data/schemas/scope-table.schema.yml"
 exports:
   - "ekthesis:audience@2"
   - "ekthesis:constraints@1"
   - "ekthesis:exposition@1"
   - "ekthesis:exposition@3"
 resources:
-  "https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml": ".kleisis/resources/anagraphe/src/anagraphe/data/schemas/addressing.v1.schema.yml"
+  "https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml": ".kleisis/resources/anagraphe/packages/read-python/src/anagraphe_read/data/schemas/addressing.v1.schema.yml"
+keywords:
+  "x-registry": "the registry of Ekthesis that holds the values of a field, read within the branch that declares it"
+  "x-role": "the role of a field in the rules of Ekthesis on sources, such as the source or the target of a relation"
