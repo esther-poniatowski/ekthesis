@@ -18,12 +18,12 @@ targets:
 
 > [!QUESTION] Strategic question
 
-- **Question record**: *the identifier of the question record that states the strategic question*
+- **Source of the question**: *the record that states the strategic question, when a source states it*
 - **Explanans (object of study)**:
 - **Presupposition(s)**:
 - **Demonstrability**: 
 - **Reach**: 
-- **Relation to the project's question**: *`subquestion-of` the question of the project, in the question record; otherwise, the relation in words, until gnomon decides its links between questions (gnomon task question-links)*
+- **Relation to the project's question**: *the relation of the strategic question to the question of the project, as its source records it, or in words*
 
 > [!CHECK] Gate
 > - [ ] Is the *explanans* interesting for both audiences?
@@ -49,9 +49,9 @@ targets:
 
 ### Target answers
 
-**Aim**: *the epistemic aim of the question record: description / exploration / prediction / explanation / modal-knowledge / model-properties / explication*
+**Aim**: *the epistemic aim of the question, as its source states it*
 
-**Form of answer**: *a chain of relations / a map of regimes or cases / a decomposition / a unification / a claim of optimality (gnomon task optimality-claim)*
+**Form of answer**: *a chain of relations / a map of regimes or cases / a decomposition / a unification / a claim of optimality*
 
 **Intents**:
 
@@ -84,13 +84,13 @@ targets:
 | --------- | ---------------- | ------------------ | ------------------------ |
 |           |                  |                    |                          |
 
-*Each condition is a ground with the role `condition` of the answer that holds the central claim. Gnomon does not record yet whether a condition is generic or special (gnomon task condition-genericity).*
+*Each condition is stated by the source of the central claim, when a source holds the claim.*
 
 ### Argument chain
 
 | ID (label) | Role & Relation toward its nucleus | Reader-facing statement | Technical content | Evidence & Ground |
 | ---------- | ---------------------------------- | ----------------------- | ----------------- | ----------------- |
-|            | *`central` / `definition` / `premise` / `mechanism` / `interpretation` / `consequence` / `qualification` / `application`, etc* + *a relation of the registry of ekthesis, from the row to its nucleus: `evidence` / `background` / `non-volitional-cause` / `condition` / `concession` / `contrast` / `elaboration` with its form, etc; a `consequence` is instead the target of an `evidence` whose source is the central claim* | *use or split rows bullets if several aspects* | *use or split rows bullets if several aspects* | *route of the answer: `derivation` / `proof` / `simulation` / `estimation` / `measurement`* + *identifier of the answer record* |
+|            | *`central` / `definition` / `premise` / `mechanism` / `interpretation` / `consequence` / `qualification` / `application`, etc* + *a relation of the registry of ekthesis, from the row to its nucleus: `evidence` / `background` / `non-volitional-cause` / `condition` / `concession` / `contrast` / `elaboration` with its form, etc; a `consequence` is instead the target of an `evidence` whose source is the central claim* | *use or split rows bullets if several aspects* | *use or split rows bullets if several aspects* | *kind of evidence: derivation / proof / simulation / estimation / measurement* + *the record or the unit of the source that holds the result* |
 
 ### Consequences
 
@@ -110,11 +110,11 @@ targets:
 
 ### Types of evidence
 
-*The answer record of each ground states the warrant of its support; the abstract names the kind of evidence and its role, and authors no warrant.*
+*The source of each ground states the warrant of its support; the abstract names the kind of evidence and its role, and authors no warrant.*
 
 | Evidence type | Role in the argument |
 | ------------- | -------------------- |
-| *route: derivation / proof / simulation / estimation / measurement; or a literature review* | *expliciting / proving / illustrating or instantiating / checking validity / estimating numerically / fitting / comparing / assessing agreement or consistency* |
+| *derivation / proof / simulation / estimation / measurement / literature review* | *expliciting / proving / illustrating or instantiating / checking validity / estimating numerically / fitting / comparing / assessing agreement or consistency* |
 
 > [!CHECK] Gate
 > - [ ] At least one contact with empirical data.
@@ -146,13 +146,13 @@ targets:
 
 | Reference | Role | Boundary of the cited result | Relation of the abstract |
 | --------- | ---- | ---------------------------- | ------------------------ |
-|           |      |                              | *in words, until the owner of the bibliographic relations is decided (gnomon task bibliographic-relations)* |
+|           |      |                              | *in words* |
 
 ### Closest prior answers
 
 | Prior line                           | Nature                                                                            | Established result | Notable departure from the prior answer |
 | ------------------------------------ | --------------------------------------------------------------------------------- | ------------------ | --------------------------------------- |
-| *name a model, phenomenon, study...* | *established model / empirical phenomenon / hypothesis / framework / theory, etc* |                    | *an assumption relaxed or replaced (`contrasts-with`, with its respect) / a quantity left open by the prior answer, now derived (`open-gap`) / a prediction that diverges within reach of recordings (`incompatible-with`), etc (gnomon task closest-prior-answer)* |
+| *name a model, phenomenon, study...* | *established model / empirical phenomenon / hypothesis / framework / theory, etc* |                    | *an assumption relaxed or replaced / a quantity left open by the prior answer, now derived / a prediction that diverges within reach of recordings, etc* |
 
 ## Outline
 
