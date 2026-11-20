@@ -145,6 +145,38 @@ def test_retained_version_is_checked_by_the_rules_of_an_argument_record(checker:
     assert findings[0].severity is Severity.WARNING
 
 
+@pytest.mark.parametrize("fixture", ["valid.yml", "retained/exposition-v1.yml"])
+@pytest.mark.parametrize(
+    ("audience", "valid"),
+    [
+        ({"id": "biological-networks-researchers"}, True),
+        ({"repository": "lab", "id": "biological-networks-researchers"}, True),
+        ("[Readers](https://example.org/audience.yml)", False),
+        ({"id": "biological-networks-researchers", "unit": "knowledge"}, False),
+        ({"repository": "lab"}, False),
+    ],
+)
+def test_audience_is_a_logical_target_of_an_audience_record(
+    checker: Checker, tmp_path: Path, fixture: str, audience: object, valid: bool
+) -> None:
+    """
+    Under both versions of the contract, the audience is the logical target of a record, naming no
+    unit; a link is rejected.
+
+    Ekthesis resolves no target: `anagraphe targets check` reports a target naming no record, or a
+    record of another contract than `ekthesis:audience`, which the field declares.
+    """
+    record: dict[str, Any] = yaml.safe_load((FIXTURES / fixture).read_text())
+    record["exposition"]["audience"] = audience
+    findings = {(f.rule, str(f.field)) for f in _check(checker, record, tmp_path)}
+    expected = {("schema-conformance", "exposition.audience")}
+    assert {f for f in findings if f[0] == "schema-conformance"} == (set() if valid else expected)
+    for contract in ("ekthesis:exposition@3", "ekthesis:exposition@1"):
+        schema = packaged_resources().schemas.schemas[contract]
+        field = schema["$defs"]["exposition"]["properties"]["audience"]
+        assert field["x-target-contract"] == ["ekthesis:audience"]
+
+
 def _valid() -> dict[str, Any]:
     """Return the valid record, with its links rewritten from the folder of the planted records."""
     text = (FIXTURES / "valid.yml").read_text().replace("(sources/", "(../sources/")

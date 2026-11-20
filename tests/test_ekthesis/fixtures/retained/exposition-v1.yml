@@ -5,6 +5,7 @@ exposition:
   id: retained-poster
   title: A poster of the first version
   source-bound: true
+  audience: {id: readers}
 ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.

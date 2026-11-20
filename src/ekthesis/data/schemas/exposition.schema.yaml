@@ -90,10 +90,17 @@ $defs:
           unit of a source
         examples: [true]
       audience:
-        $ref: '#/$defs/link'
+        $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+        x-target-contract: ['ekthesis:audience']
+        required: [id]
+        not: {required: [unit]}
         title: Audience
-        description: link to the record of the audience for which the exposition is written
-        examples: ['[Researchers studying biological networks](https://example.org/audiences/biological-networks-researchers.yml)']
+        description: >-
+          the logical target of the record of the audience for which the exposition is written,
+          naming no unit
+        examples:
+          - {id: biological-networks-researchers}
+          - {repository: lab, id: biological-networks-researchers}
       glossary:
         $ref: '#/$defs/link'
         title: Glossary

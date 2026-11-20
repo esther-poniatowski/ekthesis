@@ -5,7 +5,7 @@ exposition:
   title: A valid poster
   source-bound: true
   title: A second title
-  audience: '[Readers](https://example.org/audience.yml)'
+  audience: {id: readers}
 ideas:
   - id: mixture-input
     statement: A mixture input is a weighted sum of two component inputs.

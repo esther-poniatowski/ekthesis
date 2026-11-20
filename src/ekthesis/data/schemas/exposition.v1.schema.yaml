@@ -2,9 +2,9 @@
 # migrated to `ekthesis:exposition@3`, as the decision on the argument record states. The fields
 # `exports` and `unit` serve the retired contract of a research export, and no rule reads them.
 # The keywords `x-registry` and `x-role` belong to ekthesis, whose decision on the argument record
-# states their meaning; `x-identifier` and `x-units` belong to Anagraphe, and `x-kind` to Ekphrasis.
-# A field naming an item of the record lists under `x-units` the arrays of the record whose items it
-# may name.
+# states their meaning; `x-identifier`, `x-target-contract` and `x-units` belong to Anagraphe,
+# and `x-kind` to Ekphrasis. A field naming an item of the record lists under `x-units` the arrays
+# of the record whose items it may name, and the audience is named by a logical target.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: exposition.v1.schema.yaml
 title: Exposition
@@ -92,10 +92,17 @@ $defs:
           unit of a source
         examples: [true]
       audience:
-        $ref: '#/$defs/link'
+        $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+        x-target-contract: ['ekthesis:audience']
+        required: [id]
+        not: {required: [unit]}
         title: Audience
-        description: link to the record of the audience for which the exposition is written
-        examples: ['[Researchers studying biological networks](https://example.org/audiences/biological-networks-researchers.yml)']
+        description: >-
+          the logical target of the record of the audience for which the exposition is written,
+          naming no unit
+        examples:
+          - {id: biological-networks-researchers}
+          - {repository: lab, id: biological-networks-researchers}
       glossary:
         $ref: '#/$defs/link'
         title: Glossary
