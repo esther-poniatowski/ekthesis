@@ -50,6 +50,14 @@ def test_table_holds_the_closure_of_the_parents_and_of_its_inverse() -> None:
     assert list(table.rows) == sorted(DERIVED)
 
 
+def test_parent_outside_the_records_is_left_out() -> None:
+    """A parent naming no audience of the records is left out of the table, so that every
+    ancestor and every descendant has a row; Anagraphe reports the target of that parent."""
+    systems = load_audience(FIXTURES / "valid" / "systems-neuroscientists.yml")
+    table = ScopeTable.derive([systems])
+    assert dict(table.rows) == {"systems-neuroscientists": Row((), ())}
+
+
 def test_table_does_not_depend_on_the_order_of_the_records() -> None:
     """The text of a table is the same for any order of its records."""
     forward = ScopeTable.derive(load_audience(path) for path in VALID)
@@ -216,10 +224,10 @@ def test_errors_of_the_records_are_counted_and_not_repeated(
     table = tmp_path / "scope-table.yml"
     if mode:
         table.write_text("kept: true\n")
-    orphan = yaml.safe_load((FIXTURES / "planted" / "existing-audiences.yml").read_text())
-    orphan["identity"]["narrows"] = ["missing-a", "missing-b"]
-    (tmp_path / "orphan.yml").write_text(yaml.safe_dump(orphan))
-    planted = [tmp_path / "orphan.yml", FIXTURES / "planted" / "schema-conformance.yml"]
+    planted = [
+        FIXTURES / "planted" / "acyclic-parents.yml",
+        FIXTURES / "planted" / "schema-conformance.yml",
+    ]
     code, output = run(*map(str, [*VALID, *planted]), "-t", str(table), *mode)
     assert code == 1, output
     assert output.splitlines() == [
@@ -234,9 +242,9 @@ def test_errors_of_the_records_yield_one_sarif_result(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """In SARIF, the records with errors yield one result of a rule of its own, at the table."""
-    shutil.copy(FIXTURES / "planted" / "existing-audiences.yml", tmp_path / "orphan.yml")
+    shutil.copy(FIXTURES / "planted" / "acyclic-parents.yml", tmp_path / "cycle.yml")
     monkeypatch.chdir(tmp_path)
-    code, output = run("orphan.yml", "-t", "scope-table.yml", "--format", "sarif")
+    code, output = run("cycle.yml", "-t", "scope-table.yml", "--format", "sarif")
     assert code == 1
     log = json.loads(output)
     assert violations(log) == []

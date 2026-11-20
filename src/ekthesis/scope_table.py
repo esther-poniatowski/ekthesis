@@ -116,18 +116,25 @@ class ScopeTable:
         Derive the table of `audiences`, whose identifiers are distinct and whose parents form
         no cycle.
 
+        A parent that names no audience of `audiences` is left out, as the check of cycles leaves
+        it out, so that every ancestor and every descendant of the table has a row; Anagraphe
+        reports a parent that names no audience record.
+
         Parameters
         ----------
         audiences : Iterable of Audience
-            Audience records, each of whose parents is among them.
+            Audience records.
 
         Returns
         -------
         ScopeTable
             The row of each audience, with its ancestors and its descendants.
         """
+        audiences = tuple(audiences)
+        known = {audience.identifier for audience in audiences}
         parents = {
-            audience.identifier: [name for _, name in audience.parents] for audience in audiences
+            audience.identifier: [name for _, name in audience.parents if name in known]
+            for audience in audiences
         }
         children: dict[str, list[str]] = {identifier: [] for identifier in parents}
         for child, names in parents.items():

@@ -4,4 +4,4 @@ identity:
   id: auditory-neuroscientists
   label: auditory neuroscientists
   gloss: systems neuroscientists who study the auditory pathway
-  narrows: [systems-neuroscientists]
+  narrows: [{id: systems-neuroscientists}]

@@ -8,12 +8,12 @@ identity:                                               # who the readers are
   id: '{{AUDIENCE ID}}'                                 # kebab-case; unique among the audience records of a run
   label: '{{AUDIENCE NAME}}'                            # one line; no final period
   gloss: '{{ONE-SENTENCE DESCRIPTION OF THE READERS}}'  # one sentence; no final period
-  narrows: ['{{PARENT AUDIENCE ID}}']                   # optional; this audience inherits the knowledge of each parent
+  narrows: [{id: '{{PARENT AUDIENCE ID}}'}]             # optional; logical target of each parent audience, whose knowledge this audience inherits
   representatives:                                      # optional; researchers typical of the readership
     - name: '{{RESEARCHER NAME}}'
       profile: {id: '{{CONTACT ID}}'}                   # optional; logical target of the contact profile; add repository: when it lies in another repository
   confusions:                                           # optional; readerships that a text must not address instead
-    - community: '{{AUDIENCE ID}}'                      # or undeclared: '{{COMMUNITY DESCRIBED BY NO AUDIENCE RECORD}}'
+    - community: {id: '{{AUDIENCE ID}}'}                # logical target of an audience record; or undeclared: '{{COMMUNITY DESCRIBED BY NO AUDIENCE RECORD}}'
       target_readers: '{{OBJECT OF STUDY AND APPROACH OF THESE READERS}}'
       non_target_readers: '{{OBJECT OF STUDY AND APPROACH OF THE OTHER COMMUNITY}}'
 

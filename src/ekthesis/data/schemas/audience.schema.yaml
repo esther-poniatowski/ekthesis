@@ -1,6 +1,8 @@
 # Audience record of one readership, checked by `ekthesis check`.
-# The decision on audiences states the meaning of each field. A record of another field names an
-# audience by a logical target typed by this contract; the record itself declares no register.
+# The decision on audiences states the meaning of each field. A record names another audience, as
+# a parent or a confused community, by a logical target typed by this contract, as a record of
+# another field does; `x-identifier` and `x-target-contract` belong to Anagraphe, and `x-kind` to
+# Ekphrasis. The record itself declares no register.
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: audience.schema.yaml
 title: Audience
@@ -68,6 +70,14 @@ $defs:
     x-kind: markdown-line
     description: a non-empty text on one line
 
+  audience-target:
+    $ref: 'https://github.com/esther-poniatowski/anagraphe/schemas/addressing.v1.schema.yml#/$defs/target'
+    required: [id]
+    not: {anyOf: [{required: [repository]}, {required: [unit]}]}
+    description: >-
+      the logical target of another audience record of the repository, by its id alone, so that
+      the audience records of a run name each other as the scope table reads them
+
   identity:
     type: object
     additionalProperties: false
@@ -92,12 +102,14 @@ $defs:
         type: array
         x-kind: list
         uniqueItems: true
-        items: {$ref: '#/$defs/id'}
+        items:
+          $ref: '#/$defs/audience-target'
+          x-target-contract: ['ekthesis:audience@2']
         title: Narrows
         description: >-
-          the identifiers of the parent audiences, of which this one is a subtype; a subtype
+          the logical targets of the parent audiences, of which this one is a subtype; a subtype
           inherits the knowledge of each parent, and no chain of parents returns to the audience
-        examples: [[artificial-networks-researchers]]
+        examples: [[{id: artificial-networks-researchers}]]
       representatives:
         type: array
         x-kind: table
@@ -143,10 +155,11 @@ $defs:
         required: [undeclared]
     properties:
       community:
-        $ref: '#/$defs/id'
+        $ref: '#/$defs/audience-target'
+        x-target-contract: ['ekthesis:audience']
         title: Community
-        description: the identifier of an audience record confused with this one
-        examples: [biological-networks-researchers]
+        description: the logical target of an audience record confused with this one
+        examples: [{id: biological-networks-researchers}]
       undeclared:
         $ref: '#/$defs/text'
         title: Undeclared community

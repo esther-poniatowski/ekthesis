@@ -3,12 +3,12 @@ Audience records, read against the contract `ekthesis:audience@2`, and their che
 
 An audience record describes one readership, as the decision on audiences states. A record is
 checked alone for its undeclared concepts. The audience records of one run are checked together:
-their identifiers are distinct, the parents and the confused communities that they name are
-audience records of the run, and no chain of parents returns to the audience from which it
+their identifiers are distinct, and no chain of parents returns to the audience from which it
 starts. Ekthesis does not check the membership of a representative, which reads the contact
-profiles of the consumer. A concept and the contact profile of a representative are logical
-targets in the form that Anagraphe publishes: the schema validates that form, and Anagraphe
-resolves the record of each target and checks its contract.
+profiles of the consumer. A parent, a confused community, a concept and the contact profile of a
+representative are logical targets in the form that Anagraphe publishes: the schema validates that
+form, and Anagraphe resolves the record of each target and checks its contract, so Ekthesis
+reports no parent and no community that names no audience record.
 
 Classes
 -------
@@ -59,11 +59,6 @@ UNIQUE_AUDIENCES = Rule(
     "No two audience records of a run declare the same identifier.",
     Severity.ERROR,
 )
-EXISTING_AUDIENCES = Rule(
-    "existing-audiences",
-    "Every parent and every confused community that an audience names is an audience of the run.",
-    Severity.ERROR,
-)
 ACYCLIC_PARENTS = Rule(
     "acyclic-parents",
     "No chain of parents returns to the audience from which it starts.",
@@ -77,7 +72,6 @@ UNDECLARED_CONCEPTS = Rule(
 
 AUDIENCE_RULES: tuple[Rule, ...] = (
     UNIQUE_AUDIENCES,
-    EXISTING_AUDIENCES,
     ACYCLIC_PARENTS,
     UNDECLARED_CONCEPTS,
 )
@@ -98,9 +92,8 @@ class Audience:
     identifier : str
         Identifier of the audience, at `identity.id`.
     parents : tuple of (FieldPath, str)
-        Each parent that the audience narrows, at `identity.narrows`.
-    communities : tuple of (FieldPath, str)
-        Each declared community of its confusions, at `identity.confusions[].community`.
+        The identifier of each parent that the audience narrows, read from the logical target at
+        `identity.narrows`, with the field path of that target.
     undeclared : tuple of (FieldPath, str)
         Each undeclared concept, at `knowledge[].undeclared`.
     """
@@ -108,7 +101,6 @@ class Audience:
     path: Path
     identifier: str
     parents: tuple[Named, ...]
-    communities: tuple[Named, ...]
     undeclared: tuple[Named, ...]
 
 
@@ -153,20 +145,14 @@ def read_audience(path: Path, data: object) -> Audience:
     identity = data["identity"]
     at = FieldPath(("identity",))
     parents = tuple(
-        (at.child("narrows").child(position), str(parent))
+        (at.child("narrows").child(position), str(parent["id"]))
         for position, parent in enumerate(identity.get("narrows", []))
-    )
-    communities = tuple(
-        (at.child("confusions").child(position).child("community"), str(confusion["community"]))
-        for position, confusion in enumerate(identity.get("confusions", []))
-        if "community" in confusion
     )
     items = list(enumerate(data.get("knowledge", [])))
     return Audience(
         path=path,
         identifier=str(identity["id"]),
         parents=parents,
-        communities=communities,
         undeclared=_item_values(items, "undeclared"),
     )
 
@@ -231,19 +217,6 @@ def run_findings(entries: Sequence[RunEntry]) -> dict[int, list[Finding]]:
                     f"the identifier {entry.identifier} repeats that of {first[entry.identifier]}",
                 )
             )
-    for position, entry in enumerate(entries):
-        if entry.audience is None:
-            continue
-        for field, name in (*entry.audience.parents, *entry.audience.communities):
-            if name not in first:
-                found.setdefault(position, []).append(
-                    _finding(
-                        EXISTING_AUDIENCES,
-                        entry.audience,
-                        field,
-                        f"no audience record of the run has the identifier {name}",
-                    )
-                )
     for position, finding in _cycles(entries):
         found.setdefault(position, []).append(finding)
     return found

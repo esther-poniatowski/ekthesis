@@ -21,7 +21,6 @@ SKELETON = Path(__file__).parents[2] / "src" / "ekthesis" / "data" / "skeletons"
 PLANTED = {
     "schema-conformance": (Severity.ERROR, ""),
     "unique-audiences": (Severity.ERROR, "identity.id"),
-    "existing-audiences": (Severity.ERROR, "identity.narrows[0]"),
     "acyclic-parents": (Severity.ERROR, "identity.narrows[0]"),
     "undeclared-concepts": (Severity.WARNING, "knowledge[0].undeclared"),
 }
@@ -34,7 +33,8 @@ def fixture_checker() -> Checker:
 
 
 def write(directory: Path, name: str, identifier: str, narrows: list[str]) -> Path:
-    """Write a minimal audience record of `identifier` narrowing `narrows`, and return its path."""
+    """Write a minimal audience record of `identifier` narrowing the audiences of the identifiers
+    `narrows`, each named by a logical target, and return its path."""
     path = directory / f"{name}.yml"
     record = {
         "_schema": AUDIENCE_CONTRACT,
@@ -42,7 +42,7 @@ def write(directory: Path, name: str, identifier: str, narrows: list[str]) -> Pa
             "id": identifier,
             "label": identifier.replace("-", " "),
             "gloss": f"readers named {identifier}",
-            "narrows": narrows,
+            "narrows": [{"id": parent} for parent in narrows],
         },
     }
     path.write_text(yaml.safe_dump(record), encoding="utf-8")
@@ -112,19 +112,69 @@ def test_cycle_through_two_records_is_reported_on_each(checker: Checker, tmp_pat
     ]
 
 
-def test_unknown_confused_community_is_reported(checker: Checker, tmp_path: Path) -> None:
-    """A confused community names an audience record of the run, as a parent does."""
-    path = write(tmp_path, "readers", "readers", [])
+def test_audience_outside_the_run_is_left_to_anagraphe(checker: Checker, tmp_path: Path) -> None:
+    """
+    A parent or a confused community naming no audience record of the run yields no finding of
+    Ekthesis.
+
+    Ekthesis resolves no target: `anagraphe targets check` reports a target naming no record as
+    `unknown-record`, and a record of another contract as `target-contract-mismatch`.
+    """
+    path = write(tmp_path, "readers", "readers", ["missing-readers"])
     record = yaml.safe_load(path.read_text())
     record["identity"]["confusions"] = [
-        {"community": "other-readers", "target_readers": "a", "non_target_readers": "b"}
+        {"community": {"id": "other-readers"}, "target_readers": "a", "non_target_readers": "b"}
     ]
     path.write_text(yaml.safe_dump(record))
-    [finding] = checker.check([path])
-    assert (finding.rule, str(finding.field)) == (
-        "existing-audiences",
-        "identity.confusions[0].community",
-    )
+    assert checker.check([path]) == []
+
+
+def test_parents_and_communities_are_targets_typed_by_the_audience_contract() -> None:
+    """
+    A parent and a confused community are logical targets of an audience record of the repository.
+
+    The parent pins the current version of the contract, since the check and the scope table read
+    the parents of a parent; the community admits every version, since no rule reads its record.
+    """
+    schema = packaged_resources().schemas.schemas[AUDIENCE_CONTRACT]
+    identity = schema["$defs"]["identity"]["properties"]
+    community = schema["$defs"]["confusion"]["properties"]["community"]
+    assert identity["narrows"]["items"]["x-target-contract"] == [AUDIENCE_CONTRACT]
+    assert community["x-target-contract"] == [AUDIENCE_CONTRACT.split("@", maxsplit=1)[0]]
+    target = schema["$defs"]["audience-target"]
+    assert target["$ref"].endswith("addressing.v1.schema.yml#/$defs/target")
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "valid"),
+    [
+        ("narrows", [{"id": "parent-readers"}], True),
+        ("narrows", ["parent-readers"], False),
+        ("narrows", [{"repository": "lab", "id": "parent-readers"}], False),
+        ("narrows", [{"id": "parent-readers", "unit": "knowledge"}], False),
+        ("community", {"id": "other-readers"}, True),
+        ("community", "other-readers", False),
+        ("community", {"repository": "lab"}, False),
+    ],
+)
+def test_parent_and_community_take_a_target_by_id_alone(
+    checker: Checker, tmp_path: Path, field: str, value: object, valid: bool
+) -> None:
+    """A parent and a confused community name an audience record of the repository by its id: a
+    bare identifier, a repository and a unit are rejected by the schema."""
+    path = write(tmp_path, "readers", "readers", [])
+    record = yaml.safe_load(path.read_text())
+    if field == "narrows":
+        record["identity"]["narrows"] = value
+        located = "identity.narrows[0]"
+    else:
+        record["identity"]["confusions"] = [
+            {"community": value, "target_readers": "a", "non_target_readers": "b"}
+        ]
+        located = "identity.confusions[0].community"
+    path.write_text(yaml.safe_dump(record))
+    findings = {(f.rule, str(f.field)) for f in checker.check([path])}
+    assert findings == (set() if valid else {("schema-conformance", located)})
 
 
 def _with_target(path: Path, contract: str, field: str, value: object) -> str:
@@ -193,14 +243,14 @@ def test_finding_carries_the_position_of_its_field(checker: Checker) -> None:
 
 
 def test_command_passes_on_warnings_and_fails_on_errors() -> None:
-    """The command exits with 0 on undeclared concepts alone, and with 1 on an unknown parent."""
+    """The command exits with 0 on undeclared concepts alone, and with 1 on a cycle of parents."""
     runner = CliRunner()
     warned = runner.invoke(
         app, ["check", *map(str, VALID), str(FIXTURES / "planted" / "undeclared-concepts.yml")]
     )
     assert warned.exit_code == 0, warned.output
     assert warned.output.splitlines()[-1] == "4 records checked: 0 errors, 1 warnings"
-    failed = runner.invoke(app, ["check", str(FIXTURES / "planted" / "existing-audiences.yml")])
+    failed = runner.invoke(app, ["check", str(FIXTURES / "planted" / "acyclic-parents.yml")])
     assert failed.exit_code == 1, failed.output
 
 
@@ -245,7 +295,7 @@ def test_run_finding_joins_its_record_in_a_mixed_run(monkeypatch: pytest.MonkeyP
     """In a run that also holds an exposition, a run finding keeps the resource and the region."""
     root = FIXTURES.parent
     monkeypatch.chdir(root)
-    planted = "audiences/planted/existing-audiences.yml"
+    planted = "audiences/planted/acyclic-parents.yml"
     paths = ["valid.yml", *(str(path.relative_to(root)) for path in VALID), planted]
     result = CliRunner().invoke(app, ["check", "--format", "sarif", *paths])
     log = json.loads(result.output)
@@ -253,13 +303,15 @@ def test_run_finding_joins_its_record_in_a_mixed_run(monkeypatch: pytest.MonkeyP
     [found] = log["runs"][0]["results"]
     [location] = found["locations"]
     lines = (root / planted).read_text().splitlines()
-    line = next(number for number, text in enumerate(lines, 1) if "missing-parent" in text)
-    assert found["ruleId"] == "existing-audiences"
+    line = next(number for number, text in enumerate(lines, 1) if "narrows" in text)
+    assert found["ruleId"] == "acyclic-parents"
     assert location["physicalLocation"] == {
         "artifactLocation": {"uri": planted, "uriBaseId": "SRCROOT"},
-        "region": {"startLine": line, "startColumn": lines[line - 1].index("missing-parent") + 1},
+        "region": {"startLine": line, "startColumn": lines[line - 1].index("{id:") + 1},
     }
-    assert location["logicalLocations"] == [{"name": "id:orphan-readers#/identity/narrows/0"}]
+    assert location["logicalLocations"] == [
+        {"name": "id:self-narrowing-readers#/identity/narrows/0"}
+    ]
 
 
 def test_unknown_contract_skips_the_rules_of_every_contract(
@@ -273,7 +325,7 @@ def test_unknown_contract_skips_the_rules_of_every_contract(
     assert set(report.skipped) == {
         rule.identifier for rules in CONTRACT_RULES.values() for rule in rules
     }
-    assert {"existing-audiences", "authored-relations"} <= set(report.skipped)
+    assert {"acyclic-parents", "authored-relations"} <= set(report.skipped)
 
 
 @pytest.mark.parametrize(
